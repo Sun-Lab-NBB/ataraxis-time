@@ -7,7 +7,7 @@ the low-level C-API should be carried out through the wrapper class where possib
 
 from typing import Literal
 
-from ..precision_timer_ext import CPrecisionTimer  # type: ignore
+from ..precision_timer_ext import CPrecisionTimer
 from ..utilities import format_message
 
 

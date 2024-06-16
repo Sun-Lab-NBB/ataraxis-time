@@ -5,8 +5,8 @@ benchmark is invoked using the cli interface.
 """
 
 import pytest  # type: ignore
+from ataraxis_time import benchmark
 from click.testing import CliRunner  # type: ignore
-from high_precision_timer import benchmark
 
 
 @pytest.fixture

@@ -6,8 +6,8 @@ build-backend = "scikit_build_core.build"
 
 # Project metdata section. Provides the genral ID information about the project.
 [project]
-name = "high-precision-timer"
-version = "2.0.1"
+name = "ataraxis-time"
+version = "1.0.0"
 description = "A sub-microsecond-precise timer for timing and delaying code execution in python with/out blocking."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -50,7 +50,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/Sun-Lab-NBB/HighPrecisionTimer"
-Documentation = "https://high-precision-timer-docs.netlify.app/"
+Documentation = "https://ataraxis-time-docs.netlify.app/"
 
 # Specifies the dependecies for various build configurations. Mostly, these configurations are used together with 'tox'
 # tasks to install the required packages prior to running those tasks.
@@ -86,15 +86,15 @@ build = [
 # by developers to quickly install all necessary compontents for tox-based project building automation.
 dev = [
     "tox",
-    "high-precision-timer[lint]",
-    "high-precision-timer[test]",
-    "high-precision-timer[doc]",
-    "high-precision-timer[build]",
+    "ataraxis-time[lint]",
+    "ataraxis-time[test]",
+    "ataraxis-time[doc]",
+    "ataraxis-time[build]",
 ]
 
 # Defines the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
 [project.scripts]
-benchmark_timer = "high_precision_timer:benchmark"
+benchmark_timer = "ataraxis_time:benchmark"
 
 # Additional Scikit-Build configuration section. Used together with CMakeLists.txt to compile the C++ extensions and
 # assemble the library.

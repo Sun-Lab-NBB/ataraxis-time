@@ -17,8 +17,8 @@ import click
 import numpy as np
 from tqdm import tqdm
 
-from .timer_class import PrecisionTimer
 from ..time_helpers.helper_functions import convert_time
+from .timer_class import PrecisionTimer
 
 
 @click.command()

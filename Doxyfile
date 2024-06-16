@@ -4,9 +4,9 @@
 # parsed and merged with python code documentation by sphinx via 'breathe' bridge.
 
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "high-precision-timer"
+PROJECT_NAME           = "ataraxis-timer"
 OUTPUT_DIRECTORY       = docs/source/doxygen
 OUTPUT_LANGUAGE        = English
-INPUT                  = src/precision_timer_ext.cpp
+INPUT                  = src/c_extensions
 GENERATE_XML           = YES
 XML_OUTPUT             = xml

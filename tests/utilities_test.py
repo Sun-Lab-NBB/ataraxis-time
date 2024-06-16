@@ -1,10 +1,9 @@
-"""Tests service functions available through the utilities module.
-"""
+"""Tests service functions available through the utilities module."""
 
 import re
 
 import pytest  # type: ignore
-from high_precision_timer.utilities import format_message
+from ataraxis_time.utilities import format_message
 
 
 def test_format_message():
@@ -16,6 +15,7 @@ def test_format_message():
         "without breaking long words or splitting on hyphens. The formatting should be applied correctly to ensure "
         "readability and consistency across the library."
     )
+    # DO NOT REFORMAT. This will break the test.
     expected_long_message = (
         "This is a very long message that needs to be formatted properly. It should be wrapped at 120 characters without breaking\n"
         "long words or splitting on hyphens. The formatting should be applied correctly to ensure readability and consistency\n"
@@ -37,7 +37,5 @@ def test_format_message_error_handling():
         f"Invalid 'message' argument time encountered when formatting text message according to library display "
         f"standards. Expected a {type(str)} type, but encountered {invalid_type} of type {type(invalid_type)}."
     )
-    with pytest.raises(
-        TypeError, match=re.escape(format_message(custom_error_message))
-    ):
+    with pytest.raises(TypeError, match=re.escape(format_message(custom_error_message))):
         format_message(invalid_type)

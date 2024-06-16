@@ -15,9 +15,9 @@ import time as tm
 
 import numpy as np
 import pytest  # type: ignore
-from high_precision_timer import PrecisionTimer
-from high_precision_timer.utilities import format_message
-from high_precision_timer.precision_timer_ext import CPrecisionTimer  # type: ignore
+from ataraxis_time import PrecisionTimer
+from ataraxis_time.precision_timer_ext import CPrecisionTimer  # type: ignore
+from ataraxis_time.utilities import format_message
 
 # Global variables used for block/no-block threaded testing
 global_counter: int = 0

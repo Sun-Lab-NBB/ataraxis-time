@@ -3,10 +3,10 @@ import importlib_metadata
 import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
-project = 'high-precision-timer'
+project = 'ataraxis-time'
 copyright = '2024, Ivan Kondratyev (Inkaros) & Sun Lab'
 author = 'Ivan Kondratyev (Inkaros)'
-release = importlib_metadata.version("high-precision-timer")  # Extracts project version from the metadata .toml file.
+release = importlib_metadata.version("ataraxis-time")  # Extracts project version from the metadata .toml file.
 
 # -- General configuration ---------------------------------------------------
 extensions = [
@@ -18,8 +18,8 @@ extensions = [
 ]
 
 # Breathe configuration
-breathe_projects = {"high-precision-timer": "./doxygen/xml"}  # Specifies the source of the C++ documentation
-breathe_default_project = "high-precision-timer"  # Specifies default project name if C++ documentation is not available
+breathe_projects = {"ataraxis-time": "./doxygen/xml"}  # Specifies the source of the C++ documentation
+breathe_default_project = "ataraxis-time"  # Specifies default project name if C++ documentation is not available
 
 templates_path = ['_templates']
 exclude_patterns = []

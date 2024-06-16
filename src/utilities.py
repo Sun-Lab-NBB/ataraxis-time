@@ -29,6 +29,4 @@ def format_message(message: str) -> str:
         # Calls the formatter recursively to format own exception. Not ideal, but should be safe.
         raise TypeError(format_message(custom_error_message))
 
-    return textwrap.fill(
-        message, width=120, break_long_words=False, break_on_hyphens=False
-    )
+    return textwrap.fill(message, width=120, break_long_words=False, break_on_hyphens=False)

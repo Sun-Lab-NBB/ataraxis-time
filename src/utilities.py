@@ -26,7 +26,7 @@ def format_message(message: str) -> str:
             f"Invalid 'message' argument time encountered when formatting text message according to library display "
             f"standards. Expected a {type(str)} type, but encountered {message} of type {type(message)}."
         )
-        # Calls the formatter recursively to format own exception. Not ideal, but should be safe.
+        # Calls the formatter recursively format own exception. Not ideal, but should be safe.
         raise TypeError(format_message(custom_error_message))
 
     return textwrap.fill(message, width=120, break_long_words=False, break_on_hyphens=False)

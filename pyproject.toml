@@ -8,7 +8,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "ataraxis-time"
 version = "1.0.0"
-description = "A sub-microsecond-precise timer for timing and delaying code execution in python with/out blocking."
+description = "Provides a sub-microsecond precise elapsed / delay timer and methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -19,7 +19,18 @@ maintainers = [
     { name = "Ivan Kondratyev", email = "ik278@cornell.edu" },
 ]
 
-keywords = ["time", "sub-microsecond", "high precision", "timer", "elapsed", "delay", "time conversion", "non-blocking"]
+keywords = [
+    "time",
+    "sub-microsecond precision",
+    "high precision",
+    "timer",
+    "elapsed",
+    "delay",
+    "time conversion",
+    "non-blocking",
+    "blocking",
+    "date"
+]
 
 classifiers = [
     # Development status
@@ -49,8 +60,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Sun-Lab-NBB/HighPrecisionTimer"
-Documentation = "https://ataraxis-time-docs.netlify.app/"
+Homepage = "https://github.com/Sun-Lab-NBB/AtaraxisTime"
+Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 
 # Specifies the dependecies for various build configurations. Mostly, these configurations are used together with 'tox'
 # tasks to install the required packages prior to running those tasks.
@@ -127,9 +138,11 @@ build-verbosity = 1
 # machines running the target OSes.
 archs = ["all"]
 
-# Runs pytest to ensure that each binary wheel was built correctly. Uses pytest-xdist to optimize testing speed by using
-# '-n (default: auto)' number of parallel workers.
-test-command = "pytest {project}/tests -n auto"
+# Runs pytest to ensure that each binary wheel was built correctly. Uses pytest-xdist to optimize testing speed
+# by using '-n (default: logical)' number of parallel workers and 'loadgroup' balancing strategy. This combination of
+# parameters results in the best speed-to-safety ratio. Make sure you know how to specify test groups, which is
+# respected by 'loadgroup' and can be used to prevent parallel access to non-sharable hardware resources.
+test-command = "pytest {project}/tests -n logical --dist loadgroup"
 test-requires = ["pytest", "pytest-xdist"]
 
 # Specifies the OSx deployment target, which is needed for full C++17 support (not available in all OSx versions).
@@ -145,7 +158,6 @@ src = ["src"]  # The name of the source directory
 # list.
 extend-exclude = [
     "conf.py",
-    "automation.py",
 ]
 
 # Same as the 'basepython' version in the tox.ini 'lint' section, see comments for that section for more details.
@@ -201,7 +213,7 @@ exclude = [
     "stubs/",  # Ignores stubs folder (stubgen output target)
     "recipe/",  # Ignores recipe folder (grayskull output target)
     "tests/",   # Ignores the tests folder, as tests frequently (and purposefully) violate typing to test exceptions.
-    "automation.py",  # Ignores the automation script
+    "automation.py"  # Ignores the automation file
 ]
 
 # This is used by the '-test' tox command to aggreagte coverage data produced during pytest runtime.

@@ -5,14 +5,15 @@ be used directly.
 """
 
 import os
+import re
+import shutil
+import subprocess
+import sys
+import textwrap
 from os import PathLike
 from typing import AnyStr, Optional
-import shutil
+
 import click
-import re
-import sys
-import subprocess
-import textwrap
 
 
 def format_message(message: str) -> str:
@@ -67,7 +68,6 @@ def move_stubs(src_dir: str, dst_dir: str) -> None:
     # Iterates over all files of the input tree hierarchy
     for root, _, files in os.walk(src_dir):
         for file in files:
-
             # For any file with python stub extension, moves it to a mirroring directory level and name relative to the
             # destination root.
             if file.endswith(".pyi"):
@@ -76,7 +76,9 @@ def move_stubs(src_dir: str, dst_dir: str) -> None:
                 # Computes the would-be path of the file, if ti was saved inside the destination directory, rather than
                 # the source. In other words, replaces the source directory with destination directory, leaving the
                 # rest of the path intact
-                dst_path = os.path.relpath(stub_path, dst_dir)
+                split_path = stub_path.split(sep=os.path.sep)
+                file_path = str(os.path.sep).join(split_path[2:])
+                dst_path = os.path.join(dst_dir, file_path)
 
                 # Removes old .pyi file if it already exists
                 if os.path.exists(dst_path):
@@ -102,7 +104,7 @@ def process_typed_markers() -> None:
     This command should be called as part of the stub-generation tox command.
     """
     if not os.path.exists("src"):
-        click.echo('Unable to resolve typed markers. Source directory does not exist.', err=True)
+        click.echo("Unable to resolve typed markers. Source directory does not exist.", err=True)
         raise click.Abort()
 
     try:
@@ -121,10 +123,10 @@ def process_stubs() -> None:
         This command should only be called after the /stubs directory has been generated using stubgen command from tox.
     """
     if not os.path.exists("src"):
-        click.echo('Unable to move stub files. Source directory does not exist.', err=True)
+        click.echo("Unable to move stub files. Source directory does not exist.", err=True)
         raise click.Abort()
     if not os.path.exists("stubs"):
-        click.echo('Unable to move stub files. Stubs directory does not exist.', err=True)
+        click.echo("Unable to move stub files. Stubs directory does not exist.", err=True)
         raise click.Abort()
 
     try:
@@ -219,8 +221,9 @@ def import_env() -> None:
 
     # If the os-specific .yml file is not found, raises an error
     if not os.path.exists(yml_path):
-        click.echo(f"No environment file found for the requested postfix and extension combination {yml_file}",
-                   err=True)
+        click.echo(
+            f"No environment file found for the requested postfix and extension combination {yml_file}", err=True
+        )
         raise click.Abort()
 
     # If the .yml file was found, attempts to create a new environment by calling Conda from subprocess
@@ -240,8 +243,12 @@ def import_env() -> None:
 
 
 @cli.command()
-@click.option("--base-env", prompt="Enter the base environment name", required=True,
-              help="The base name of the environment to export.")
+@click.option(
+    "--base-env",
+    prompt="Enter the base environment name",
+    required=True,
+    help="The base name of the environment to export.",
+)
 def export_env(base_env: str) -> None:
     """Exports the os-specific Conda environment as a .yml file and a spec-file .txt.
 
@@ -265,11 +272,15 @@ def export_env(base_env: str) -> None:
         if "_lin64" in env_extension:
             subprocess.run(f"conda env export --name {env_name} | head -n -1 > {yml_path}", shell=True, check=True)
         elif "_osx" in env_extension:
-            subprocess.run(f"conda env export --name {env_name} | tail -r | tail -n +2 | tail -r > {yml_path}",
-                           shell=True, check=True)
+            subprocess.run(
+                f"conda env export --name {env_name} | tail -r | tail -n +2 | tail -r > {yml_path}",
+                shell=True,
+                check=True,
+            )
         elif "_win64" in env_extension:
-            subprocess.run(f'conda env export --name {env_name} | findstr -v "prefix" > {yml_path}', shell=True,
-                           check=True)
+            subprocess.run(
+                f'conda env export --name {env_name} | findstr -v "prefix" > {yml_path}', shell=True, check=True
+            )
         else:
             raise click.BadParameter(f"Unsupported operating system: {os_name}")
 
@@ -278,7 +289,7 @@ def export_env(base_env: str) -> None:
         # Exports environment as spec-file .txt
         spec_file: str = f"{env_name}_spec.txt"
         spec_path: str = os.path.join("envs", spec_file)
-        subprocess.run(f'conda list -n {env_name} --explicit -r > {spec_path}', shell=True, check=True)
+        subprocess.run(f"conda list -n {env_name} --explicit -r > {spec_path}", shell=True, check=True)
         click.echo(f"Environment spec-file exported to {spec_path}")
 
     except subprocess.CalledProcessError as e:
@@ -288,38 +299,36 @@ def export_env(base_env: str) -> None:
 
 def validate_library_name(_ctx, _param, value: str) -> str:
     """Verifies that the input library name contains only letters, numbers, and underscores."""
-    if not re.match(r'^[a-zA-Z0-9_]*$', value):
-        raise click.BadParameter(
-            "Library name should contain only letters, numbers, and underscores.")
+    if not re.match(r"^[a-zA-Z0-9_]*$", value):
+        raise click.BadParameter("Library name should contain only letters, numbers, and underscores.")
     return value
 
 
 def validate_project_name(_ctx, _param, value: str) -> str:
     """Verifies that the input project name contains only letters, numbers, and dashes."""
-    if not re.match(r'^[a-zA-Z0-9-]+$', value):
+    if not re.match(r"^[a-zA-Z0-9-]+$", value):
         raise click.BadParameter("Project name should contain only letters, numbers, or dashes.")
     return value
 
 
 def validate_author_name(_ctx, _param, value: str) -> str:
     """Verifies that the input author name contains only letters, numbers, spaces, underscores and dashes."""
-    if not re.match(r'^[a-zA-Z0-9\s_-]+$', value):
+    if not re.match(r"^[a-zA-Z0-9\s_-]+$", value):
         raise click.BadParameter("Author name should contain only letters, numbers, spaces, underscores, or dashes.")
     return value
 
 
 def validate_email(_ctx, _param, value: str) -> str:
     """Verifies that the input email address contains only valid characters."""
-    if not re.match(r'^[\w.-]+@[\w.-]+\.\w+$', value):
+    if not re.match(r"^[\w.-]+@[\w.-]+\.\w+$", value):
         raise click.BadParameter("Invalid email address.")
     return value
 
 
 def validate_env_name(_ctx, _param, value: str) -> str:
     """Verifies that the input environment name contains only letters, numbers, and underscores."""
-    if not re.match(r'^[a-zA-Z0-9_]*$', value):
-        raise click.BadParameter(
-            "Environment name should contain only letters, numbers, and underscores.")
+    if not re.match(r"^[a-zA-Z0-9_]*$", value):
+        raise click.BadParameter("Environment name should contain only letters, numbers, and underscores.")
     return value
 
 
@@ -374,9 +383,9 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                     markers = {
                         "YOUR_LIBRARY_NAME": library_name,
                         "YOUR-PROJECT-NAME": project_name,
-                        "YOUR_AUTHOR_NAME" : author_name,
-                        "YOUR_EMAIL"       : email,
-                        "YOUR_ENV_NAME"    : env_name
+                        "YOUR_AUTHOR_NAME": author_name,
+                        "YOUR_EMAIL": email,
+                        "YOUR_ENV_NAME": env_name,
                     }
 
                     # Loops over markers and if any are discovered inside the evaluated file contents, replaces the

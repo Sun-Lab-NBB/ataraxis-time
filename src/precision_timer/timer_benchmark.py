@@ -2,8 +2,8 @@
 the intended host-system.
 
 To improve user-experience, installing the library automatically generates a shorthand 'benchmark_timer' command that
-allows calling the benchmark() method from the CLI without using the short (high_precision_timer.benchmark) or the full
-method path (high_precision_timer.precision_timer.timer_benchmark.benchmark).
+allows calling the benchmark() method from the CLI without using the short (ataraxis_time.benchmark) or the full
+method path (ataraxis_time.precision_timer.timer_benchmark.benchmark).
 
 Calling benchmark_timer with --help argument displays the list of command line arguments that can be used to configure
 the behavior of the benchmark. The default benchmark arguments are designed to offer a high-confidence result

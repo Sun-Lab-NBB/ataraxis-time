@@ -28,7 +28,7 @@ Timer Benchmark
 Standalone Python Functions
 ===========================
 
-.. automodule:: ataraxis_time.precision_timer.utilities
+.. automodule:: ataraxis_time.utilities
    :members:
    :undoc-members:
    :show-inheritance:

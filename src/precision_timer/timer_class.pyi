@@ -2,7 +2,7 @@ from typing import Literal
 
 from _typeshed import Incomplete
 
-from ..precision_timer_ext import CPrecisionTimer as CPrecisionTimer  # type: ignore
+from ..precision_timer_ext import CPrecisionTimer as CPrecisionTimer
 from ..utilities import format_message as format_message
 
 class PrecisionTimer:

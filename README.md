@@ -81,7 +81,7 @@ This is a minimal example of how to use this library:
 
 ```
 # First, import the timer class.
-from high_precision_timer.precision_timer import PrecisionTimer
+from ataraxis_time import PrecisionTimer
 import time as tm
 
 # Then, instantiate the timer class using the desired precision. Supported precisions are: 'ns' (nanoseconds),

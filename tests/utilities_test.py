@@ -16,6 +16,7 @@ def test_format_message():
         "readability and consistency across the library."
     )
     # DO NOT REFORMAT. This will break the test.
+    # noinspection LongLine
     expected_long_message = (
         "This is a very long message that needs to be formatted properly. It should be wrapped at 120 characters without breaking\n"
         "long words or splitting on hyphens. The formatting should be applied correctly to ensure readability and consistency\n"

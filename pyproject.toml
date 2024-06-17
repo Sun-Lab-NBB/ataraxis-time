@@ -145,8 +145,7 @@ src = ["src"]  # The name of the source directory
 # list.
 extend-exclude = [
     "conf.py",
-    "move_stubs.py",
-    "ensure_recipe_dir.py",
+    "automation.py",
 ]
 
 # Same as the 'basepython' version in the tox.ini 'lint' section, see comments for that section for more details.
@@ -194,7 +193,7 @@ convention = "google"
 disallow_untyped_defs = true # Enforces function annotation
 warn_unused_ignores = true  # Warns against using 'type: ignore' for packages that have type stubs available.
 exclude = [
-    "high-precision-python-timer-\\d+", # Ignores temporary folder created by setuptools when building the sdist
+    "ataraxis-time-\\d+", # Ignores temporary folder created by setuptools when building the sdist
     "venv.*/", # Ignores virtual environments
     "build/",  # Ignores the sdist folder
     "dist/",   # Ignores the wheel folder
@@ -202,8 +201,7 @@ exclude = [
     "stubs/",  # Ignores stubs folder (stubgen output target)
     "recipe/",  # Ignores recipe folder (grayskull output target)
     "tests/",   # Ignores the tests folder, as tests frequently (and purposefully) violate typing to test exceptions.
-    "move_stubs.py",  # Ignores the stub-moving script
-    "ensure_recipe_dir.py"  # Ignores the script used to ensure recipe folder (grayskull output target) exsits.
+    "automation.py",  # Ignores the automation script
 ]
 
 # This is used by the '-test' tox command to aggreagte coverage data produced during pytest runtime.

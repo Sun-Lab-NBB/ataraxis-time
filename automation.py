@@ -71,7 +71,7 @@ def move_stubs(src_dir: str, dst_dir: str) -> None:
             # For any file with python stub extension that matches the pattern, moves it to a mirroring directory level
             # and name relative to the destination root. Explicitly designed to filter out an occasional issue seen with
             # parallel tox runtimes, where an extra space_number is appended to the file.
-            if file.endswith(".pyi") and not re.match(r'.*\s\d+\.pyi$', file):
+            if file.endswith(".pyi") and not re.match(r".*\s\d+\.pyi$", file):
                 stub_path = os.path.join(root, file)  # Parses the path to the stub file relative to the source root
 
                 # Computes the would-be path of the file, if ti was saved inside the destination directory, rather than

@@ -1,4 +1,4 @@
-2024-06-17 21:23:24  (rev 0)
+2024-06-17 23:35:59  (rev 0)
     +alabaster-0.7.16 (conda-forge/noarch)
     +babel-2.14.0 (conda-forge/noarch)
     +backports-1.0 (conda-forge/noarch)
@@ -118,6 +118,7 @@
     +tox-4.15.1 (conda-forge/noarch)
     +tqdm-4.66.4 (conda-forge/noarch)
     +twine-5.1.0 (conda-forge/noarch)
+    +types-tqdm-4.66.0.20240417 (conda-forge/noarch)
     +typing-extensions-4.12.2 (conda-forge/noarch)
     +typing_extensions-4.12.2 (conda-forge/noarch)
     +tzdata-2024a (conda-forge/noarch)
@@ -126,7 +127,4 @@
     +wheel-0.43.0 (conda-forge/noarch)
     +xz-5.2.6 (conda-forge/osx-arm64)
     +zipp-3.18.1 (conda-forge/noarch)
-
-2024-06-17 21:30:18  (rev 1)
-    +types-tqdm-4.66.0.20240417 (conda-forge/noarch)
 

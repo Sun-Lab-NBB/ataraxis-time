@@ -1,7 +1,6 @@
-# HighPrecisionTimer
+# AtaraxisTime
 
-A library that offers sub-microsecond precise interval timing and blocking / non-blocking delay functionality for
-Python projects.
+A Python library that provides a sub-microsecond-precise thread-safe timer and methods to work with date and time data.
 
 ![PyPI - Version](https://img.shields.io/pypi/v/high-precision-timer)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/high-precision-timer)
@@ -17,7 +16,10 @@ ___
 This library uses the 'chrono' C++ library to access the fastest available system clock and use it to provide interval
 timing and delay functionality via a Python binding API. While the performance of the timer heavily depends on the
 particular system configuration and utilization, most modern CPU should be capable of sub-microsecond precision using
-this timer. Additionally, the library offers a set of standalone utility functions that provide further date and time 
+this timer. Due to using a C-extension to provide interval and delay timing functionality, the library is thread- and
+process-safe.
+
+Additionally, the library offers a set of standalone utility functions that provide further date and time 
 related services, such as time conversion and timestamp generation.
 ___
 

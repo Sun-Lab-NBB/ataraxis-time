@@ -332,13 +332,50 @@ def validate_env_name(_ctx, _param, value: str) -> str:
     return value
 
 
+def rename_all_envs(new_name: str) -> None:
+    """This task loops over all files inside the '/envs' directory and replaces base environment names with the input
+    new name.
+
+    It is mainly designed to be used during template project adoption, but also can be used as part of tox-automation to
+    rename all environments in the folder (for example, when changing environment naming pattern for the project).
+
+    Args:
+        new_name: The new base name to use for all environments.
+    """
+
+    # Loops over the files inside 'envs' directory and renames them from the generic base name to the desired env
+    # name to be used with the project. Specifically, keeps the _os-suffix and everything on the right side, while
+    # replacing everything on the left side.
+    if os.path.exists("envs"):
+        for file in os.listdir(envs_dir):
+            if file.endswith(".yml"):
+                last_underscore_index = file.rfind("_")
+                if last_underscore_index != -1:
+                    os_suffix_and_ext = file[last_underscore_index:]
+                    new_file_name = f"{new_name}{os_suffix_and_ext}"  # Underscore from suffix is kept
+                    old_file_path = os.path.join(envs_dir, file)
+                    new_file_path = os.path.join(envs_dir, new_file_name)
+                    os.rename(old_file_path, new_file_path)
+                    click.echo(f"Renamed environment file: {file} -> {new_file_name}")
+            elif file.endswith("_spec.txt"):
+                # finds the first underscore starting from _spec.txt (excludes the spec underscore)
+                last_underscore_index = file.rfind("_", 0, file.rfind("_spec.txt"))
+                if last_underscore_index != -1:
+                    os_suffix_and_ext = file[last_underscore_index:]
+                    new_file_name = f"{new_name}{os_suffix_and_ext}"
+                    old_file_path = os.path.join(envs_dir, file)
+                    new_file_path = os.path.join(envs_dir, new_file_name)
+                    os.rename(old_file_path, new_file_path)
+                    click.echo(f"Renamed environment file: {file} -> {new_file_name}")
+
+
 @cli.command()
 @click.option("--library-name", prompt="Enter the desired library name", callback=validate_library_name)
 @click.option("--project-name", prompt="Enter the desired project name", callback=validate_project_name)
 @click.option("--author-name", prompt="Enter the author name", callback=validate_author_name)
 @click.option("--email", prompt="Enter the email address", callback=validate_email)
 @click.option("--env-name", prompt="Enter the environment name", callback=validate_env_name)
-def adopt_project(library_name: str, project_name: str, author_name: str, email: str, env_name: str):
+def adopt_project(library_name: str, project_name: str, author_name: str, email: str, env_name: str) -> None:
     """Adopt a new project that was initialized from a standard Sun Lab template, by replacing placeholders in metadata
     and automation files with user0-defined data.
 
@@ -402,6 +439,9 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                             f.write(content)
                         click.echo(f"Replaced markers in {file_path}")
 
+        # Uses the input environment name to rename all environment files inside the 'envs' folder.
+        rename_all_envs(env_name)
+
         # Provides the final reminder
         message = (
             f"Project Adoption: Complete. Be sure to manually verify critical files such as CMakeLists.txt and "
@@ -411,6 +451,13 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
     except Exception as e:
         click.echo(f"Error replacing markers: {str(e)}", err=True)
         raise click.Abort()
+
+
+@cli.command()
+@click.option("--new-name", prompt="Enter the new base environment name to use:", callback=validate_env_name)
+def rename_environments(new_name: str) -> None:
+    # This is basically the wrapper for the shared method.
+    rename_all_envs(new_name=new_name)
 
 
 if __name__ == "__main__":

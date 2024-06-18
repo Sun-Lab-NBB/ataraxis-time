@@ -10,16 +10,16 @@ release = importlib_metadata.version("ataraxis-time")  # Extracts project versio
 
 # -- General configuration ---------------------------------------------------
 extensions = [
-    'sphinx.ext.autodoc',  # To build documentation from docstrings
-    'sphinx.ext.napoleon',  # To read google-style docstrings
-    'breathe',  # To read doxygen-generated xml files (so that C++ documentation can also be parsed)
-    'sphinx_rtd_theme',  # To format the documentation html using ReadTheDocs format
-    'sphinx_click'  # To read docstrings and command-line argument data from click-wrapped functions.
+    'sphinx.ext.autodoc',  # To build documentation from python source code docstrings.
+    'sphinx.ext.napoleon',  # To read google-style docstrings (works with autodoc module).
+    'breathe',  # To read doxygen-generated xml files (so that C++ documentation can be parsed by sphinx).
+    'sphinx_rtd_theme',  # To format the documentation html using ReadTheDocs format.
+    'sphinx_click'  # To read docstrings and command-line arguments from click-wrapped python functions.
 ]
 
 # Breathe configuration
-breathe_projects = {"ataraxis-time": "./doxygen/xml"}  # Specifies the source of the C++ documentation
-breathe_default_project = "ataraxis-time"  # Specifies default project name if C++ documentation is not available
+breathe_projects = {"ataraxis-time": "./doxygen/xml"}  # Specifies the source of the C++ documentation.
+breathe_default_project = "ataraxis-time"  # Specifies default project name if C++ documentation is not available.
 
 templates_path = ['_templates']
 exclude_patterns = []

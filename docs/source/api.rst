@@ -2,8 +2,8 @@
    extension. Use it to declare Python and C++ extension documentation sub-directories via appropriate modules
    (autodoc, doxygenfile and ).
 
-Python Timer API
-================
+Precision Timer API
+===================
 
 .. automodule:: ataraxis_time.precision_timer.timer_class
    :members:
@@ -25,8 +25,16 @@ Timer Benchmark
    :prog: benchmark_timer
    :nested: full
 
-Standalone Python Functions
-===========================
+Helper Functions
+================
+
+.. automodule:: ataraxis_time.time_helpers.helper_functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Utility Functions
+=================
 
 .. automodule:: ataraxis_time.utilities
    :members:

@@ -8,7 +8,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "ataraxis-time"
 version = "1.0.0"
-description = "Provides a sub-microsecond precise elapsed / delay timer and methods to work with date and time data."
+description = "Provides a sub-microsecond-precise thread-safe timer and methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -64,33 +64,45 @@ Homepage = "https://github.com/Sun-Lab-NBB/AtaraxisTime"
 Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 
 # Specifies the dependecies for various build configurations. Mostly, these configurations are used together with 'tox'
-# tasks to install the required packages prior to running those tasks.
+# tasks to install the required packages prior to running those tasks. Note, many of these requirements overlap with
+# eachother in a non-compatible way and should only be used through tox automation!
 [project.optional-dependencies]
 lint = [
     "mypy",
     "ruff",
     "types-tqdm",
 ]
-
+stubs = [
+    "mypy==1.4.0"
+]
 test = [
+    "scikit-build-core",
+    "nanobind",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
     "coverage[toml]",
 ]
-
-doc = [
+coverage = [
+    "junitparser",
+    "coverage[toml]",
+]
+docs = [
     "sphinx",
     "importlib_metadata",
     "breathe",
     "sphinx-rtd-theme",
     "sphinx-click"
 ]
-
 build = [
     "scikit-build-core",
     "nanobind",
     "cibuildwheel",
+    "build",
+]
+upload = [
+    "twine",
+    "grayskull",
 ]
 
 # A shorhand specification that installs tox and all packages required for the tox tasks. This specification can be used
@@ -99,8 +111,10 @@ dev = [
     "tox",
     "ataraxis-time[lint]",
     "ataraxis-time[test]",
-    "ataraxis-time[doc]",
+    "ataraxis-time[coverage]",
+    "ataraxis-time[docs]",
     "ataraxis-time[build]",
+    "ataraxis-time[upload]",
 ]
 
 # Defines the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
@@ -111,6 +125,7 @@ benchmark_timer = "ataraxis_time:benchmark"
 # assemble the library.
 [tool.scikit-build]
 
+# Specifies files that should not be included in the source-code distribution, but are also not part of gitignore.
 sdist.exclude = [".github", "recipe"]
 
 # Protects the configuration against future changes in scikit-build-core
@@ -195,12 +210,13 @@ lint.ignore = [
 # (https://github.com/astral-sh/ruff/issues/5434)
 keep-runtime-typing = true
 
-# Specifies the docstring style
+# Specifies docstring style
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 # MyPy configuration section. MyPy is used to enforce typing in python and verify that all varaibles are correctly
-# typed. This is used by tox 'lint' command.
+# typed. This is used by tox 'lint' command. Note, for mypy to work correctly you may need to manually resolve any
+# stubs issues (tox -e stubs to resolve locally or see mypy output hints to resolve pacakge-related errors).
 [tool.mypy]
 disallow_untyped_defs = true # Enforces function annotation
 warn_unused_ignores = true  # Warns against using 'type: ignore' for packages that have type stubs available.

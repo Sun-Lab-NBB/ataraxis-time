@@ -1,9 +1,9 @@
 # Configuration file for the Sphinx documentation builder.
 import importlib_metadata
-import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 project = 'ataraxis-time'
+# noinspection PyShadowingBuiltins
 copyright = '2024, Ivan Kondratyev (Inkaros) & Sun Lab'
 author = 'Ivan Kondratyev (Inkaros)'
 release = importlib_metadata.version("ataraxis-time")  # Extracts project version from the metadata .toml file.

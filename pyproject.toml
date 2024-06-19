@@ -54,7 +54,7 @@ classifiers = [
 
 # Project-wide dependencies
 dependencies = [
-    "numpy<2.0.0",  # Newest numpy version currently fails to compile for linux, so odler one is used
+    "numpy<2.0.0",  # The newest numpy version currently fails to compile for linux, so odler one is used.
     "click",
     "tqdm",
 ]
@@ -215,7 +215,7 @@ keep-runtime-typing = true
 convention = "google"
 
 # MyPy configuration section. MyPy is used to enforce typing in python and verify that all varaibles are correctly
-# typed. This is used by tox 'lint' command. Note, for mypy to work correctly you may need to manually resolve any
+# typed. This is used by tox 'lint' command. Note, for mypy to work correctly, you may need to manually resolve any
 # stubs issues (tox -e stubs to resolve locally or see mypy output hints to resolve pacakge-related errors).
 [tool.mypy]
 disallow_untyped_defs = true # Enforces function annotation

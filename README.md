@@ -17,7 +17,7 @@ This library uses the 'chrono' C++ library to access the fastest available syste
 timing and delay functionality via a Python binding API. While the performance of the timer heavily depends on the
 particular system configuration and utilization, most modern CPUs should be capable of sub-microsecond precision using
 this timer. Due to using a C-extension to provide interval and delay timing functionality, the library is thread- and
-process-safe and releases the GIL when using appropriate delay command. Additionally, the library offers a set of 
+process-safe and releases the GIL when using the appropriate delay command. Additionally, the library offers a set of 
 standalone helper functions that can be used to manipulate date and time data.
 
 The library can be used as a standalone module, but it is primarily designed to integrate with the broader 'Ataraxis'
@@ -134,7 +134,7 @@ ___
 
 See the [API documentation](https://ataraxis-time-api-docs.netlify.app/) for the
 detailed description of the methods and classes exposed by components of this library. The documentation also covers the
-C++ source code and any cli- interfaces (such as benchmark timer).
+C++ source code and any cli-interfaces (such as benchmark timer).
 ___
 
 ## Developers
@@ -151,17 +151,17 @@ that were used during development from the included .yml files.
    1. **_Preferred Method:_** Use conda or pip to install 
    [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use an environment that has it installed and 
    call ```tox -e import-env``` to automatically import the os-specific development environment included with the 
-   source code into your local conda distribution.
+   source code in your local conda distribution.
    2. Run ```python -m pip install .'[dev]'``` command to install development dependencies and the library. For some
    systems, you may need to use a slightly modified version of this command: ```python -m pip install .[dev]```.
    3. As long as you have an environment with [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) installed
-   and do not intend to run any code outside the predefined project automation pipelines, all required dependencies will
-   be automatically installed by tox for each task. Generally, this option is **_not_** recommended.
+   and do not intend to run any code outside the predefined project automation pipelines, tox will automatically 
+   install all required dependencies for each task. Generally, this option is **_not_** recommended.
 
 **Note:** When using tox automation, having a local version of the library may interfere with tox methods that attempt
 to build the library using an isolated environment. It is advised to remove the library from your test environment, or
 disconnect from the environment, prior to running any tox tasks. This problem is rarely observed with the latest version
-of automation pipeline, but is worth mentioning.
+of the automation pipeline, but is worth mentioning.
 
 ### Additional Dependencies
 
@@ -180,7 +180,7 @@ In addition to installing the required python packages, separately install the f
 
 To help developers, this project comes with a set of fully configured 'tox'-based pipelines for verifying and building
 the project. Each of the tox commands builds the project in an isolated environment before carrying out its task. Some 
-of the commands rely on the 'automation.py' module that provides the helper-scripts implemented in python. This module 
+commands rely on the 'automation.py' module that provides the helper-scripts implemented in python. This module 
 is stored in the source code root directory for each Sun Lab project.
 
 - ```tox -e stubs``` Builds the library and uses mypy-stubgen to generate the stubs for the library wheel and move them 
@@ -191,7 +191,7 @@ library.
 using pytest-coverage module.
 - ```tox -e combine-test-reports``` Combines coverage reports from all test commands (for each python version) and 
 compiles them into an interactive .html file stored inside '/reports' directory.
-- ```tox -e doxygen``` Uses externally-installed Doxygen distribution to generate documentation from docstrings of
+- ```tox -e doxygen``` Uses externally installed Doxygen distribution to generate documentation from docstrings of
   the C++ source code files.
 - ```tox -e docs``` Uses Sphinx to generate API documentation from Python Google-style docstrings. If Doxygen-generated
   .xml files for the C++ extension are available, uses Breathe plugin to convert them to Sphinx-compatible format and

@@ -365,8 +365,16 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
 
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_names = ["pyproject.toml", "Doxyfile", "CMakeLists.txt", "tox.ini", "conf.py", "README.md", "api.rst",
-                  "welcome.rst"]
+    file_names = [
+        "pyproject.toml",
+        "Doxyfile",
+        "CMakeLists.txt",
+        "tox.ini",
+        "conf.py",
+        "README.md",
+        "api.rst",
+        "welcome.rst",
+    ]
 
     try:
         # Loops over the script directory, which should be project root directory
@@ -424,7 +432,7 @@ def rename_all_envs(new_name: str) -> None:
     new name.
 
     It is mainly designed to be used during template project adoption, but also can be used as part of tox-automation to
-    rename all environments in the folder (for example, when changing environment naming pattern for the project).
+    rename all environments in the folder (for example, when changing the environment naming pattern for the project).
 
     Args:
         new_name: The new base name to use for all environments.

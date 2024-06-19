@@ -1,4 +1,4 @@
-# AtaraxisTime
+# ataraxis-time
 
 A Python library that provides a sub-microsecond-precise thread-safe timer and methods to work with date and time data.
 
@@ -204,7 +204,8 @@ commands below are not intended to be used as-frequently and, therefore, are not
 
 - ```tox -e build``` Builds the sdist and binary wheels for the library for all architectures supported by the host 
 machine and saves them to the '/dist' directory.
-- ```tox -e upload``` Uploads the sdist and wheels to PIP using twine, if they have not yet been uploaded.
+- ```tox -e upload``` Uploads the sdist and wheels to PIP using twine, if they have not yet been uploaded. Optionally 
+use ```tox -e upload -- --replace-token true``` to replace the token stored in .pypirc file.
 - ```tox -e recipe``` Uses Grayskull to generate the conda-forge recipe from the latest available PIP-distribution. 
 Assumes sdist is included with binary wheels when they are uploaded to PIP.
 - ```tox -e export-env``` Exports the os-specific local conda development environment as a .yml and spec.txt file to the

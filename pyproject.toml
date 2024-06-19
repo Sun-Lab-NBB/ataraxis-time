@@ -54,13 +54,13 @@ classifiers = [
 
 # Project-wide dependencies
 dependencies = [
-    "numpy",
+    "numpy<2.0.0",  # Newest numpy version currently fails to compile for linux, so odler one is used
     "click",
     "tqdm",
 ]
 
 [project.urls]
-Homepage = "https://github.com/Sun-Lab-NBB/AtaraxisTime"
+Homepage = "https://github.com/Sun-Lab-NBB/ataraxis-time"
 Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 
 # Specifies the dependecies for various build configurations. Mostly, these configurations are used together with 'tox'

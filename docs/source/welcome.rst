@@ -1,15 +1,15 @@
-Welcome to AtaraxisTime API Documentation Page
-==============================================
+Welcome to ataraxis-time API documentation page
+===============================================
 
-AtaraxisTime is a Python library that provides a sub-microsecond-precise thread-safe timer and methods to work with date
-and time data.
+ataraxis-time is a Python library that provides a sub-microsecond-precise thread-safe timer and methods to work with
+date and time data.
 
 This library is part of the broader 'Ataraxis' science-automation project, developed in the
 `Sun Lab <https://neuroai.github.io/sunlab/>`_ at Cornell University.
 
 This website only contains the API documentation for the classes and methods offered by this library. See the project
-GitHub repository for installation instructions and library usage examples: `AtaraxisTime GitHub Repository
-<https://github.com/Sun-Lab-NBB/AtaraxisTime>`_.
+GitHub repository for installation instructions and library usage examples: `ataraxis-time GitHub repository
+<https://github.com/Sun-Lab-NBB/ataraxis-time>`_.
 
-.. _`Ataraxis Time GitHub Repository`: https://github.com/Sun-Lab-NBB/AtaraxisTime
+.. _`ataraxis-time GitHub repository`: https://github.com/Sun-Lab-NBB/ataraxis-time
 .. _`Sun Lab`: https://neuroai.github.io/sunlab/

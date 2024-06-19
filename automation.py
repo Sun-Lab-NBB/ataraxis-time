@@ -12,9 +12,9 @@ import sys
 import textwrap
 from os import PathLike
 from typing import AnyStr, Optional
-import yaml
 
 import click
+import yaml
 
 
 def format_message(message: str) -> str:

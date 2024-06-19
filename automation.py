@@ -428,8 +428,8 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
 
 
 def rename_all_envs(new_name: str) -> None:
-    """This task loops over all files inside the '/envs' directory and replaces base environment names with the input
-    new name.
+    """This task loops over all files inside the '/envs' directory, replaces base environment names with the input
+    new name, and updates the environment names inside the .yml files.
 
     It is mainly designed to be used during template project adoption, but also can be used as part of tox-automation to
     rename all environments in the folder (for example, when changing the environment naming pattern for the project).
@@ -438,9 +438,6 @@ def rename_all_envs(new_name: str) -> None:
         new_name: The new base name to use for all environments.
     """
 
-    # Loops over the files inside 'envs' directory and renames them from the generic base name to the desired env
-    # name to be used with the project. Specifically, keeps the _os-suffix and everything on the right side, while
-    # replacing everything on the left side.
     envs_dir: str = "envs"
     if os.path.exists(envs_dir):
         for file in os.listdir(envs_dir):
@@ -451,7 +448,22 @@ def rename_all_envs(new_name: str) -> None:
                     new_file_name = f"{new_name}{os_suffix_and_ext}"  # Underscore from suffix is kept
                     old_file_path = os.path.join(envs_dir, file)
                     new_file_path = os.path.join(envs_dir, new_file_name)
-                    os.rename(old_file_path, new_file_path)
+
+                    # Read the YAML file
+                    with open(old_file_path, "r") as f:
+                        yaml_data = yaml.safe_load(f)
+
+                    # Update the environment name inside the YAML file
+                    if "name" in yaml_data:
+                        yaml_data["name"] = new_file_name[:-4]  # Remove the '.yml' extension
+
+                    # Write the updated YAML data to the new file
+                    with open(new_file_path, "w") as f:
+                        yaml.safe_dump(yaml_data, f)
+
+                    # Remove the old file
+                    os.remove(old_file_path)
+
                     click.echo(f"Renamed environment file: {file} -> {new_file_name}")
             elif file.endswith("_spec.txt"):
                 # finds the first underscore starting from _spec.txt (excludes the spec underscore)

@@ -128,3 +128,7 @@
     +xz-5.2.6 (conda-forge/osx-arm64)
     +zipp-3.18.1 (conda-forge/noarch)
 
+2024-06-19 17:58:40  (rev 1)
+    +pyyaml-6.0.1 (conda-forge/osx-arm64)
+    +yaml-0.2.5 (conda-forge/osx-arm64)
+

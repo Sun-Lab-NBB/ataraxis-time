@@ -85,6 +85,7 @@ dependencies:
   - python-utils=3.8.2=pyhd8ed1ab_0
   - python_abi=3.12=4_cp312
   - pytz=2024.1=pyhd8ed1ab_0
+  - pyyaml=6.0.1=py312h02f2b3b_1
   - rapidfuzz=3.9.3=py312h5c2e7bc_0
   - readline=8.2=h92ec313_1
   - readme_renderer=42.0=pyhd8ed1ab_0
@@ -129,6 +130,7 @@ dependencies:
   - virtualenv=20.26.2=pyhd8ed1ab_0
   - wheel=0.43.0=pyhd8ed1ab_1
   - xz=5.2.6=h57fd34a_0
+  - yaml=0.2.5=h3422bc3_2
   - zipp=3.18.1=pyhd8ed1ab_0
   - pip:
       - bashlex==0.18

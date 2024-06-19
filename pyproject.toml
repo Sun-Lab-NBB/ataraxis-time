@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 # Project metdata section. Provides the genral ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "1.0.0"
+version = "1.0.1"
 description = "Provides a sub-microsecond-precise thread-safe timer and methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }

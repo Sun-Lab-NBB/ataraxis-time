@@ -1,6 +1,7 @@
 name: axt_dev_lin64
 channels:
   - conda-forge
+  - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
@@ -158,5 +159,3 @@ dependencies:
   - xz=5.2.6=h166bdaf_0
   - yaml=0.2.5=h7f98852_2
   - zipp=3.19.2=pyhd8ed1ab_0
-  - pip:
-      - ataraxis-time==1.0.0

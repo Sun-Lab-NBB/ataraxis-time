@@ -12,6 +12,7 @@ import sys
 import textwrap
 from os import PathLike
 from typing import AnyStr, Optional
+import yaml
 
 import click
 

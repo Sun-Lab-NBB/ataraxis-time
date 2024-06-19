@@ -57,6 +57,7 @@ dependencies = [
     "numpy<2.0.0",  # The newest numpy version currently fails to compile for linux, so odler one is used.
     "click",
     "tqdm",
+    "pyyaml",
 ]
 
 [project.urls]

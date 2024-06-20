@@ -101,7 +101,7 @@ def cli() -> None:
 @cli.command()
 def process_typed_markers() -> None:
     """Crawls the '/src' directory and ensures that the 'py.typed' marker is found only at the highest level of the
-    library hierarchy.
+    library hierarchy (the highest directory with __init__.py in it).
 
     This command should be called as part of the stub-generation tox command.
     """
@@ -109,8 +109,34 @@ def process_typed_markers() -> None:
         click.echo("Unable to resolve typed markers. Source directory does not exist.", err=True)
         raise click.Abort()
 
+    error_message: str = format_message(
+        "Unable to resolve typed markers. Expected an __init__.py at the level of the src or a single "
+        "sub-directory with an __init__.py, but discovered neither. C-extensions should use 'src' as the "
+        "root directory and pure-python packages should have the library stored directly under src."
+    )
+
+    # If __init__.py is not found at the level of the src, this implies that the processed project is a pure python
+    # project and, in this case, it is expected that there is a single library-directory under /src that is the
+    # root.
+    if "__init__.py" not in os.listdir("src"):
+        if len(os.listdir("src")) > 1:
+            click.echo(error_message, err=True)
+            raise click.Abort()
+        candidate_path: str = os.path.join("src", os.listdir("src")[0])
+        if not os.path.isdir(candidate_path):
+            click.echo(error_message, err=True)
+            raise click.Abort()
+        if "__init__.py" in os.listdir(candidate_path):
+            click.echo(error_message, err=True)
+            raise click.Abort()
+    # If __init__.py is found at the level of the src, this is used as a heuristic that implies that this library
+    # is a c-extension library and does not contain a 'root' package (instead, src is the root).
+    else:
+        candidate_path: str = "src"
+
+    # This is only executed if the conditional above was able to determine a good candidate_path.
     try:
-        resolve_typed_markers(target_dir="src")
+        resolve_typed_markers(target_dir=candidate_path)
         click.echo("Typed Markers: Resolved.")
     except Exception as e:
         click.echo(f"Error resolving typed markers: {str(e)}", err=True)
@@ -119,7 +145,8 @@ def process_typed_markers() -> None:
 
 @cli.command()
 def process_stubs() -> None:
-    """Distributes the stub files from the '/stubs' directory to the appropriate level of the '/src' directory.
+    """Distributes the stub files from the '/stubs' directory to the appropriate level of the '/src' or
+     'src/library' directory (depending on the type of the processed project).
 
     Notes:
         This command should only be called after the /stubs directory has been generated using stubgen command from tox.
@@ -131,8 +158,35 @@ def process_stubs() -> None:
         click.echo("Unable to move stub files. Stubs directory does not exist.", err=True)
         raise click.Abort()
 
+    # Resolves the candidate path for moving the stubs
+    error_message: str = format_message(
+        "Unable to resolve typed markers. Expected an __init__.py at the level of the src or a single "
+        "sub-directory with an __init__.py, but discovered neither. C-extensions should use 'src' as the "
+        "root directory and pure-python packages should have the library stored directly under src."
+    )
+
+    # If __init__.py is not found at the level of the src, this implies that the processed project is a pure python
+    # project and, in this case, it is expected that there is a single library-directory under /src that is the
+    # root.
+    if "__init__.py" not in os.listdir("src"):
+        if len(os.listdir("src")) > 1:
+            click.echo(error_message, err=True)
+            raise click.Abort()
+        candidate_path: str = os.path.join("src", os.listdir("src")[0])
+        if not os.path.isdir(candidate_path):
+            click.echo(error_message, err=True)
+            raise click.Abort()
+        if "__init__.py" in os.listdir(candidate_path):
+            click.echo(error_message, err=True)
+            raise click.Abort()
+
+    # If __init__.py is found at the level of the src, this is used as a heuristic that implies that this library
+    # is a c-extension library and does not contain a 'root' package (instead, src is the root).
+    else:
+        candidate_path: str = "src"
+
     try:
-        move_stubs(src_dir="stubs", dst_dir="src")  # Distributes the stubs across source directory
+        move_stubs(src_dir="stubs", dst_dir=candidate_path)  # Distributes the stubs across source directory
         shutil.rmtree("stubs")  # Removes the directory
         click.echo("Stubs: Distributed.")
     except Exception as e:

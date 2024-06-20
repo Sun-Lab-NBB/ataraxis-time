@@ -431,7 +431,17 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
     }
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    exclude_file_names = ["automation.py"]
+    file_names = [
+        "pyproject.toml",
+        "Doxyfile",
+        "CMakeLists.txt",
+        "tox.ini",
+        "conf.py",
+        "README.md",
+        "api.rst",
+        "welcome.rst",
+        "utilities_test.py",
+    ]
 
     # Uses the input environment name to rename all environment files inside the 'envs' folder.
     rename_all_envs(env_name)
@@ -446,11 +456,7 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                 _, file_ext = os.path.splitext(file)
 
                 # Opens and reads the contents of the files ot be modified
-                if file not in exclude_file_names:
-
-                    # Processes file names
-                    if file in markers.items():
-                        os.rename(src=file_path, dst=os.path.join(root, file))
+                if file in file_names:
 
                     # Processes file contents
                     with open(file_path, "r") as f:
@@ -469,6 +475,10 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                         with open(file_path, "w") as f:
                             f.write(content)
                         click.echo(f"Replaced markers in {file_path}")
+
+                # Also processes file names in case they match any of the placeholders.
+                elif file in markers.items():
+                    os.rename(src=file_path, dst=os.path.join(root, file))
 
         # Provides the final reminder
         message = (

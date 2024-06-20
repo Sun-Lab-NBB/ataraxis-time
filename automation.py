@@ -126,7 +126,7 @@ def process_typed_markers() -> None:
         if not os.path.isdir(candidate_path):
             click.echo(error_message, err=True)
             raise click.Abort()
-        if "__init__.py" in os.listdir(candidate_path):
+        if "__init__.py" not in os.listdir(candidate_path):
             click.echo(error_message, err=True)
             raise click.Abort()
     # If __init__.py is found at the level of the src, this is used as a heuristic that implies that this library
@@ -176,7 +176,7 @@ def process_stubs() -> None:
         if not os.path.isdir(candidate_path):
             click.echo(error_message, err=True)
             raise click.Abort()
-        if "__init__.py" in os.listdir(candidate_path):
+        if "__init__.py" not in os.listdir(candidate_path):
             click.echo(error_message, err=True)
             raise click.Abort()
 
@@ -423,11 +423,11 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
     markers = {
         "YOUR_LIBRARY_NAME": library_name,
         "YOUR-PROJECT-NAME": project_name,
-        "YOUR_AUTHOR_NAME" : author_name,
-        "YOUR_EMAIL"       : email,
-        "YOUR_ENV_NAME"    : env_name,
-        "template_ext"     : env_name,
-        "template_pure"    : env_name,
+        "YOUR_AUTHOR_NAME": author_name,
+        "YOUR_EMAIL": email,
+        "YOUR_ENV_NAME": env_name,
+        "template_ext": env_name,
+        "template_pure": env_name,
     }
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -457,7 +457,6 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
 
                 # Opens and reads the contents of the files ot be modified
                 if file in file_names:
-
                     # Processes file contents
                     with open(file_path, "r") as f:
                         content = f.read()

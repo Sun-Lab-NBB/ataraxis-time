@@ -419,17 +419,22 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
             the name automatically given to all exported conda files (via export-env automation command).
 
     """
+    # Stores the placeholder markers alongside their replacement values
+    markers = {
+        "YOUR_LIBRARY_NAME": library_name,
+        "YOUR-PROJECT-NAME": project_name,
+        "YOUR_AUTHOR_NAME" : author_name,
+        "YOUR_EMAIL"       : email,
+        "YOUR_ENV_NAME"    : env_name,
+        "template_ext"     : env_name,
+        "template_pure"    : env_name,
+    }
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_names = [
-        "pyproject.toml",
-        "Doxyfile",
-        "CMakeLists.txt",
-        "tox.ini",
-        "conf.py",
-        "README.md",
-        "api.rst",
-        "welcome.rst",
-    ]
+    exclude_file_names = ["automation.py"]
+
+    # Uses the input environment name to rename all environment files inside the 'envs' folder.
+    rename_all_envs(env_name)
 
     try:
         # Loops over the script directory, which should be project root directory
@@ -441,18 +446,15 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                 _, file_ext = os.path.splitext(file)
 
                 # Opens and reads the contents of the files ot be modified
-                if file in file_names:
+                if file not in exclude_file_names:
+
+                    # Processes file names
+                    if file in markers.items():
+                        os.rename(src=file_path, dst=os.path.join(root, file))
+
+                    # Processes file contents
                     with open(file_path, "r") as f:
                         content = f.read()
-
-                    # Stores the placeholder markers alongside their replacement values
-                    markers = {
-                        "YOUR_LIBRARY_NAME": library_name,
-                        "YOUR-PROJECT-NAME": project_name,
-                        "YOUR_AUTHOR_NAME": author_name,
-                        "YOUR_EMAIL": email,
-                        "YOUR_ENV_NAME": env_name,
-                    }
 
                     # Loops over markers and if any are discovered inside the evaluated file contents, replaces the
                     # markers with the corresponding value. If the marker is not found, the file is not modified.
@@ -467,9 +469,6 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                         with open(file_path, "w") as f:
                             f.write(content)
                         click.echo(f"Replaced markers in {file_path}")
-
-        # Uses the input environment name to rename all environment files inside the 'envs' folder.
-        rename_all_envs(env_name)
 
         # Provides the final reminder
         message = (

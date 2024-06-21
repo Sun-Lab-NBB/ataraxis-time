@@ -12,11 +12,10 @@ import subprocess
 import sys
 import textwrap
 from os import PathLike
-from typing import AnyStr, Literal, LiteralString, Optional
+from typing import AnyStr, Literal, Optional
 
 import click
 import yaml
-from click import BadParameter
 
 
 def format_message(message: str) -> str:
@@ -99,14 +98,14 @@ def resolve_library_root() -> str:
     This function is primarily used by the functions such as stub-generators that generate the necessary files in a
     temporary directory and then need to distribute them to source code directories. Since our c-extension and
     pure-python use a slightly different layout, this function allows using the same automation code for both project
-    type.
+    types.
 
     Returns:
         The path, relative to the 'src' directory, that points to the root directory of the LIBRARY (after it is
         built).
 
     Raises:
-        RuntimeError: If valid root candidate cannot be found based on the determination heuristics.
+        RuntimeError: If the valid root candidate cannot be found based on the determination heuristics.
     """
 
     error_message: str = format_message(
@@ -234,7 +233,7 @@ def generate_recipe_folder() -> None:
             click.echo(message, err=True)
             raise click.Abort()
     else:
-        # If the folder does exist, recreates it (to remove potentially existing recipe)
+        # If the folder does exist, recreates it (to remove the potentially existing recipe)
         shutil.rmtree("recipe")
         os.makedirs("recipe")
         message = format_message("Recipe Directory: Recreated.")
@@ -254,11 +253,11 @@ def is_valid_pypirc(file_path: str) -> bool:
     config_validator = configparser.ConfigParser()
     config_validator.read(file_path)
     return (
-        config_validator.has_section("pypi")
-        and config_validator.has_option("pypi", "username")
-        and config_validator.has_option("pypi", "password")
-        and config_validator.get("pypi", "username") == "__token__"
-        and config_validator.get("pypi", "password").startswith("pypi-")
+            config_validator.has_section("pypi")
+            and config_validator.has_option("pypi", "username")
+            and config_validator.has_option("pypi", "password")
+            and config_validator.get("pypi", "username") == "__token__"
+            and config_validator.get("pypi", "password").startswith("pypi-")
     )
 
 
@@ -310,11 +309,14 @@ def set_pypi_token(replace_token: bool) -> None:
         try:
             # Asks the user for the token.
             token = click.prompt(
-                "Enter your PyPI (API) token. It will be stored inside the .pypirc file for future use. Input is hidden:",
+                text=(
+                    "Enter your PyPI (API) token. It will be stored inside the .pypirc "
+                    "file for future use. Input is hidden:"
+                ),
                 hide_input=True,
             )
 
-            # Catches and prevents entering incorrectly-formatted tokens
+            # Catches and prevents entering incorrectly formatted tokens
             if not token.startswith("pypi-"):
                 message = format_message("Invalid token format. PyPI tokens should start with 'pypi-'.")
                 raise ValueError(message)
@@ -330,7 +332,7 @@ def set_pypi_token(replace_token: bool) -> None:
             click.echo(message)
             break
 
-        # This block allows to rerun the token acquisition if an invalid token was provided and the user has elected
+        # This block allows rerunning the token acquisition if an invalid token was provided, and the user has elected
         # to retry token input.
         except Exception as e:
             message = format_message(f"Error setting PyPI token: {str(e)}")
@@ -372,7 +374,7 @@ def get_conda_cmdlet() -> str:
         The string-name of the cmdlet to use for all conda (or mamba) related commands.
 
     Raises:
-        RuntimeError: If neither conda nor mamba are accessible via subprocess call through the shell.
+        RuntimeError: If neither conda nor mamba is accessible via subprocess call through the shell.
     """
 
     command: str
@@ -386,7 +388,7 @@ def get_conda_cmdlet() -> str:
         except subprocess.CalledProcessError:
             continue  # For failed command, cycles to the next command in the cycle or to the general error below.
 
-    # If this point in the runtime is reached, this means neither conda nor mamba are installed or accessible.
+    # If this point in the runtime is reached, this means neither conda nor mamba is installed or accessible.
     message = format_message(f"Unable to interface with either conda or mamba. Is it installed and added to Path?")
     click.echo(message, err=True)
     raise click.Abort()
@@ -403,7 +405,7 @@ def import_env() -> None:
         RuntimeError: If there is no .yml file for the desired base-name and OS-extension combination in the 'envs'
             folder. If creation and update commands both fail for any reason. If 'envs' folder does not exist
     """
-    if not OS.path.exists("envs"):
+    if not os.path.exists("envs"):
         message: str = format_message(f"Unable to import conda environment. '/envs' directory does not exist.")
         click.echo(message, err=True)
         raise click.Abort()
@@ -429,7 +431,7 @@ def import_env() -> None:
         click.echo(message, err=True)
         raise click.Abort()
 
-    # Obtains the command name to use. Primarily, this is used to select the 'fastest' available command. Also ensures
+    # Gets the command name to use. Primarily, this is used to select the 'fastest' available command. Also ensures
     # the necessary cmdlet is accessible form this script.
     cmdlet_name: str = get_conda_cmdlet()
 
@@ -456,10 +458,10 @@ def import_env() -> None:
 
 
 def get_export_command(
-    cmdlet_name: Literal["conda", "mamba"],
-    env_name: str,
-    yml_path: str,
-    spec_path,
+        cmdlet_name: Literal["conda", "mamba"],
+        env_name: str,
+        yml_path: str,
+        spec_path,
 ) -> tuple[str, str]:
     """Resolves the appropriate environment .yml and spec.txt export commands based on the platform OS version.
 
@@ -526,7 +528,7 @@ def export_env(base_env: str) -> None:
     yml_path: str = os.path.join("envs", f"{env_name}.yml")
     spec_path: str = os.path.join("envs", f"{env_name}_spec.txt")
 
-    # Obtains the command name to use. Primarily, this is used to select the 'fastest' available command. Also ensures
+    # Gets the command name to use. Primarily, this is used to select the 'fastest' available command. Also ensures
     # the necessary cmdlet is accessible form this script.
     cmdlet_name: str = get_conda_cmdlet()
 
@@ -722,7 +724,7 @@ def validate_env_name(_ctx, _param, value: str) -> str:
 @cli.command()
 @click.option("--new-name", prompt="Enter the new base environment name to use:", callback=validate_env_name)
 def rename_environments(new_name: str) -> None:
-    """Iteratively renames all environment files inside the 'envs' directory to use the input new_name as the base-name."""
+    """Iteratively renames environment files inside the 'envs' directory to use the input new_name as the base-name."""
 
     # This is basically the wrapper for the shared method.
     rename_all_envs(new_name=new_name)
@@ -796,7 +798,7 @@ def replace_markers_in_file(file_path: str, markers: dict[str, str]) -> int:
     callback=validate_env_name,
 )
 def adopt_project(library_name: str, project_name: str, author_name: str, email: str, env_name: str) -> None:
-    """Adopts a new project that was initialized from a standard Sun Lab template, by replacing placeholders in
+    """Adopts a new project initialized from a standard Sun Lab template, by replacing placeholders in
     metadata and automation files with user-defined data.
 
     In addition to replacing placeholders inside a predefined set of files, this function also renames any files whose
@@ -825,15 +827,15 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
     markers: dict[str, str] = {
         "YOUR_LIBRARY_NAME": library_name,  # Library name placeholder
         "YOUR-PROJECT-NAME": project_name,  # Project name placeholder
-        "YOUR_AUTHOR_NAME": author_name,  # Author name placeholder
-        "YOUR_EMAIL": email,  # Author email placeholder
-        "YOUR_ENV_NAME": env_name,  # Environment base-name placeholder
-        "template_ext": env_name,  # The initial environment base-name used by c-extension projects
-        "template_pure": env_name,  # The initial environment base-name used by pure-python projects
+        "YOUR_AUTHOR_NAME" : author_name,  # Author name placeholder
+        "YOUR_EMAIL"       : email,  # Author email placeholder
+        "YOUR_ENV_NAME"    : env_name,  # Environment base-name placeholder
+        "template_ext"     : env_name,  # The initial environment base-name used by c-extension projects
+        "template_pure"    : env_name,  # The initial environment base-name used by pure-python projects
     }
 
     # A tuple that stores the files whose content will be scanned for the presence of markers. All other files will not
-    # be checked for content, but their names will be checked and replaced, if they match any markers. Note, the files
+    # be checked for content, but their names will be checked and replaced if they match any markers. Note, the files
     # in this list can be anywhere inside the root project directory, the loop below will find and process them all.
     file_names = (
         "pyproject.toml",
@@ -857,7 +859,7 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
         total_markers: int = 0  # Tracks the number of replaced markers.
         for root, dirs, files in os.walk(script_dir):
             for file in files:
-                # Obtains the absolute path to each scanned file.
+                # Gets the absolute path to each scanned file.
                 # noinspection PyTypeChecker
                 file_path: str = os.path.join(root, file)
 

@@ -1,4 +1,4 @@
-2024-06-17 23:35:59  (rev 0)
+2024-06-20 15:14:33  (rev 0)
     +alabaster-0.7.16 (conda-forge/noarch)
     +babel-2.14.0 (conda-forge/noarch)
     +backports-1.0 (conda-forge/noarch)
@@ -82,6 +82,7 @@
     +python-utils-3.8.2 (conda-forge/noarch)
     +python_abi-3.12 (conda-forge/osx-arm64)
     +pytz-2024.1 (conda-forge/noarch)
+    +pyyaml-6.0.1 (conda-forge/osx-arm64)
     +rapidfuzz-3.9.3 (conda-forge/osx-arm64)
     +readline-8.2 (conda-forge/osx-arm64)
     +readme_renderer-42.0 (conda-forge/noarch)
@@ -126,9 +127,6 @@
     +virtualenv-20.26.2 (conda-forge/noarch)
     +wheel-0.43.0 (conda-forge/noarch)
     +xz-5.2.6 (conda-forge/osx-arm64)
-    +zipp-3.18.1 (conda-forge/noarch)
-
-2024-06-19 17:58:40  (rev 1)
-    +pyyaml-6.0.1 (conda-forge/osx-arm64)
     +yaml-0.2.5 (conda-forge/osx-arm64)
+    +zipp-3.18.1 (conda-forge/noarch)
 

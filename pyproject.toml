@@ -128,14 +128,15 @@ free-threaded-support = true
 # Specifies runtime verbosity, which is necessary to see build output from the actual compilation
 build-verbosity = 1
 
-# Builds wheels for AMD64 and ARM64 for all platforms. Currently, only these fairly common architectures are supported.
-# This set of requirements is adjusted to work for each supported platform.
+# Builds wheels for AMD64 and ARM64 for all platforms and x86 for Linux and Windows. Currently, only these fairly
+# common architectures are supported. This set of requirements is adjusted to work for each supported platform.
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"]
+# Note, to cross-compile on Linux, you need to first install this for Docker https://hub.docker.com/r/tonistiigi/binfmt.
+archs = ["i686", "aarch64", "x86_64"]
 [tool.cibuildwheel.windows]
-archs = ["AMD64", "ARM64"]
+archs = ["AMD64", "ARM64", "x86"]
 
 # Instructs the frontend to use uv over pip, which significantly improves build speed (but may not work in some cases).
 build-frontend = "build[uv]"

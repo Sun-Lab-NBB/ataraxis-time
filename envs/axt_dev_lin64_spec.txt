@@ -1,4 +1,4 @@
-2024-06-19 18:19:19  (rev 0)
+2024-06-21 20:51:35  (rev 0)
     +_libgcc_mutex-0.1 (conda-forge/linux-64)
     +_openmp_mutex-4.5 (conda-forge/linux-64)
     +alabaster-0.7.16 (conda-forge/noarch)
@@ -155,4 +155,7 @@
     +xz-5.2.6 (conda-forge/linux-64)
     +yaml-0.2.5 (conda-forge/linux-64)
     +zipp-3.19.2 (conda-forge/noarch)
+
+2024-06-21 21:31:58  (rev 1)
+    +uv-0.2.13 (conda-forge/linux-64)
 

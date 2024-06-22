@@ -5,6 +5,7 @@ A Python library that provides a sub-microsecond-precise thread-safe timer and m
 ![PyPI - Version](https://img.shields.io/pypi/v/ataraxis-time)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ataraxis-time)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 ![type-checked: mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square&logo=python)
 ![PyPI - License](https://img.shields.io/pypi/l/ataraxis-time)
 ![PyPI - Status](https://img.shields.io/pypi/status/ataraxis-time)

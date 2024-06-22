@@ -130,3 +130,14 @@
     +yaml-0.2.5 (conda-forge/osx-arm64)
     +zipp-3.18.1 (conda-forge/noarch)
 
+2024-06-21 07:44:31  (rev 1)
+    -tox-4.15.1 (conda-forge/noarch)
+
+2024-06-21 07:45:56  (rev 2)
+    +tox-4.15.1 (conda-forge/noarch)
+    +uv-0.2.13 (conda-forge/osx-arm64)
+
+2024-06-21 21:06:18  (rev 3)
+    +build-0.7.0 (conda-forge/noarch)
+    +pep517-0.13.0 (conda-forge/noarch)
+

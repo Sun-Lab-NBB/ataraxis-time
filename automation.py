@@ -874,6 +874,21 @@ def adopt_project(library_name: str, project_name: str, author_name: str, email:
                     os.rename(file_path, os.path.join(root, new_file_name))
                     click.echo(f"Renamed file: {file_path} -> {new_file_name}")
 
+            for directory in dirs:
+                # Gets the absolute path to each scanned directory.
+                # noinspection PyTypeChecker
+                dir_path: str = os.path.join(root, directory)
+
+                # If directory name matches one of the markers, renames the directory.
+                if directory in markers:
+                    new_dir_name = markers[directory]
+                    new_dir_path = os.path.join(root, new_dir_name)
+                    os.rename(dir_path, new_dir_path)
+                    click.echo(f"Renamed directory: {dir_path} -> {new_dir_path}")
+
+                    # Update the directory name in the dirs list to avoid potential issues with os.walk
+                    dirs[dirs.index(directory)] = new_dir_name
+
         # Provides the final reminder
         message: str = format_message(
             f"Project Adoption: Complete. Be sure to manually verify critical files such as pyproject.toml before "

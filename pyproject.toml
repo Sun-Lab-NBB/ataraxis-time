@@ -54,68 +54,47 @@ classifiers = [
 
 # Project-wide dependencies
 dependencies = [
-    "numpy<2.0.0",  # The newest numpy version currently fails to compile for linux, so odler one is used.
+    "numpy",
     "click",
     "tqdm",
-    "pyyaml",
 ]
 
 [project.urls]
 Homepage = "https://github.com/Sun-Lab-NBB/ataraxis-time"
 Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 
-# Specifies the dependecies for various build configurations. Mostly, these configurations are used together with 'tox'
-# tasks to install the required packages prior to running those tasks. Note, many of these requirements overlap with
-# eachother in a non-compatible way and should only be used through tox automation!
+# Specifies additional build dependencies.
 [project.optional-dependencies]
-lint = [
-    "mypy",
-    "ruff",
-    "types-tqdm",
-]
-stubs = [
-    "mypy==1.4.0"
-]
-test = [
-    "scikit-build-core",
-    "nanobind",
+
+# A shorhand specification that installs tox and all packages required for development tasks. This specification can
+# be used by developers to quickly install all necessary compontents for working on this project.
+dev = [
+    # Packages avaialble from conda and pip for all supported OS versions.
+    "tox>=4",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
     "coverage[toml]",
-]
-coverage = [
     "junitparser",
-    "coverage[toml]",
-]
-docs = [
     "sphinx",
     "importlib_metadata",
     "breathe",
     "sphinx-rtd-theme",
-    "sphinx-click"
-]
-build = [
-    "scikit-build-core",
-    "nanobind",
-    "cibuildwheel",
+    "sphinx-click",
+    "mypy",
+    "ruff",
+    "types-tqdm",
     "build",
-]
-upload = [
     "twine",
     "grayskull",
-]
-
-# A shorhand specification that installs tox and all packages required for the tox tasks. This specification can be used
-# by developers to quickly install all necessary compontents for tox-based project building automation.
-dev = [
-    "tox",
-    "ataraxis-time[lint]",
-    "ataraxis-time[test]",
-    "ataraxis-time[coverage]",
-    "ataraxis-time[docs]",
-    "ataraxis-time[build]",
-    "ataraxis-time[upload]",
+    "pyyaml",
+    "scikit-build-core",
+    "nanobind",
+    "black",
+    "uv",
+    # Packages that may not be available from conda for all supported OS versions.
+    "tox-uv",
+    "cibuildwheel[uv]",
 ]
 
 # Defines the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
@@ -149,10 +128,17 @@ free-threaded-support = true
 # Specifies runtime verbosity, which is necessary to see build output from the actual compilation
 build-verbosity = 1
 
-# Builds ALL wheels supported by the host OS and Platform. For maximum coverage, this should be run as a GitHub actions
-# to truly cover ALL supported architectures for ALL OSes. Alternatively, the tox 'build' task can be run on separate
-# machines running the target OSes.
-archs = ["all"]
+# Builds wheels for AMD64 and ARM64 for all platforms. Currently, only these fairly common architectures are supported.
+# This set of requirements is adjusted to work for each supported platform.
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+[tool.cibuildwheel.windows]
+archs = ["AMD64", "ARM64"]
+
+# Instructs the frontend to use uv over pip, which significantly improves build speed (but may not work in some cases).
+build-frontend = "build[uv]"
 
 # Runs pytest to ensure that each binary wheel was built correctly. Uses pytest-xdist to optimize testing speed
 # by using '-n (default: logical)' number of parallel workers and 'loadgroup' balancing strategy. This combination of
@@ -224,12 +210,12 @@ warn_unused_ignores = true  # Warns against using 'type: ignore' for packages th
 exclude = [
     "ataraxis-time-\\d+", # Ignores temporary folder created by setuptools when building the sdist
     "venv.*/", # Ignores virtual environments
-    "build/",  # Ignores the sdist folder
-    "dist/",   # Ignores the wheel folder
-    "docs/",   # Ignores the sphinx files stored inside the docs folder
-    "stubs/",  # Ignores stubs folder (stubgen output target)
-    "recipe/",  # Ignores recipe folder (grayskull output target)
-    "tests/",   # Ignores the tests folder, as tests frequently (and purposefully) violate typing to test exceptions.
+    "build/", # Ignores the sdist folder
+    "dist/", # Ignores the wheel folder
+    "docs/", # Ignores the sphinx files stored inside the docs folder
+    "stubs/", # Ignores stubs folder (stubgen output target)
+    "recipe/", # Ignores recipe folder (grayskull output target)
+    "tests/", # Ignores the tests folder, as tests frequently (and purposefully) violate typing to test exceptions.
     "automation.py"  # Ignores the automation file
 ]
 

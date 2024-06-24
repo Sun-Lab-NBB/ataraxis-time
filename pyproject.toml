@@ -217,7 +217,6 @@ exclude = [
     "stubs/", # Ignores stubs folder (stubgen output target)
     "recipe/", # Ignores recipe folder (grayskull output target)
     "tests/", # Ignores the tests folder, as tests frequently (and purposefully) violate typing to test exceptions.
-    "automation.py"  # Ignores the automation file
 ]
 
 # This is used by the '-test' tox command to aggreagte coverage data produced during pytest runtime.

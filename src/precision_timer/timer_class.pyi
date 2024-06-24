@@ -1,3 +1,4 @@
+from ..precision_timer_ext import CPrecisionTimer as CPrecisionTimer
 from _typeshed import Incomplete
 from typing import Literal
 

@@ -66,22 +66,20 @@ library. It is highly advised to use the option to install from PIP or CONDA ins
 2. ```cd``` to the root directory of the project using your CLI of choice.
 3. Run ```python -m pip install .``` to install the project. Alternatively, if using a distribution with precompiled 
    binaries, use ```python -m pip install WHEEL_PATH```, replacing 'WHEEL_PATH' with the path to the wheel file.
-4. Optionally, run the timer benchmark using ```benchmark_timer``` command from your CLI (no need to use 'python'
-   directive). You can use ```benchmark_timer --help``` command to see the list of additional configuration
+4. Optionally, run the timer benchmark using ```benchmark-timer``` command from your CLI (no need to use 'python'
+   directive). You can use ```benchmark-timer --help``` command to see the list of additional configuration
    parameters that can be used to customize the benchmark behavior.
 
 ### PIP
 
-Use the following command to install the library using PIP:
-```pip install ataraxis-time```
+Use the following command to install the library using PIP: ```pip install ataraxis-time```
 
 ### Conda / Mamba
 
 **_Note. Due to conda-forge contributing process being more nuanced than pip uploads, conda versions may lag behind
 pip and source code distributions._**
 
-Use the following command to install the library using Conda or Mamba:
-```conda install ataraxis-time```
+Use the following command to install the library using Conda or Mamba: ```conda install ataraxis-time```
 ___
 
 ## Usage
@@ -135,7 +133,7 @@ ___
 
 See the [API documentation](https://ataraxis-time-api-docs.netlify.app/) for the
 detailed description of the methods and classes exposed by components of this library. The documentation also covers the
-C++ source code and any cli-interfaces (such as benchmark timer).
+C++ source code and benchmark-timer cli command.
 ___
 
 ## Developers
@@ -169,21 +167,23 @@ of the automation pipeline, but is worth mentioning.
 
 In addition to installing the required python packages, separately install the following dependencies:
 
-- [Doxygen](https://www.doxygen.nl/manual/install.html), if you want to generate C++ code documentation.
-- An appropriate build tool or Docker, if you intend to build binary wheels via
-  [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/) (See the link for information on which dependencies to
-  install).
-- [Python](https://www.python.org/downloads/) distributions, one for each version that you intend to support. Currently,
-  this library supports 3.10, 3.11 and 3.12. The easiest way to get tox to work as intended is to have separate
-  python distributions, but using [pyenv](https://github.com/pyenv/pyenv) is a good alternative too. This is needed for 
-  the 'test' task to work as intended.
+1. [Doxygen](https://www.doxygen.nl/manual/install.html), if you want to generate C++ code documentation.
+2. An appropriate build tool or Docker, if you intend to build binary wheels via
+   [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/) (See the link for information on which dependencies to
+   install).
+3. [Python](https://www.python.org/downloads/) distributions, one for each version that you intend to support. 
+   Currently, this library supports 3.10, 3.11 and 3.12. The easiest way to get tox to work as intended is to have 
+   separate python distributions, but using [pyenv](https://github.com/pyenv/pyenv) is a good alternative too. 
+   This is needed for the 'test' task to work as intended.
 
 ### Development Automation
+
 This project comes with a fully configured set of automation pipelines implemented using 
 [tox](https://tox.wiki/en/latest/config.html#provision_tox_env). 
-Check tox [ini](tox.ini) file for details about available pipelines and their implementation.
+Check [tox.ini file](tox.ini) for details about available pipelines and their implementation.
 
-**Note!** All commits to this library have to successfully complete the ```tox``` task before being uploaded.
+**Note!** All commits to this library have to successfully complete the ```tox``` task before being pushed to GitHub. 
+To minimize the runtime task for this task, use ```tox --parallel```.
 
 ### Environments
 

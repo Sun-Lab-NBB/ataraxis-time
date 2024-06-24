@@ -149,15 +149,16 @@ that were used during development from the included .yml files.
 1. Download this repository to your local machine using your preferred method, such as git-cloning.
 2. ```cd``` to the root directory of the project using your CLI of choice.
 3. Install development dependencies. You have multiple options of satisfying this requirement:
-   1. **_Preferred Method:_** Use conda or pip to install 
-   [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use an environment that has it installed and 
-   call ```tox -e import-env``` to automatically import the os-specific development environment included with the 
-   source code in your local conda distribution.
+   1. **_Preferred Method:_** Use conda or pip to install
+      [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use an environment that has it installed and
+      call ```tox -e import-env``` to automatically import the os-specific development environment included with the
+      source code in your local conda distribution. Alternatively, see [environments](#environments) section for other
+      environment installation methods.
    2. Run ```python -m pip install .'[dev]'``` command to install development dependencies and the library. For some
-   systems, you may need to use a slightly modified version of this command: ```python -m pip install .[dev]```.
+      systems, you may need to use a slightly modified version of this command: ```python -m pip install .[dev]```.
    3. As long as you have an environment with [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) installed
-   and do not intend to run any code outside the predefined project automation pipelines, tox will automatically 
-   install all required dependencies for each task. Generally, this option is **_not_** recommended.
+      and do not intend to run any code outside the predefined project automation pipelines, tox will automatically 
+      install all required dependencies for each task.
 
 **Note:** When using tox automation, having a local version of the library may interfere with tox methods that attempt
 to build the library using an isolated environment. It is advised to remove the library from your test environment, or
@@ -175,52 +176,20 @@ In addition to installing the required python packages, separately install the f
 - [Python](https://www.python.org/downloads/) distributions, one for each version that you intend to support. Currently,
   this library supports 3.10, 3.11 and 3.12. The easiest way to get tox to work as intended is to have separate
   python distributions, but using [pyenv](https://github.com/pyenv/pyenv) is a good alternative too. This is needed for 
-  the 'test' task to work as intended
+  the 'test' task to work as intended.
 
 ### Development Automation
+This project comes with a fully configured set of automation pipelines implemented using 
+[tox](https://tox.wiki/en/latest/config.html#provision_tox_env). 
+Check tox [ini](tox.ini) file for details about available pipelines and their implementation.
 
-To help developers, this project comes with a set of fully configured 'tox'-based pipelines for verifying and building
-the project. Each of the tox commands builds the project in an isolated environment before carrying out its task. Some 
-commands rely on the 'automation.py' module that provides the helper-scripts implemented in python. This module 
-is stored in the source code root directory for each Sun Lab project.
-
-- ```tox -e stubs``` Builds the library and uses mypy-stubgen to generate the stubs for the library wheel and move them 
-to the appropriate position in the '/src' directory. This enables mypy and other type-checkers to work with this 
-library.
-- ```tox -e lint``` Checks and, where safe, fixes code formatting, style, and type-hinting.
-- ```tox -e {py310, py311, py312}-test``` Builds the library and executes the tests stored in the /tests directory 
-using pytest-coverage module.
-- ```tox -e combine-test-reports``` Combines coverage reports from all test commands (for each python version) and 
-compiles them into an interactive .html file stored inside '/reports' directory.
-- ```tox -e doxygen``` Uses externally installed Doxygen distribution to generate documentation from docstrings of
-  the C++ source code files.
-- ```tox -e docs``` Uses Sphinx to generate API documentation from Python Google-style docstrings. If Doxygen-generated
-  .xml files for the C++ extension are available, uses Breathe plugin to convert them to Sphinx-compatible format and
-  add them to the final API .html file.
-- ```tox``` Sequentially carries out the commands above (in the same order). Use ```tox --parallel``` to parallelize 
-command execution (may not work on all platforms).
-
-The commands above are considered 'checkout' commands and generally required to pass before every code push. The 
-commands below are not intended to be used as-frequently and, therefore, are not part of the 'generic' tox-flow.
-
-- ```tox -e build``` Builds the sdist and binary wheels for the library for all architectures supported by the host 
-machine and saves them to the '/dist' directory.
-- ```tox -e upload``` Uploads the sdist and wheels to PIP using twine, if they have not yet been uploaded. Optionally 
-use ```tox -e upload -- --replace-token true``` to replace the token stored in .pypirc file.
-- ```tox -e recipe``` Uses Grayskull to generate the conda-forge recipe from the latest available PIP-distribution. 
-Assumes sdist is included with binary wheels when they are uploaded to PIP.
-- ```tox -e export-env``` Exports the os-specific local conda development environment as a .yml and spec.txt file to the
-'/envs' directory. This automatically uses the project-specific base-environment-name.
-- ```tox -e import-env``` Imports and os-specific conda development environment from the .yml file stored in the '/envs'
-directory.
-- ```tox -e rename-envs``` Replaces the base-name for all environment files inside the '/envs' directory. Remember to 
-also change the base-name argument of the export-env command.
+**Note!** All commits to this library have to successfully complete the ```tox``` task before being uploaded.
 
 ### Environments
 
 All environments used during development are exported as .yml files and as spec.txt files to the [envs](envs) folder. 
 The environment snapshots were taken on each of the three supported OS families: Windows 11, OSx 14.5 and 
-Ubuntu Cinnamon 24.04 LTS.
+Ubuntu 22.04 LTS.
 
 To install the development environment for your OS:
 
@@ -228,10 +197,10 @@ To install the development environment for your OS:
 2. ```cd``` into the [envs](envs) folder.
 3. Use one of the installation methods below:
    1. **_Preferred Method_**: Install [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use another 
-   environment with already installed tox and call ```tox -e import-env```.
-   2. Alternative Method: Run ```conda env create -f ENVNAME.yml``` or ```mamba env create -f ENVNAME.yml```. 
-   Replace 'ENVNAME.yml' with the name of the environment you want to install (axt_dev_osx for OSx, axt_dev_win64 for 
-   Windows and axt_dev_lin64 for Linux).
+      environment with already installed tox and call ```tox -e import-env```.
+   2. **_Alternative Method_**: Run ```conda env create -f ENVNAME.yml``` or ```mamba env create -f ENVNAME.yml```. 
+      Replace 'ENVNAME.yml' with the name of the environment you want to install (axt_dev_osx for OSx, axt_dev_win64 
+      for Windows and axt_dev_lin64 for Linux).
 
 **Note:** the OSx environment was built against M1 (Apple Silicon) platform and may not work on Intel-based Apple 
 devices.

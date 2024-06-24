@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 # Project metdata section. Provides the genral ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "1.0.3"
+version = "1.0.4"
 description = "Provides a sub-microsecond-precise thread-safe timer and methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -29,7 +29,7 @@ keywords = [
     "time conversion",
     "non-blocking",
     "blocking",
-    "date"
+    "date",
 ]
 
 classifiers = [
@@ -57,6 +57,7 @@ dependencies = [
     "numpy",
     "click",
     "tqdm",
+    "ataraxis-automation",
 ]
 
 [project.urls]
@@ -91,15 +92,14 @@ dev = [
     "scikit-build-core",
     "nanobind",
     "black",
-    "uv",
     # Packages that may not be available from conda for all supported OS versions.
     "tox-uv",
     "cibuildwheel[uv]",
 ]
 
-# Defines the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
+# Exposes the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
 [project.scripts]
-benchmark_timer = "ataraxis_time:benchmark"
+benchmark-timer = "ataraxis_time:benchmark"
 
 # Additional Scikit-Build configuration section. Used together with CMakeLists.txt to compile the C++ extensions and
 # assemble the library.

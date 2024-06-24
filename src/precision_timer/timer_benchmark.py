@@ -85,10 +85,10 @@ def benchmark(
     # test all supported interval timers, even if this requires a few minutes to run the test cycles. By default, the
     # test takes 4 minutes (1 second x 60 cycles x 4 precisions) to run. Of note, it is very likely that perf_counter_ns
     # and PrecisionTimer use the same system-clock.
-    interval_results: list = []
-    for precision in precisions:  # Loops over all precisions
-        # noinspection PyTypeChecker
-        timer.set_precision(precision=precision)  # Switches the timer to use the tested precision
+    interval_results: list[tuple[str, np.float64, np.float64]] = []
+    for precision in precisions:
+        # Switches the timer to use the tested precision
+        timer.set_precision(precision=precision)  # type: ignore
         elapsed_deltas = []
         # Executes the requested number of benchmarking cycles for each precision
         for _ in tqdm(
@@ -96,22 +96,22 @@ def benchmark(
         ):
             # Delays for the requested number of seconds, converted into the precision used by the elapsed timer.
             # This relies on a local 'busywait' loop that uses 'elapsed()' property of the timer.
-            # noinspection PyTypeChecker
-            interval: float = convert_time(interval_delay, from_units="s", to_units=precision)
+            precision = precision.lower()
+            interval: float = convert_time(interval_delay, from_units="s", to_units=precision)  # type: ignore
             start = tm.perf_counter_ns()
             timer.reset()  # Resets the timer
             while timer.elapsed < interval:
                 pass
             end = tm.perf_counter_ns()  # Records the time counted by the timer during the delay
-            # noinspection PyTypeChecker
-            elapsed_time = convert_time(end - start, from_units="ns", to_units=precision)
+            elapsed_time = convert_time(end - start, from_units="ns", to_units=precision)  # type: ignore
             elapsed_deltas.append(elapsed_time)
 
         # Calculates the mean and std for the recorded elapsed times and adds them to the results' list alongside some
         # ID information.
+        # Appends cycle results to the storage list
         interval_results.append(
-            (precision, np.around(np.mean(elapsed_deltas), 3), np.around(np.std(elapsed_deltas), 3))
-        )  # Appends cycle results to the storage list
+            (precision, np.around(np.mean(elapsed_deltas), 3), np.around(np.std(elapsed_deltas), 3))  # type: ignore
+        )
 
     # Runs and aggregates delay timing results into a storage array. The delay timing tests rely on executing blocking
     # and non-blocking delay methods for each tested precision. Note, this collection explicitly uses busy-wait method
@@ -119,9 +119,9 @@ def benchmark(
     delay_results_busywait = []
     for index, precision in enumerate(precisions):  # Loops over all precisions
         # noinspection PyTypeChecker
-        timer.set_precision(precision=precision)
-        deltas_block = []
-        deltas_noblock = []
+        timer.set_precision(precision=precision)  # type: ignore
+        deltas_block: list[float] = []
+        deltas_noblock: list[float] = []
 
         for _ in tqdm(
             range(delay_cycles[index]), desc=f"Running busywait delay benchmark for {precision} precision timer"
@@ -130,15 +130,13 @@ def benchmark(
             start = tm.perf_counter_ns()
             timer.delay_block(delay=delay_durations[index], allow_sleep=False)
             end = tm.perf_counter_ns()
-            # noinspection PyTypeChecker
-            deltas_block.append(convert_time((end - start), from_units="ns", to_units=precision))
+            deltas_block.append(convert_time((end - start), from_units="ns", to_units=precision))  # type: ignore
 
             # Tests non-blocking delay
             start = tm.perf_counter_ns()
             timer.delay_noblock(delay=delay_durations[index], allow_sleep=False)
             end = tm.perf_counter_ns()
-            # noinspection PyTypeChecker
-            deltas_noblock.append(convert_time((end - start), from_units="ns", to_units=precision))
+            deltas_noblock.append(convert_time((end - start), from_units="ns", to_units=precision))  # type: ignore
 
         # Calculates the mean and std for both blocking and non-blocking delays and adds them to the results' list
         # alongside some ID information.
@@ -158,7 +156,7 @@ def benchmark(
     delay_results_sleep = []
     for index, precision in enumerate(["ms", "s"], start=2):  # Loops over all precisions
         # noinspection PyTypeChecker
-        timer.set_precision(precision=precision)
+        timer.set_precision(precision=precision)  # type: ignore
         deltas_block = []
         deltas_noblock = []
 
@@ -169,15 +167,13 @@ def benchmark(
             start = tm.perf_counter_ns()
             timer.delay_block(delay=delay_durations[index], allow_sleep=True)
             end = tm.perf_counter_ns()
-            # noinspection PyTypeChecker
-            deltas_block.append(convert_time((end - start), from_units="ns", to_units=precision))
+            deltas_block.append(convert_time((end - start), from_units="ns", to_units=precision))  # type: ignore
 
             # Tests non-blocking delay
             start = tm.perf_counter_ns()
             timer.delay_noblock(delay=delay_durations[index], allow_sleep=True)
             end = tm.perf_counter_ns()
-            # noinspection PyTypeChecker
-            deltas_noblock.append(convert_time((end - start), from_units="ns", to_units=precision))
+            deltas_noblock.append(convert_time((end - start), from_units="ns", to_units=precision))  # type: ignore
 
         # Calculates the mean and std for both blocking and non-blocking delays and adds them to the results' list
         # alongside some ID information.
@@ -199,7 +195,7 @@ def benchmark(
     print("----------+---------------+--------------------+------------------")
     for index, (precision, mean, std) in enumerate(interval_results, start=1):
         # noinspection PyTypeChecker
-        print(f"{precision:9} | {convert_time(interval_delay, 's', precision):13} | {mean:18.3f} | {std:16.3f}")
+        print(f"{precision:9} | {convert_time(interval_delay, 's', precision):13} | {mean:18.3f} | {std:16.3f}")  # type: ignore
 
     print("\nBusy-wait Delay Timing:")
     print("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")

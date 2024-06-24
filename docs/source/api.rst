@@ -1,6 +1,6 @@
 .. This file provides the instructions for how to display the API documentation generated using sphinx autodoc
    extension. Use it to declare Python and C++ extension documentation sub-directories via appropriate modules
-   (autodoc, doxygenfile and sphinx-click).
+   (automodule, doxygenfile and sphinx-click).
 
 Precision Timer API
 ===================
@@ -18,25 +18,14 @@ Timer Benchmark
    :undoc-members:
    :show-inheritance:
 
-.. Since benchmark() function is a click-based function, it has to be documented using the click plugin, rather than
-.. the automodule used for most other library methods. Nesting allows documenting click-options in-addition to the main
-.. function docstring.
 .. click:: ataraxis_time.precision_timer.timer_benchmark:benchmark
-   :prog: benchmark_timer
+   :prog: benchmark-timer
    :nested: full
 
 Helper Functions
 ================
 
 .. automodule:: ataraxis_time.time_helpers.helper_functions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Utility Functions
-=================
-
-.. automodule:: ataraxis_time.utilities
    :members:
    :undoc-members:
    :show-inheritance:

@@ -7,3 +7,5 @@ written in C++. It is highly advised to carry out all timer-related operations t
 
 from .timer_benchmark import benchmark
 from .timer_class import PrecisionTimer
+
+__all__ = ["PrecisionTimer", "benchmark"]

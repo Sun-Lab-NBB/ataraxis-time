@@ -54,7 +54,6 @@ nanobind_add_module(
 # Specifies what to include in the library. Uses the global LIBRARY_NAME variable to add content to the same library.
 install(FILES src/py.typed DESTINATION ${LIBRARY_NAME})  # Includes py.typed
 install(FILES src/__init__.py DESTINATION ${LIBRARY_NAME})  # Includes the main package init
-install(FILES src/utilities.py DESTINATION ${LIBRARY_NAME})  # Includes the shared utilities module
 
 install(TARGETS precision_timer_ext LIBRARY DESTINATION ${LIBRARY_NAME})  # C++ Extension binding (via nanobind).
 install(DIRECTORY src/precision_timer DESTINATION ${LIBRARY_NAME})  # Pure Python package, uses C++ extension.

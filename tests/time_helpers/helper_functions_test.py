@@ -4,8 +4,8 @@ import re
 
 import numpy as np
 import pytest  # type: ignore
+from ataraxis_automation.utilities import format_message
 from ataraxis_time.time_helpers import convert_time, get_timestamp
-from ataraxis_time.utilities import format_message
 
 
 def test_convert_time() -> None:

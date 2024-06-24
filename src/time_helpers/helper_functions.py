@@ -9,9 +9,8 @@ from datetime import datetime
 from typing import Literal
 
 import numpy as np
+from ataraxis_automation.utilities import format_message
 from numpy.typing import NDArray
-
-from ..utilities import format_message
 
 
 def convert_time(
@@ -129,7 +128,6 @@ def convert_time(
         # Converts numpy scalars to pythonic floats before returning them
         return float(converted_time)
     elif is_list:
-        # noinspection PyTypeChecker
         float_list: list[float] = converted_time.tolist()
         # If the input time was a list, converts it back to list format
         return float_list

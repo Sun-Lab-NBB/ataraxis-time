@@ -7,8 +7,9 @@ the low-level C-API should be carried out through the wrapper class where possib
 
 from typing import Literal
 
-from ..precision_timer_ext import CPrecisionTimer
-from ..utilities import format_message
+from ataraxis_automation.utilities import format_message
+
+from ..precision_timer_ext import CPrecisionTimer  # type: ignore
 
 
 class PrecisionTimer:
@@ -76,12 +77,12 @@ class PrecisionTimer:
             This functionality does not clash with delay functionality of the class. The timer used to delay code
             execution is different from the timer used to calculate elapsed time.
         """
-        return self._timer.Elapsed()
+        return self._timer.Elapsed()  # type: ignore
 
     @property
     def precision(self) -> str:
         """Returns the units currently used by the timer ('ns', 'us', 'ms' or 's')."""
-        return self._timer.GetPrecision()
+        return self._timer.GetPrecision()  # type: ignore
 
     @property
     def supported_precisions(self) -> tuple[str, str, str, str]:

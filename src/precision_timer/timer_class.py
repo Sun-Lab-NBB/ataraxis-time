@@ -7,7 +7,7 @@ the low-level C-API should be carried out through the wrapper class where possib
 
 from typing import Literal
 
-from ataraxis_automation.utilities import format_message
+from ataraxis_base_utilities import console
 
 from ..precision_timer_ext import CPrecisionTimer  # type: ignore
 
@@ -51,20 +51,22 @@ class PrecisionTimer:
 
         # If the input precision is not supported, raises an error
         if precision not in self._supported_precisions:
-            error_message = (
+            message = (
                 f"Unsupported precision argument value ({precision}) encountered when initializing PrecisionTimer "
                 f"class. Use one of the supported precision options: {self._supported_precisions}."
             )
-            raise ValueError(format_message(error_message))
+            console.error(message=message, error=ValueError)
+            raise ValueError(message)  # Fallback should not be reachable
 
         # Otherwise, initializes the C++ class using the input precision
         self._timer = CPrecisionTimer(precision=precision)
 
     def __repr__(self) -> str:
+        """Generates and returns a string representation of the PrecisionTimer object."""
         representation_string: str = (
             f"PrecisionTimer(precision={self.precision}, elapsed_time = {self.elapsed} {self.precision}.)"
         )
-        return format_message(representation_string)
+        return representation_string
 
     @property
     def elapsed(self) -> int:
@@ -158,11 +160,12 @@ class PrecisionTimer:
 
         # If the input precision is not supported, raises an error
         if precision not in self._supported_precisions:
-            error_message = (
+            message = (
                 f"Unsupported precision argument value ({precision}) encountered when setting the precision of a "
                 f"PrecisionTimer class instance. Use one of the supported precision options: "
                 f"{self._supported_precisions}."
             )
-            raise ValueError(format_message(error_message))
+            console.error(message=message, error=ValueError)
+            raise ValueError(message)  # Fallback should not be reachable
 
         self._timer.SetPrecision(precision=precision)

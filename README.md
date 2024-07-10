@@ -1,11 +1,12 @@
 # ataraxis-time
 
-A Python library that provides a sub-microsecond-precise thread-safe timer and methods to work with date and time data.
+A Python library that provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and 
+time data.
 
 ![PyPI - Version](https://img.shields.io/pypi/v/ataraxis-time)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ataraxis-time)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![type-checked: mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square&logo=python)
 ![PyPI - License](https://img.shields.io/pypi/l/ataraxis-time)
 ![PyPI - Status](https://img.shields.io/pypi/status/ataraxis-time)
@@ -21,8 +22,8 @@ this timer. Due to using a C-extension to provide interval and delay timing func
 process-safe and releases the GIL when using the appropriate delay command. Additionally, the library offers a set of 
 standalone helper functions that can be used to manipulate date and time data.
 
-The library can be used as a standalone module, but it is primarily designed to integrate with the broader 'Ataraxis'
-science-automation project, providing date- and time-related functionality to other project modules.
+While the library was written to integrate with other Sun Lab projects, it can be used as a standalone library for 
+non-lab projects with no additional modification.
 ___
 
 ## Features
@@ -42,6 +43,7 @@ ___
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
 - [Developers](#developers)
+- [Versioning](#versioning)
 - [Authors](#authors)
 - [License](#license)
 - [Acknowledgements](#Acknowledgments)
@@ -63,12 +65,12 @@ library. It is highly advised to use the option to install from PIP or CONDA ins
 
 1. Download this repository to your local machine using your preferred method, such as git-cloning. Optionally, use one
    of the stable releases that include precompiled binary wheels in addition to source code.
-2. ```cd``` to the root directory of the project using your CLI of choice.
+2. ```cd``` to the root directory of the project using your command line interface of choice.
 3. Run ```python -m pip install .``` to install the project. Alternatively, if using a distribution with precompiled 
    binaries, use ```python -m pip install WHEEL_PATH```, replacing 'WHEEL_PATH' with the path to the wheel file.
-4. Optionally, run the timer benchmark using ```benchmark-timer``` command from your CLI (no need to use 'python'
-   directive). You can use ```benchmark-timer --help``` command to see the list of additional configuration
-   parameters that can be used to customize the benchmark behavior.
+4. Optionally, run the timer benchmark using ```benchmark-timer``` command from your command line interface 
+   (no need to use 'python' directive). You can use ```benchmark-timer --help``` command to see the list of additional 
+   configuration parameters that can be used to customize the benchmark behavior.
 
 ### PIP
 
@@ -84,8 +86,9 @@ ___
 
 ## Usage
 
-This is a minimal example of how to use the precision timer class from this library:
+### Precision Timer
 
+This is a minimal example of how to use the precision timer class from this library:
 ```
 # First, import the timer class.
 from ataraxis_time import PrecisionTimer
@@ -115,6 +118,8 @@ for i in range(10):
     timer.delay_noblock(500)  # Delays for 500 milliseconds, releases the GIL
 ```
 
+### Date & Time Helper Methods
+
 This is a minimal example of how to use helper-functions from this library:
 ```
 # Import the desired function(s) from the time_helpers sub-package.
@@ -132,8 +137,8 @@ ___
 ## API Documentation
 
 See the [API documentation](https://ataraxis-time-api-docs.netlify.app/) for the
-detailed description of the methods and classes exposed by components of this library. The documentation also covers the
-C++ source code and benchmark-timer cli command.
+detailed description of the methods and classes exposed by components of this library. 
+The documentation also covers the C++ source code and benchmark-timer command line interface command.
 ___
 
 ## Developers
@@ -145,23 +150,25 @@ that were used during development from the included .yml files.
 ### Installing the library
 
 1. Download this repository to your local machine using your preferred method, such as git-cloning.
-2. ```cd``` to the root directory of the project using your CLI of choice.
+2. ```cd``` to the root directory of the project using your command line interface of choice.
 3. Install development dependencies. You have multiple options of satisfying this requirement:
    1. **_Preferred Method:_** Use conda or pip to install
       [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use an environment that has it installed and
-      call ```tox -e import-env``` to automatically import the os-specific development environment included with the
-      source code in your local conda distribution. Alternatively, see [environments](#environments) section for other
-      environment installation methods.
+      call ```tox -e import``` to automatically import the os-specific development environment included with the
+      source code in your local conda distribution. Alternatively, you can use ```tox -e create``` to create the 
+      environment from scratch and automatically install the necessary dependencies using pyproject.toml file. See 
+      [environments](#environments) section for other environment installation methods.
    2. Run ```python -m pip install .'[dev]'``` command to install development dependencies and the library. For some
       systems, you may need to use a slightly modified version of this command: ```python -m pip install .[dev]```.
    3. As long as you have an environment with [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) installed
       and do not intend to run any code outside the predefined project automation pipelines, tox will automatically 
       install all required dependencies for each task.
 
-**Note:** When using tox automation, having a local version of the library may interfere with tox methods that attempt
-to build the library using an isolated environment. It is advised to remove the library from your test environment, or
-disconnect from the environment, prior to running any tox tasks. This problem is rarely observed with the latest version
-of the automation pipeline, but is worth mentioning.
+**Note:** When using tox automation, having a local version of the library may interfere with tox tasks that attempt
+to build the library using an isolated environment. While the problem is rare, our 'tox' pipelines automatically 
+install and uninstall the project from its' conda environment. This relies on a static tox configuration and will only 
+target the project-specific environment, so it is advised to always ```tox -e import``` or ```tox -e create``` the 
+project environment using 'tox' before running other tox commands.
 
 ### Additional Dependencies
 
@@ -172,24 +179,28 @@ In addition to installing the required python packages, separately install the f
    [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/) (See the link for information on which dependencies to
    install).
 3. [Python](https://www.python.org/downloads/) distributions, one for each version that you intend to support. 
-   Currently, this library supports 3.10, 3.11 and 3.12. The easiest way to get tox to work as intended is to have 
+   Currently, this library supports 3.10, 3.11, and 3.12. The easiest way to get tox to work as intended is to have 
    separate python distributions, but using [pyenv](https://github.com/pyenv/pyenv) is a good alternative too. 
    This is needed for the 'test' task to work as intended.
 
 ### Development Automation
 
 This project comes with a fully configured set of automation pipelines implemented using 
-[tox](https://tox.wiki/en/latest/config.html#provision_tox_env). 
-Check [tox.ini file](tox.ini) for details about available pipelines and their implementation.
+[tox](https://tox.wiki/en/latest/user_guide.html). Check [tox.ini file](tox.ini) for details about 
+available pipelines and their implementation. Alternatively, call ```tox list``` from the root directory of the project
+to see the list of available tasks.
 
-**Note!** All commits to this library have to successfully complete the ```tox``` task before being pushed to GitHub. 
+**Note!** All commits to this project have to successfully complete the ```tox``` task before being pushed to GitHub. 
 To minimize the runtime task for this task, use ```tox --parallel```.
 
 ### Environments
 
-All environments used during development are exported as .yml files and as spec.txt files to the [envs](envs) folder. 
-The environment snapshots were taken on each of the three supported OS families: Windows 11, OSx 14.5 and 
-Ubuntu 22.04 LTS.
+All environments used during development are exported as .yml files and as spec.txt files to the [envs](envs) folder.
+The environment snapshots were taken on each of the three explicitly supported OS families: Windows 11, OSx (M1) 14.5
+and Linux Ubuntu 22.04 LTS.
+
+**Note!** Since the OSx environment was built against an M1 (Apple Silicon) platform and may not work on Intel-based 
+Apple devices.
 
 To install the development environment for your OS:
 
@@ -197,15 +208,33 @@ To install the development environment for your OS:
 2. ```cd``` into the [envs](envs) folder.
 3. Use one of the installation methods below:
    1. **_Preferred Method_**: Install [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use another 
-      environment with already installed tox and call ```tox -e import-env```.
+      environment with already installed tox and call ```tox -e import```.
    2. **_Alternative Method_**: Run ```conda env create -f ENVNAME.yml``` or ```mamba env create -f ENVNAME.yml```. 
-      Replace 'ENVNAME.yml' with the name of the environment you want to install (axt_dev_osx for OSx, axt_dev_win64 
-      for Windows and axt_dev_lin64 for Linux).
+      Replace 'ENVNAME.yml' with the name of the environment you want to install (axt_dev_osx for OSx, axt_dev_win 
+      for Windows, and axt_dev_lin for Linux).
 
-**Note:** the OSx environment was built against M1 (Apple Silicon) platform and may not work on Intel-based Apple 
-devices.
+**Hint:** while only the platforms mentioned above were explicitly evaluated, this project is likely to work on any 
+common OS, but may require additional configurations steps.
 
+Since the release of [ataraxis-automation](https://github.com/Sun-Lab-NBB/ataraxis-automation) version 2.0.0 you can 
+also create the development environment from scratch via pyproject.toml dependencies. To do this, use 
+```tox -e create``` from project root directory.
+
+### Automation Troubleshooting
+
+Many packages used in 'tox' automation pipelines (uv, mypy, ruff) and 'tox' itself are prone to various failures. In 
+most cases, this is related to their caching behavior. Despite a considerable effort to disable caching behavior known 
+to be problematic, in some cases it cannot or should not be eliminated. If you run into an unintelligible error with 
+any of the automation components, deleting the corresponding .cache (.tox, .ruff_cache, .mypy_cache, etc.) manually 
+or via a cli command is very likely to fix the issue.
 ___
+
+## Versioning
+
+We use [semantic versioning](https://semver.org/) for this project. For the versions available, see the 
+[tags on this repository](https://github.com/Sun-Lab-NBB/ataraxis-time/tags).
+
+---
 
 ## Authors
 

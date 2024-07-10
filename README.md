@@ -153,16 +153,17 @@ that were used during development from the included .yml files.
 2. ```cd``` to the root directory of the project using your command line interface of choice.
 3. Install development dependencies. You have multiple options of satisfying this requirement:
    1. **_Preferred Method:_** Use conda or pip to install
-      [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use an environment that has it installed and
+      [tox](https://tox.wiki/en/latest/user_guide.html) or use an environment that has it installed and
       call ```tox -e import``` to automatically import the os-specific development environment included with the
       source code in your local conda distribution. Alternatively, you can use ```tox -e create``` to create the 
       environment from scratch and automatically install the necessary dependencies using pyproject.toml file. See 
       [environments](#environments) section for other environment installation methods.
    2. Run ```python -m pip install .'[dev]'``` command to install development dependencies and the library. For some
       systems, you may need to use a slightly modified version of this command: ```python -m pip install .[dev]```.
-   3. As long as you have an environment with [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) installed
-      and do not intend to run any code outside the predefined project automation pipelines, tox will automatically 
-      install all required dependencies for each task.
+   3. As long as you have an environment with 
+      [tox](https://tox.wiki/en/latest/user_guide.html) installed
+      and do not intend to run any code outside the predefined project automation pipelines, 
+      tox will automatically install all required dependencies for each task.
 
 **Note:** When using tox automation, having a local version of the library may interfere with tox tasks that attempt
 to build the library using an isolated environment. While the problem is rare, our 'tox' pipelines automatically 
@@ -207,7 +208,7 @@ To install the development environment for your OS:
 1. Download this repository to your local machine using your preferred method, such as git-cloning.
 2. ```cd``` into the [envs](envs) folder.
 3. Use one of the installation methods below:
-   1. **_Preferred Method_**: Install [tox](https://tox.wiki/en/latest/config.html#provision_tox_env) or use another 
+   1. **_Preferred Method_**: Install [tox](https://tox.wiki/en/latest/user_guide.html) or use another 
       environment with already installed tox and call ```tox -e import```.
    2. **_Alternative Method_**: Run ```conda env create -f ENVNAME.yml``` or ```mamba env create -f ENVNAME.yml```. 
       Replace 'ENVNAME.yml' with the name of the environment you want to install (axt_dev_osx for OSx, axt_dev_win 

@@ -13,12 +13,12 @@ API documentation.
 
 import time as tm
 
+from tqdm import tqdm
 import click
 import numpy as np
-from tqdm import tqdm
 
-from ..time_helpers.helper_functions import convert_time
 from .timer_class import PrecisionTimer
+from ..time_helpers.helper_functions import convert_time
 
 
 @click.command()
@@ -77,7 +77,7 @@ def benchmark(
     precisions = timer.supported_precisions
 
     # Notifies the user that the benchmark has started
-    print("Timer Benchmark: Initialized.")
+    click.echo("Timer Benchmark: Initialized.")
 
     # Runs and aggregates interval timing results into a storage array. The interval tests consist of executing the
     # requested delay (via PrecisionTimer 'elapsed' property) and timing the duration of the delay using
@@ -189,30 +189,32 @@ def benchmark(
         )
 
     # Displays the test results
-    print("\nResults:")
-    print("Interval Timing:")
-    print("Precision | Interval Time | Mean Recorded Time | Std Recorded Time")
-    print("----------+---------------+--------------------+------------------")
+    click.echo("\nResults:")
+    click.echo("Interval Timing:")
+    click.echo("Precision | Interval Time | Mean Recorded Time | Std Recorded Time")
+    click.echo("----------+---------------+--------------------+------------------")
     for index, (precision, mean, std) in enumerate(interval_results, start=1):
-        # noinspection PyTypeChecker
-        print(f"{precision:9} | {convert_time(interval_delay, 's', precision):13} | {mean:18.3f} | {std:16.3f}")  # type: ignore
+        # noinspection PyTypeChecker,LongLine
+        click.echo(
+            f"{precision:9} | {convert_time(interval_delay, 's', precision):13} | {mean:18.3f} | {std:16.3f}"  # type: ignore
+        )
 
-    print("\nBusy-wait Delay Timing:")
-    print("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")
-    print("----------+----------------+-----------------+----------------+-------------------+-----------------")
+    click.echo("\nBusy-wait Delay Timing:")
+    click.echo("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")
+    click.echo("----------+----------------+-----------------+----------------+-------------------+-----------------")
     for precision, delay_duration, block_mean, block_std, noblock_mean, noblock_std in delay_results_busywait:
         print(
             f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | {noblock_mean:17.3f} | "
             f"{noblock_std:16.3f}"
         )
 
-    print("\nSleep Delay Timing:")
-    print("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")
-    print("----------+----------------+-----------------+----------------+-------------------+-----------------")
+    click.echo("\nSleep Delay Timing:")
+    click.echo("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")
+    click.echo("----------+----------------+-----------------+----------------+-------------------+-----------------")
     for precision, delay_duration, block_mean, block_std, noblock_mean, noblock_std in delay_results_sleep:
-        print(
+        click.echo(
             f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | {noblock_mean:17.3f} | "
             f"{noblock_std:16.3f}"
         )
 
-    print("\nBenchmark: Complete.")
+    click.echo("\nBenchmark: Complete.")

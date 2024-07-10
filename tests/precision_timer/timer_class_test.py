@@ -10,18 +10,27 @@ conclude it runs without errors.
 
 # Imports
 import re
-import threading
 import time as tm
+import textwrap
+import threading
 
 import numpy as np
 import pytest  # type: ignore
-from ataraxis_automation.utilities import format_message
 from ataraxis_time import PrecisionTimer
 from ataraxis_time.precision_timer_ext import CPrecisionTimer  # type: ignore
 
 # Global variables used for block/no-block threaded testing
 global_counter: int = 0
 end_flag: bool = False
+
+
+def error_format(message: str) -> str:
+    """Formats the input message to match the default Console format and escapes it using re, so that it can be used to
+    verify raised exceptions.
+
+    This method is used to set up pytest 'match' clauses to verify raised exceptions.
+    """
+    return re.escape(textwrap.fill(message, width=120, break_long_words=False, break_on_hyphens=False))
 
 
 def update_global_counter() -> None:
@@ -136,24 +145,24 @@ def test_initialization_and_precision_control_errors() -> None:
 
     # Verifies that attempting to initialize the class with an invalid precision fails as expected
     invalid_precision = "invalid_precision"
-    error_message = (
+    message = (
         f"Unsupported precision argument value ({invalid_precision}) encountered when initializing PrecisionTimer "
         f"class. Use one of the supported precision options: {valid_precision}."
     )
     # noinspection PyTypeChecker
-    with pytest.raises(ValueError, match=re.escape(format_message(error_message))):
+    with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
         PrecisionTimer(invalid_precision)
 
     # Also verifies that attempting to set the precision of an initialized class to an unsupported value fails as
     # expected
-    error_message = (
+    message = (
         f"Unsupported precision argument value ({invalid_precision}) encountered when setting the precision of a "
         f"PrecisionTimer class instance. Use one of the supported precision options: "
         f"{valid_precision}."
     )
     # noinspection PyTypeChecker
-    with pytest.raises(ValueError, match=re.escape(format_message(error_message))):
+    with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
         timer.set_precision(invalid_precision)
 

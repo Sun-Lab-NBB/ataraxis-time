@@ -22,7 +22,7 @@ def convert_time(time: int | float | list[int | float] | tuple[int | float] | np
         from_units: The units used by the input data. Valid options are: 'ns' (nanoseconds), 'us' (microseconds),
             'ms' (milliseconds), 's' (seconds), 'm' (minutes), 'h' (hours), 'd' (days).
         to_units: The units to convert the input data to. Uses the same options as from_units.
-        convert_output: Determines whether to convert output to Python scalar / iterable type or to return it as a
+        convert_output: Determines whether to convert output to a Python scalar / iterable type or to return it as a
             numpy type.
 
     Returns:

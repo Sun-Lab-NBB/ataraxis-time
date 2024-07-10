@@ -1,4 +1,4 @@
-2024-07-09 21:59:47  (rev 0)
+2024-07-09 23:35:54  (rev 0)
     +bzip2-1.0.8 (conda-forge/win-64)
     +ca-certificates-2024.7.4 (conda-forge/win-64)
     +cachetools-5.3.3 (conda-forge/noarch)
@@ -32,7 +32,7 @@
     +wheel-0.43.0 (conda-forge/noarch)
     +xz-5.2.6 (conda-forge/win-64)
 
-2024-07-09 22:00:09  (rev 1)
+2024-07-09 23:36:15  (rev 1)
     +alabaster-0.7.16 (conda-forge/noarch)
     +babel-2.14.0 (conda-forge/noarch)
     +backports-1.0 (conda-forge/noarch)

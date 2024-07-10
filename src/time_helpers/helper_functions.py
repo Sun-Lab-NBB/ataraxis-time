@@ -5,13 +5,12 @@ independently of the PrecisionTimer class. Unlike PrecisionTimer class, they are
 in real-time runtimes and are implemented using pure-python API where possible.
 """
 
-from typing import Any, Union, Literal
+from typing import Any, Union, Literal, Optional
 from datetime import datetime
 
 import numpy as np
 from numpy.typing import NDArray
 from ataraxis_base_utilities import console
-from ataraxis_data_structures.standalone_methods import ensure_list
 
 
 def convert_time(
@@ -49,7 +48,7 @@ def convert_time(
         from_units: The units used by the input data. Valid options are: 'ns' (nanoseconds), 'us' (microseconds),
             'ms' (milliseconds), 's' (seconds), 'm' (minutes), 'h' (hours), 'd' (days).
         to_units: The units to convert the input data to. Uses the same options as from_units.
-        convert_output: Determines whether to convert output to Python scalar / iterable type or to return it as a
+        convert_output: Determines whether to convert output to a Python scalar / iterable type or to return it as a
             numpy type.
 
     Returns:
@@ -85,11 +84,29 @@ def convert_time(
     # Verifies that the input time uses a valid type. To do so, attempts to cast the input into a python list. This
     # will generally 'pass' more arguments than desired, so there are extra checks below to further filter the input
     # types.
+    time_list: Optional[list[Any]] = None
     try:
-        # Filters out invalid input types that would successfully pass through ensure_list.
+        # Filters out invalid input types amd converts input into a list
         if isinstance(time, (str, bool, set)) or time is None:
             raise TypeError
-        time = ensure_list(input_item=time)
+        elif np.isscalar(time):
+            time_list = [time]  # Scalars are converted into one-element lists
+        elif isinstance(time, list):
+            time_list = time  # Lists are returned as is
+        elif isinstance(time, tuple):
+            time_list = list(time)  # Tuples are converted to lists via 'list'
+        elif isinstance(time, np.ndarray):
+            # Numpy arrays are converted based on their dimensionality. Arrays with 0 dimensions are actually scalars
+            # as far as numpy is concerned. They do not pass the 'is_scalar' check though.
+            if time.ndim > 0:
+                time_list = time.tolist()
+            else:
+                time_list = [time.item()]
+
+        # If the steps above failed to convert input to list, raises an error.
+        if not isinstance(time_list, list):
+            raise TypeError
+
     except TypeError:
         message = (
             f"Invalid 'time' argument type encountered when converting input time-values to the requested time-format. "
@@ -117,7 +134,7 @@ def convert_time(
 
     # Next, loops over each element of the list generated above and verifies that it is float-convertible by
     # attempting to convert it to a float type. If conversion fails, raises a TypeError.
-    for num, element in enumerate(time):
+    for num, element in enumerate(time_list):
         try:
             float(element)
         except BaseException:
@@ -130,7 +147,7 @@ def convert_time(
             raise TypeError(message)  # Fallback should not be reachable
 
     # If all values pass validation, converts the input list or array into a float numpy array
-    time = np.array(time, dtype=np.float64)
+    time = np.array(time_list, dtype=np.float64)
 
     # Converts the time to the desired time format and rounds the resultant values to 3 decimal points.
     converted_time: NDArray[np.float64] = np.round(

@@ -59,7 +59,6 @@ dependencies = [
     "click>=8,<9",
     "tqdm>=4,<5",
     "ataraxis-base-utilities>=1,<2",
-    "ataraxis-data-structures>=0,<2"
 ]
 
 [project.urls]

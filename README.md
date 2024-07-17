@@ -5,8 +5,8 @@ time data.
 
 ![PyPI - Version](https://img.shields.io/pypi/v/ataraxis-time)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ataraxis-time)
-[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://tinyurl.com/uvbadge)](https://github.com/astral-sh/uv)
+[![Ruff](https://tinyurl.com/ruffbadge)](https://github.com/astral-sh/ruff)
 ![type-checked: mypy](https://img.shields.io/badge/type--checked-mypy-blue?style=flat-square&logo=python)
 ![PyPI - License](https://img.shields.io/pypi/l/ataraxis-time)
 ![PyPI - Status](https://img.shields.io/pypi/status/ataraxis-time)
@@ -60,8 +60,8 @@ ___
 
 ### Source
 
-**_Note. Building from source may require additional build-components to be available to compile the C++ portion of the
-library. It is highly advised to use the option to install from PIP or CONDA instead._**
+**_Note. Building from source may require additional build components to be available to compile the C++ portion of the
+library. It is highly recommended to install from PIP or CONDA instead._**
 
 1. Download this repository to your local machine using your preferred method, such as git-cloning. Optionally, use one
    of the stable releases that include precompiled binary wheels in addition to source code.

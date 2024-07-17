@@ -4,10 +4,10 @@
 requires = ["scikit-build-core>=0,<1", "nanobind>=2,<3"]
 build-backend = "scikit_build_core.build"
 
-# Project metdata section. Provides the genral ID information about the project.
+# Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "1.1.0"
+version = "2.0.0"
 description = "Provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -45,7 +45,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    # Core languiage (C++)
+    # Core language (C++)
     "Programming Language :: C++",
     # Supported Operating Systems
     "Operating System :: Microsoft :: Windows",
@@ -58,7 +58,7 @@ dependencies = [
     "numpy>=2,<3",
     "click>=8,<9",
     "tqdm>=4,<5",
-    "ataraxis-base-utilities>=1,<2",
+    "ataraxis-base-utilities>=2,<3",
 ]
 
 [project.urls]
@@ -72,13 +72,13 @@ Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 # Runtime dependencies known to be installable with conda for all development platforms
 # (OSX ARM64, WIN AMD64, LIN AMD64). This specification is used by ataraxis-automation to resolve as many
 # project dependencies with conda over pip as possible.
-conda_run = [
+condarun = [
     "numpy>=2,<3",
     "click>=8,<9",
     "tqdm>=4,<5",
 ]
 
-# Depepndencies known to be installable with conda for all development platforms (OSX ARM64, WIN AMD64, LIN AMD64).
+# Dependencies known to be installable with conda for all development platforms (OSX ARM64, WIN AMD64, LIN AMD64).
 conda = [
     # Tox
     "tox>=4,<5",
@@ -122,7 +122,7 @@ conda = [
 
 # Dependencies known to not be installable with conda for at least one supported development platform
 # (OSX ARM64, WIN AMD64, LIN AMD64).
-noconda =[
+noconda = [
     # Tox
     "tox-uv>=1,<2",
 
@@ -131,11 +131,11 @@ noconda =[
     "build>=1,<2",
 
     # Automation
-    "ataraxis-automation>=2,<3",
+    "ataraxis-automation>=3,<4",
 ]
 
-# A shorhand specification that installs tox and all packages required for development tasks. This specification can
-# be used by developers to quickly install all necessary compontents for working on this project. Has to be installed
+# A shorthand specification that installs tox and all packages required for development tasks. This specification can
+# be used by developers to quickly install all necessary components for working on this project. Has to be installed
 # from pip.
 dev = [
     "ataraxis-base-utilities[conda]",
@@ -163,8 +163,8 @@ build-dir = "build/{wheel_tag}"
 wheel.py-api = "cp312"
 
 # Specifies additional configuration for the cibuildwheel backend, which is used to build OS- and Platform-specific
-# binary wheels for the project. Techncially, this step can be outsourced to GitHub actions, but, for now, it is only
-# avaialble locally (via 'tox -e build' command).
+# binary wheels for the project. Technically, this step can be outsourced to GitHub actions, but, for now, it is only
+# available locally (via 'tox -e build' command).
 [tool.cibuildwheel]
 
 # Declares and enables compiling with free-threaded support (for future python versions).
@@ -229,7 +229,7 @@ lint.ignore = [
 quote-style = "double"             # Uses double quotes for strings
 indent-style = "space"             # Uses space for indents
 skip-magic-trailing-comma = false  # Like black, ignores trailing commas
-line-ending = "auto"               # Automatically detects and standardizes line ending chracter
+line-ending = "auto"               # Automatically detects and standardizes line ending character
 
 # Docstrings and comments' line length
 [tool.ruff.lint.pycodestyle]
@@ -268,7 +268,7 @@ exclude = [
     "tests/",             # Ignores the test directory.
 ]
 
-# This is used by the 'test' tox tasks to aggreagte coverage data produced during pytest runtimes.
+# This is used by the 'test' tox tasks to aggregate coverage data produced during pytest runtimes.
 [tool.coverage.paths]
 source = ["src/", ".tox/*/lib/python*/site-packages/"]  # Maps coverage measured in site-packages to source files in src
 

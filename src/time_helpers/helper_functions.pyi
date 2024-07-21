@@ -1,8 +1,22 @@
-import numpy as np
-from numpy.typing import NDArray
 from typing import Any, Literal
 
-def convert_time(time: int | float | list[int | float] | tuple[int | float] | np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any] | NDArray[np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any]], from_units: Literal['ns', 'us', 'ms', 's', 'm', 'h', 'd'], to_units: Literal['ns', 'us', 'ms', 's', 'm', 'h', 'd'], *, convert_output: bool = True) -> float | tuple[float] | NDArray[np.float64] | np.float64:
+import numpy as np
+from numpy.typing import NDArray
+
+def convert_time(
+    time: int
+    | float
+    | list[int | float]
+    | tuple[int | float]
+    | np.signedinteger[Any]
+    | np.unsignedinteger[Any]
+    | np.floating[Any]
+    | NDArray[np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any]],
+    from_units: Literal["ns", "us", "ms", "s", "m", "h", "d"],
+    to_units: Literal["ns", "us", "ms", "s", "m", "h", "d"],
+    *,
+    convert_output: bool = True,
+) -> float | tuple[float] | NDArray[np.float64] | np.float64:
     """Converts the input time value(s) from the original units to the requested units.
 
     Supports conversion in the range from days to nanoseconds and uses numpy under-the-hood to optimize runtime speed.
@@ -35,8 +49,9 @@ def convert_time(time: int | float | list[int | float] | tuple[int | float] | np
         ValueError: If 'from_units' or 'to_units' argument is not set to a valid time-option. If time is a
             multidimensional numpy array.
     """
-def get_timestamp(time_separator: str = '-') -> str:
-    '''Gets the current date and time (to seconds) and formats it into year-month-day-hour-minute-second string.
+
+def get_timestamp(time_separator: str = "-") -> str:
+    """Gets the current date and time (to seconds) and formats it into year-month-day-hour-minute-second string.
 
     This utility method can be used to quickly time-stamp events and should be decently fast as it links to a
     C-extension under the hood.
@@ -56,4 +71,4 @@ def get_timestamp(time_separator: str = '-') -> str:
     Raises:
         TypeError: If the time_separator argument is not a string.
 
-    '''
+    """

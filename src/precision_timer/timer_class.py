@@ -56,7 +56,6 @@ class PrecisionTimer:
                 f"class. Use one of the supported precision options: {self._supported_precisions}."
             )
             console.error(message=message, error=ValueError)
-            raise ValueError(message)  # Fallback should not be reachable
 
         # Otherwise, initializes the C++ class using the input precision
         self._timer = CPrecisionTimer(precision=precision)
@@ -166,6 +165,5 @@ class PrecisionTimer:
                 f"{self._supported_precisions}."
             )
             console.error(message=message, error=ValueError)
-            raise ValueError(message)  # Fallback should not be reachable
 
         self._timer.SetPrecision(precision=precision)

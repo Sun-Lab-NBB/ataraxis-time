@@ -128,7 +128,7 @@ def test_convert_time_errors() -> None:
     invalid_array = np.zeros(shape=(5, 5))
     message = (
         f"Unable to convert input time-values to the requested time-format. Expected a one-dimensional Python or "
-        f"numpy iterable inputs as 'time', but encountered a numpy array with unsupported shape shape "
+        f"numpy iterable inputs as 'time', but encountered a numpy array with unsupported shape "
         f"({invalid_array.shape}) and dimensionality ({invalid_array.ndim})."
     )
     with pytest.raises(ValueError, match=error_format(message)):
@@ -136,7 +136,7 @@ def test_convert_time_errors() -> None:
         convert_time(invalid_array, from_units="s", to_units="ms")
 
     # Tests general invalid 'time' argument type input.
-    invalid_type: str = "not good"
+    invalid_type = object()
     message = (
         f"Invalid 'time' argument type encountered when converting input time-values to the requested time-format. "
         f"Expected a valid Python or numpy numeric scalar or iterable with float-convertible elements as input, "
@@ -173,11 +173,13 @@ def test_convert_time_errors() -> None:
     )
     invalid_list: list = [1, None, 3]
     with pytest.raises(TypeError, match=error_format(message)):
+        # noinspection PyTypeChecker
         convert_time(invalid_list, from_units="s", to_units="ms")
 
     # Test invalid element type inside a numpy array 'time' argument input (uses the same error message as a list).
     invalid_array: np.ndarray = np.array([1, None, 3])
     with pytest.raises(TypeError, match=error_format(message)):
+        # noinspection PyTypeChecker
         convert_time(invalid_array, from_units="s", to_units="ms")
 
 

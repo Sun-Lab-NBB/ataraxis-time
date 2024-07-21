@@ -1,6 +1,8 @@
-from ..precision_timer_ext import CPrecisionTimer as CPrecisionTimer
-from _typeshed import Incomplete
 from typing import Literal
+
+from _typeshed import Incomplete
+
+from ..precision_timer_ext import CPrecisionTimer as CPrecisionTimer
 
 class PrecisionTimer:
     """Provides sub-microsecond-precision interval-timing and blocking / non-blocking delay functionality.
@@ -32,9 +34,10 @@ class PrecisionTimer:
     Raises:
         ValueError: If the input precision is not one of the accepted options.
     """
+
     _supported_precisions: Incomplete
     _timer: Incomplete
-    def __init__(self, precision: Literal['ns', 'us', 'ms', 's'] = 'us') -> None: ...
+    def __init__(self, precision: Literal["ns", "us", "ms", "s"] = "us") -> None: ...
     def __repr__(self) -> str:
         """Generates and returns a string representation of the PrecisionTimer object."""
     @property
@@ -98,7 +101,7 @@ class PrecisionTimer:
             allow_sleep: A boolean flag that allows using CPU-releasing sleep() method to suspend execution for
                 durations above 1 millisecond. Defaults to False.
         """
-    def set_precision(self, precision: Literal['ns', 'us', 'ms', 's']) -> None:
+    def set_precision(self, precision: Literal["ns", "us", "ms", "s"]) -> None:
         """Changes the precision used by the timer to the input string-option.
 
         This method allows reusing the same timer instance for different precisions, which is frequently more efficient

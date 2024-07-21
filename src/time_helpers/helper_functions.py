@@ -5,12 +5,12 @@ independently of the PrecisionTimer class. Unlike PrecisionTimer class, they are
 in real-time runtimes and are implemented using pure-python API where possible.
 """
 
-from typing import Any, Union, Literal, Optional
+from typing import Any, Union, Literal
 from datetime import datetime
 
 import numpy as np
 from numpy.typing import NDArray
-from ataraxis_base_utilities import console
+from ataraxis_base_utilities import console, ensure_list
 
 
 def convert_time(
@@ -75,37 +75,16 @@ def convert_time(
     if isinstance(time, np.ndarray) and time.ndim > 1:
         message = (
             f"Unable to convert input time-values to the requested time-format. Expected a one-dimensional Python or "
-            f"numpy iterable inputs as 'time', but encountered a numpy array with unsupported shape shape "
-            f"({time.shape}) and dimensionality ({time.ndim})."
+            f"numpy iterable inputs as 'time', but encountered a numpy array with unsupported shape ({time.shape}) and "
+            f"dimensionality ({time.ndim})."
         )
         console.error(message=message, error=ValueError)
-        raise ValueError(message)  # Fallback should not be reachable
 
     # Verifies that the input time uses a valid type. To do so, attempts to cast the input into a python list. This
     # will generally 'pass' more arguments than desired, so there are extra checks below to further filter the input
     # types.
-    time_list: Optional[list[Any]] = None
     try:
-        # Filters out invalid input types amd converts input into a list
-        if isinstance(time, (str, bool, set)) or time is None:
-            raise TypeError
-        elif np.isscalar(time):
-            time_list = [time]  # Scalars are converted into one-element lists
-        elif isinstance(time, list):
-            time_list = time  # Lists are returned as is
-        elif isinstance(time, tuple):
-            time_list = list(time)  # Tuples are converted to lists via 'list'
-        elif isinstance(time, np.ndarray):
-            # Numpy arrays are converted based on their dimensionality. Arrays with 0 dimensions are actually scalars
-            # as far as numpy is concerned. They do not pass the 'is_scalar' check though.
-            if time.ndim > 0:
-                time_list = time.tolist()
-            else:
-                time_list = [time.item()]
-
-        # If the steps above failed to convert input to list, raises an error.
-        if not isinstance(time_list, list):
-            raise TypeError
+        time_list = ensure_list(time)
 
     except TypeError:
         message = (
@@ -114,7 +93,8 @@ def convert_time(
             f"but encountered {time} of type {type(time).__name__}."
         )
         console.error(message=message, error=TypeError)
-        raise TypeError(message)  # Fallback should not be reachable
+        # Fallback to appease mypy, should not be reachable
+        raise TypeError(message)  # pragma: no cover
 
     # Verifies that unit-options are valid.
     if from_units not in conversion_dict.keys():
@@ -123,14 +103,13 @@ def convert_time(
             f"the requested time-format. Use one of the supported time-units: {', '.join(conversion_dict.keys())}."
         )
         console.error(message=message, error=ValueError)
-        raise ValueError(message)  # Fallback should not be reachable
+
     if to_units not in conversion_dict.keys():
         message = (
             f"Unsupported 'to_units' argument value ({to_units}) encountered when converting input time-values to "
             f"the requested time-format. Use one of the supported time-units: {', '.join(conversion_dict.keys())}."
         )
         console.error(message=message, error=ValueError)
-        raise ValueError(message)  # Fallback should not be reachable
 
     # Next, loops over each element of the list generated above and verifies that it is float-convertible by
     # attempting to convert it to a float type. If conversion fails, raises a TypeError.
@@ -144,7 +123,6 @@ def convert_time(
                 f"elements, index {num} ({element}) of type {type(element).__name__} is not float-convertible."
             )
             console.error(message=message, error=TypeError)
-            raise TypeError(message)  # Fallback should not be reachable
 
     # If all values pass validation, converts the input list or array into a float numpy array
     time = np.array(time_list, dtype=np.float64)
@@ -200,7 +178,6 @@ def get_timestamp(time_separator: str = "-") -> str:
             f"Expected {type(str).__name__}, but encountered {time_separator} of type {type(time_separator).__name__}."
         )
         console.error(message=message, error=TypeError)
-        raise TypeError(message)  # Fallback should not be reachable
 
     # Obtains and formats date and time to be appended to various file and directory variables
     now: datetime = datetime.now()

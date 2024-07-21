@@ -146,6 +146,7 @@ dependencies:
       - appdirs==1.4.4
       - ataraxis-automation==3.0.3
       - ataraxis-base-utilities==2.1.1
+      - ataraxis-time==2.0.0
       - bashlex==0.18
       - bracex==2.4
       - build==1.2.1

@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 # Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "2.0.0"
+version = "2.0.1"
 description = "Provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -138,8 +138,8 @@ noconda = [
 # be used by developers to quickly install all necessary components for working on this project. Has to be installed
 # from pip.
 dev = [
-    "ataraxis-base-utilities[conda]",
-    "ataraxis-base-utilities[noconda]"
+    "ataraxis-time[conda]",
+    "ataraxis-time[noconda]"
 ]
 
 # Exposes the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.

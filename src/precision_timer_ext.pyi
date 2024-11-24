@@ -1,4 +1,3 @@
-# noinspection PyPep8Naming
 class CPrecisionTimer:
     def __init__(self, precision: str = ...) -> None:
         """__init__(self, precision: str = 'us') -> None"""

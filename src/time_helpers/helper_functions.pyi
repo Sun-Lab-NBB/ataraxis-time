@@ -50,14 +50,12 @@ def convert_time(
             multidimensional numpy array.
     """
 
-def get_timestamp(time_separator: str = "-") -> str:
-    """Gets the current date and time (to seconds) and formats it into year-month-day-hour-minute-second string.
+def get_timestamp(time_separator: str = "-", as_bytes: bool = False) -> str | NDArray[np.uint8]:
+    """Gets the current date and time in a timezone-aware format and returns it as a delimited string or bytes array.
 
-    This utility method can be used to quickly time-stamp events and should be decently fast as it links to a
-    C-extension under the hood.
-
-    Args:
-        time_separator: The separator to use to separate the components of the time-string. Defaults to hyphens "-".
+    This utility method is used to timestamp events. To do so, it connects to one of the global time-servers and obtains
+    atomic time for the UTC timezone. The method can then return the timestamp as a microsecond-precise bytes array
+    (used in logging) or string (used in file names).
 
     Notes:
         Hyphen-separation is supported by the majority of modern OSes and, therefore, the default separator should be
@@ -65,10 +63,36 @@ def get_timestamp(time_separator: str = "-") -> str:
         OS-reserved symbols and treats it as a generic string to be inserted between time components. Therefore, it is
         advised to make sure that the separator is a valid string given your OS and Platform combination.
 
+        When timestamp is converted to the bytes array, it is first converted to microseconds since epoch onset and then
+        cast to a bytes array. You can use the extract_timestamp_from_bytes() method available from this library to
+        decode a byte-serialized timestamp into the formatted string.
+
+    Args:
+        time_separator: The separator to use to separate the components of the time-string. Defaults to hyphens "-".
+        as_bytes: Determines whether to return the timestamp as a delimited string or as a bytes array.
+
     Returns:
-        The \'year-month-day-hour-minute-second\' string that uses the input timer-separator to separate time-components.
+        The \'year-month-day-hour-minute-second-microsecond\' string that uses the input timer-separator to separate
+        time-components or a numpy bytes array that stores the microsecond-precise timestamp.
 
     Raises:
         TypeError: If the time_separator argument is not a string.
 
+    """
+
+def extract_timestamp_from_bytes(timestamp_bytes: NDArray[np.uint8], time_separator: str = "-") -> str:
+    """Decodes a timestamp from the input bytes array into a delimited string format.
+
+    This method is primarily designed to decode byte-serialized timestamps produced by get_timestamp() method into
+    a delimited string format.
+
+    Args:
+        timestamp_bytes: The timestamp data as bytes array from get_timestamp(as_bytes=True)
+        time_separator: Character to separate time components in output string
+
+    Returns:
+        Formatted timestamp string with microsecond precision ('year-month-day-hour-minute-second-microsecond').
+
+    Raises:
+        TypeError: If the timestamp_bytes is not a one-dimensional bytes array or if time_separator is not a string.
     """

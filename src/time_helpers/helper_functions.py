@@ -6,7 +6,8 @@ in real-time runtimes and are implemented using pure-python API where possible.
 """
 
 from typing import Any, Union, Literal
-from datetime import datetime
+import datetime
+from datetime import timezone
 
 import numpy as np
 from numpy.typing import NDArray
@@ -149,14 +150,12 @@ def convert_time(
             return np.float64(converted_time[0])
 
 
-def get_timestamp(time_separator: str = "-") -> str:
-    """Gets the current date and time (to seconds) and formats it into year-month-day-hour-minute-second string.
+def get_timestamp(time_separator: str = "-", as_bytes: bool = False) -> str | NDArray[np.uint8]:
+    """Gets the current date and time in a timezone-aware format and returns it as a delimited string or bytes array.
 
-    This utility method can be used to quickly time-stamp events and should be decently fast as it links to a
-    C-extension under the hood.
-
-    Args:
-        time_separator: The separator to use to separate the components of the time-string. Defaults to hyphens "-".
+    This utility method is used to timestamp events. To do so, it connects to one of the global time-servers and obtains
+    atomic time for the UTC timezone. The method can then return the timestamp as a microsecond-precise bytes array
+    (used in logging) or string (used in file names).
 
     Notes:
         Hyphen-separation is supported by the majority of modern OSes and, therefore, the default separator should be
@@ -164,8 +163,17 @@ def get_timestamp(time_separator: str = "-") -> str:
         OS-reserved symbols and treats it as a generic string to be inserted between time components. Therefore, it is
         advised to make sure that the separator is a valid string given your OS and Platform combination.
 
+        When timestamp is converted to the bytes array, it is first converted to microseconds since epoch onset and then
+        cast to a bytes array. You can use the extract_timestamp_from_bytes() method available from this library to
+        decode a byte-serialized timestamp into the formatted string.
+
+    Args:
+        time_separator: The separator to use to separate the components of the time-string. Defaults to hyphens "-".
+        as_bytes: Determines whether to return the timestamp as a delimited string or as a bytes array.
+
     Returns:
-        The 'year-month-day-hour-minute-second' string that uses the input timer-separator to separate time-components.
+        The 'year-month-day-hour-minute-second-microsecond' string that uses the input timer-separator to separate
+        time-components or a numpy bytes array that stores the microsecond-precise timestamp.
 
     Raises:
         TypeError: If the time_separator argument is not a string.
@@ -179,10 +187,77 @@ def get_timestamp(time_separator: str = "-") -> str:
         )
         console.error(message=message, error=TypeError)
 
-    # Obtains and formats date and time to be appended to various file and directory variables
-    now: datetime = datetime.now()
-    timestamp: str = now.strftime(
-        f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}%S"
+    # Obtains the atomic time using timezone-aware query.
+    now = datetime.datetime.now(timezone.utc)
+
+    # If requested, converts the timestamp to a bytes numpy array and returns it to caller
+    if as_bytes:
+        # Converts UTC timestamp to microseconds since epoch
+        microseconds = int(now.timestamp() * 1_000_000)
+
+        # Converts to bytes array using little-endian 64-bit integer
+        onset_serial = np.array([microseconds], dtype="<i8").view(np.uint8)
+        return onset_serial
+
+    # Otherwise, formats the timestamp into a string using requested delimiters and returns it to caller
+    else:
+        timestamp: str = now.strftime(
+            (
+                f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}"
+                f"%S{time_separator}%f"
+            )
+        )
+        return timestamp
+
+
+def extract_timestamp_from_bytes(timestamp_bytes: NDArray[np.uint8], time_separator: str = "-") -> str:
+    """Decodes a timestamp from the input bytes array into a delimited string format.
+
+    This method is primarily designed to decode byte-serialized timestamps produced by get_timestamp() method into
+    a delimited string format.
+
+    Args:
+        timestamp_bytes: The timestamp data as bytes array from get_timestamp(as_bytes=True)
+        time_separator: Character to separate time components in output string
+
+    Returns:
+        Formatted timestamp string with microsecond precision ('year-month-day-hour-minute-second-microsecond').
+
+    Raises:
+        TypeError: If the timestamp_bytes is not a one-dimensional bytes array or if time_separator is not a string.
+    """
+    # Verifies input type
+    if not isinstance(timestamp_bytes, np.ndarray) or timestamp_bytes.dtype != np.uint8 or timestamp_bytes.ndim != 1:
+        message = (
+            f"Invalid 'timestamp_bytes' argument type encountered when decoding timestamp from input bytes array. "
+            f"Expected a one-dimensional uint8 numpy array, but got {timestamp_bytes} of type "
+            f"{type(timestamp_bytes).__name__}."
+        )
+        console.error(message=message, error=TypeError)
+
+    if not isinstance(time_separator, str):
+        message = (
+            f"Invalid 'time_separator' argument type encountered when decoding timestamp from input bytes array. "
+            f"Expected {type(str).__name__}, but encountered {time_separator} of type {type(time_separator).__name__}."
+        )
+        console.error(message=message, error=TypeError)
+
+    # Converts bytes array back to microseconds since epoch
+    microseconds = np.frombuffer(timestamp_bytes.tobytes(), dtype="<i8")[0]
+
+    # Splits into seconds and microseconds components
+    seconds = float(microseconds) // 1_000_000
+    microseconds_part = int(microseconds % 1_000_000)
+
+    # Creates UTC datetime with microsecond precision
+    timestamp_dt = datetime.datetime.fromtimestamp(seconds, tz=timezone.utc).replace(microsecond=microseconds_part)
+
+    # Formats with the specified separator and returns to caller
+    formatted_timestamp = timestamp_dt.strftime(
+        (
+            f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}"
+            f"%S{time_separator}%f"
+        )
     )
 
-    return timestamp
+    return formatted_timestamp

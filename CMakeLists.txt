@@ -30,7 +30,7 @@ set(SKBUILD_SABI_SUPPORTED ${Python_SABI_SUPPORTED})
 
 # Imports the necessary nanobind components. Note, the Python version has to match the minimum python version supported
 # by the library (declared via pyproject.toml).
-find_package(Python 3.10
+find_package(Python 3.11
   REQUIRED COMPONENTS Interpreter Development.Module
   OPTIONAL_COMPONENTS Development.SABIModule)
 

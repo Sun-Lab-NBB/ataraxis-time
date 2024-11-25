@@ -17,20 +17,12 @@ import threading
 import numpy as np
 import pytest  # type: ignore
 from ataraxis_time import PrecisionTimer
+from ataraxis_base_utilities import error_format
 from ataraxis_time.precision_timer_ext import CPrecisionTimer  # type: ignore
 
 # Global variables used for block/no-block threaded testing
 global_counter: int = 0
 end_flag: bool = False
-
-
-def error_format(message: str) -> str:
-    """Formats the input message to match the default Console format and escapes it using re, so that it can be used to
-    verify raised exceptions.
-
-    This method is used to set up pytest 'match' clauses to verify raised exceptions.
-    """
-    return re.escape(textwrap.fill(message, width=120, break_long_words=False, break_on_hyphens=False))
 
 
 def update_global_counter() -> None:

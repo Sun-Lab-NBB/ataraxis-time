@@ -75,13 +75,6 @@ library. It is highly recommended to install from PIP or CONDA instead._**
 ### PIP
 
 Use the following command to install the library using PIP: ```pip install ataraxis-time```
-
-### Conda / Mamba
-
-**_Note. Due to conda-forge contributing process being more nuanced than pip uploads, conda versions may lag behind
-pip and source code distributions._**
-
-Use the following command to install the library using Conda or Mamba: ```conda install ataraxis-time```
 ___
 
 ## Usage
@@ -172,14 +165,24 @@ initial_time = np.array([12, 12, 12])
 time_in_seconds = convert_time(time=initial_time, from_units='d', to_units='s')
 ```
 
-#### Get Timestamp
-This method is used to get timestamps accurate up to seconds. This is typically helpful when time-stamping file 
-names and slow events.
+#### Timestamps
+Timestamp methods are used to get timestamps accurate up to microseconds. They work by connecting to one of the global
+time-servers and obtaining the current timestamp for the UTC timezone. The method can be used to return the timestamp 
+as string (good for naming files) or bytes array (good for serialized communication and logging).
 ```
-from ataraxis_time.time_helpers import get_timestamp
+from ataraxis_time.time_helpers import get_timestamp, extract_timestamp_from_bytes
 
 # Obtains the current date and time and uses it to generate a timestamp that can be used in file-names (for example).
-dt = get_timestamp(time_separator='-')  # Returns 2024-06-18-00-06-25 (yyyy-mm-dd-hh-mm-ss)
+# The timestamp is precise up to microseconds.
+dt = get_timestamp(time_separator='-')  # Returns 2024-06-18-00-06-25-927794 (yyyy-mm-dd-hh-mm-ss-us)
+
+# Also, the method supports giving the timestamp as a serialized array of bytes. This is helpful when it is used as
+# part of a serialized communication protocol. For example, this is the format expected by our DataLogger class,
+# available from ataraxis-data-structures library.
+bytes_dt = get_timestamp(as_bytes=True)  # Returns an 8-byte numpy array.
+
+# To decode the byte-serialized timestamp into a string, use the extract_timestamp_from_bytes() method
+dt_2 = extract_timestamp_from_bytes(bytes_dt)  # Returns 2024-06-18-00-06-25-927794 (yyyy-mm-dd-hh-mm-ss-us)
 ```
 ___
 
@@ -214,12 +217,6 @@ that were used during development from the included .yml files.
       and do not intend to run any code outside the predefined project automation pipelines, 
       tox will automatically install all required dependencies for each task.
 
-**Note:** When using tox automation, having a local version of the library may interfere with tox tasks that attempt
-to build the library using an isolated environment. While the problem is rare, our 'tox' pipelines automatically 
-install and uninstall the project from its' conda environment. This relies on a static tox configuration and will only 
-target the project-specific environment, so it is advised to always ```tox -e import``` or ```tox -e create``` the 
-project environment using 'tox' before running other tox commands.
-
 ### Additional Dependencies
 
 In addition to installing the required python packages, separately install the following dependencies:
@@ -249,8 +246,8 @@ For more information, you can also see the 'Usage' section of the
 ### Environments
 
 All environments used during development are exported as .yml files and as spec.txt files to the [envs](envs) folder.
-The environment snapshots were taken on each of the three explicitly supported OS families: Windows 11, OSx (M1) 14.5
-and Linux Ubuntu 22.04 LTS.
+The environment snapshots were taken on each of the three explicitly supported OS families: Windows 11, OSx (M1) 15.1.1
+and Linux Ubuntu 24.04 LTS.
 
 **Note!** Since the OSx environment was built against an M1 (Apple Silicon) platform and may not work on Intel-based 
 Apple devices.

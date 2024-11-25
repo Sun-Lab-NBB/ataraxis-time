@@ -1,20 +1,12 @@
 """Tests the functions available through the 'helper_functions' module."""
 
 import re
-import textwrap
+from datetime import datetime, timezone
 
 import numpy as np
 import pytest  # type: ignore
-from ataraxis_time.time_helpers import convert_time, get_timestamp
-
-
-def error_format(message: str) -> str:
-    """Formats the input message to match the default Console format and escapes it using re, so that it can be used to
-    verify raised exceptions.
-
-    This method is used to set up pytest 'match' clauses to verify raised exceptions.
-    """
-    return re.escape(textwrap.fill(message, width=120, break_long_words=False, break_on_hyphens=False))
+from ataraxis_base_utilities import error_format
+from ataraxis_time.time_helpers import convert_time, get_timestamp, extract_timestamp_from_bytes
 
 
 @pytest.mark.parametrize(
@@ -186,17 +178,62 @@ def test_convert_time_errors() -> None:
 def test_get_timestamp() -> None:
     """Verifies the functioning of the get_timestamp() method."""
 
-    # Tests default separator
+    # Tests default separator with microseconds
     timestamp = get_timestamp()
-    assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}", timestamp)
+    assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{6}", timestamp)
 
-    # Tests separator override
+    # Tests custom separator with microseconds
     timestamp = get_timestamp(time_separator="_")
-    assert re.match(r"\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}", timestamp)
+    assert re.match(r"\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}_\d{6}", timestamp)
+
+    # Tests bytes output
+    timestamp_bytes = get_timestamp(as_bytes=True)
+    assert isinstance(timestamp_bytes, np.ndarray)
+    assert timestamp_bytes.dtype == np.uint8
+
+    # Verifies the bytes timestamp is the correct length (8 bytes for int64)
+    assert len(timestamp_bytes) == 8
+
+
+def test_extract_timestamp_from_bytes() -> None:
+    """Verifies the functioning of the extract_timestamp_from_bytes() method."""
+
+    # Gets a timestamp in bytes
+    timestamp_bytes = get_timestamp(as_bytes=True)
+
+    # Tests the default separator
+    decoded = extract_timestamp_from_bytes(timestamp_bytes)
+    assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{6}", decoded)
+
+    # Tests a custom separator
+    decoded = extract_timestamp_from_bytes(timestamp_bytes, time_separator="_")
+    assert re.match(r"\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}_\d{6}", decoded)
+
+    # Parses the decoded timestamp
+    components = decoded.split("_")
+    assert len(components) == 7  # Year, month, day, hour, minute, second, microsecond
+
+    # Verifies timestamp components are valid
+    year = int(components[0])
+    month = int(components[1])
+    day = int(components[2])
+    hour = int(components[3])
+    minute = int(components[4])
+    second = int(components[5])
+    microsecond = int(components[6])
+
+    assert 2024 <= year <= 2025  # Valid year range
+    assert 1 <= month <= 12  # Valid month
+    assert 1 <= day <= 31  # Valid day
+    assert 0 <= hour <= 23  # Valid hour
+    assert 0 <= minute <= 59  # Valid minute
+    assert 0 <= second <= 59  # Valid second
+    assert 0 <= microsecond <= 999999  # Valid microseconds
 
 
 def test_get_timestamp_errors() -> None:
     """Verifies the error-handling behavior of the get_timestamp() method."""
+
     # Tests invalid time_separator type
     invalid_time_separator: int = 123
     message = (
@@ -207,3 +244,52 @@ def test_get_timestamp_errors() -> None:
     with pytest.raises(TypeError, match=error_format(message)):
         # noinspection PyTypeChecker
         get_timestamp(time_separator=invalid_time_separator)
+
+
+def test_extract_timestamp_from_bytes_errors() -> None:
+    """Verifies the error-handling behavior of the extract_timestamp_from_bytes() method."""
+
+    # Tests invalid input type
+    invalid_input = [1, 2, 3]  # List instead of numpy array
+    message = (
+        f"Invalid 'timestamp_bytes' argument type encountered when decoding timestamp from input bytes array. "
+        f"Expected a one-dimensional uint8 numpy array, but got {invalid_input} of type "
+        f"{type(invalid_input).__name__}."
+    )
+    with pytest.raises(TypeError, match=error_format(message)):
+        # noinspection PyTypeChecker
+        extract_timestamp_from_bytes(invalid_input)
+
+    # Tests invalid numpy array (wrong size)
+    invalid_array = np.array([1, 2, 3], dtype=np.uint8)  # Wrong size
+    with pytest.raises(ValueError):
+        extract_timestamp_from_bytes(invalid_array)
+
+
+def test_timestamp_roundtrip() -> None:
+    """Verifies that encoding and decoding a timestamp preserves the information."""
+
+    # Gets current timestamp in bytes
+    timestamp_bytes = get_timestamp(as_bytes=True)
+
+    # Decodes it back to string
+    decoded = extract_timestamp_from_bytes(timestamp_bytes)
+
+    # Gets a fresh timestamp for comparison structure
+    fresh = get_timestamp()
+
+    # Verifies the structure matches (same number of components, same separators)
+    assert len(decoded.split("-")) == len(fresh.split("-"))
+
+    # Verifies the decoded timestamp represents a valid datetime
+    components = decoded.split("-")
+    dt = datetime(
+        year=int(components[0]),
+        month=int(components[1]),
+        day=int(components[2]),
+        hour=int(components[3]),
+        minute=int(components[4]),
+        second=int(components[5]),
+        microsecond=int(components[6]),
+    )
+    assert isinstance(dt, datetime)

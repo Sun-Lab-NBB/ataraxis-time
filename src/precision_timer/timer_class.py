@@ -153,7 +153,6 @@ class PrecisionTimer:
         Raises:
             ValueError: If the input precision is not one of the accepted options.
         """
-
         # Casts to the lower case
         precision = precision.lower()  # type: ignore
 

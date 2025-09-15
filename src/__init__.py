@@ -1,4 +1,4 @@
-"""This library provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and
+"""A Python library that provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and
 time data.
 
 See https://github.com/Sun-Lab-NBB/ataraxis-time for more details.

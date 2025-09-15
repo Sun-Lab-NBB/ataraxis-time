@@ -2,8 +2,8 @@
    extension. Use it to declare Python and C++ extension documentation sub-directories via appropriate modules
    (automodule, doxygenfile and sphinx-click).
 
-Precision Timer API
-===================
+Precision Timer
+===============
 
 .. automodule:: ataraxis_time.precision_timer.timer_class
    :members:

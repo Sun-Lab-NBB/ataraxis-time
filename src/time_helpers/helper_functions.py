@@ -5,9 +5,8 @@ independently of the PrecisionTimer class. Unlike PrecisionTimer class, they are
 in real-time runtimes and are implemented using pure-python API where possible.
 """
 
-from typing import Any, Union, Literal
+from typing import Any, Literal
 import datetime
-from datetime import timezone
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,16 +14,7 @@ from ataraxis_base_utilities import console, ensure_list
 
 
 def convert_time(
-    time: Union[
-        int,
-        float,
-        list[int | float],
-        tuple[int | float],
-        np.signedinteger[Any],
-        np.unsignedinteger[Any],
-        np.floating[Any],
-        NDArray[np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any]],
-    ],
+    time: float | list[int | float] | tuple[int | float] | np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any] | NDArray[np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any]],
     from_units: Literal["ns", "us", "ms", "s", "m", "h", "d"],
     to_units: Literal["ns", "us", "ms", "s", "m", "h", "d"],
     *,
@@ -98,14 +88,14 @@ def convert_time(
         raise TypeError(message)  # pragma: no cover
 
     # Verifies that unit-options are valid.
-    if from_units not in conversion_dict.keys():
+    if from_units not in conversion_dict:
         message = (
             f"Unsupported 'from_units' argument value ({from_units}) encountered when converting input time-values to "
             f"the requested time-format. Use one of the supported time-units: {', '.join(conversion_dict.keys())}."
         )
         console.error(message=message, error=ValueError)
 
-    if to_units not in conversion_dict.keys():
+    if to_units not in conversion_dict:
         message = (
             f"Unsupported 'to_units' argument value ({to_units}) encountered when converting input time-values to "
             f"the requested time-format. Use one of the supported time-units: {', '.join(conversion_dict.keys())}."
@@ -138,16 +128,13 @@ def convert_time(
         if converted_time.size != 1:
             # Converts an array with multiple elements to tuple
             return tuple(converted_time.tolist())
-        else:
-            # This pops the only element out as the nearest Python type (float)
-            return converted_time.item()
-    else:
-        if converted_time.size != 1:
-            # This returns numpy array with a float64 type
-            return converted_time
-        else:
-            # This returns a float64 scalar type.
-            return np.float64(converted_time[0])
+        # This pops the only element out as the nearest Python type (float)
+        return converted_time.item()
+    if converted_time.size != 1:
+        # This returns numpy array with a float64 type
+        return converted_time
+    # This returns a float64 scalar type.
+    return np.float64(converted_time[0])
 
 
 def get_timestamp(time_separator: str = "-", as_bytes: bool = False) -> str | NDArray[np.uint8]:
@@ -188,7 +175,7 @@ def get_timestamp(time_separator: str = "-", as_bytes: bool = False) -> str | ND
         console.error(message=message, error=TypeError)
 
     # Obtains the atomic time using timezone-aware query.
-    now = datetime.datetime.now(timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     # If requested, converts the timestamp to a bytes numpy array and returns it to caller
     if as_bytes:
@@ -200,14 +187,13 @@ def get_timestamp(time_separator: str = "-", as_bytes: bool = False) -> str | ND
         return onset_serial
 
     # Otherwise, formats the timestamp into a string using requested delimiters and returns it to caller
-    else:
-        timestamp: str = now.strftime(
-            (
-                f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}"
-                f"%S{time_separator}%f"
-            )
-        )
-        return timestamp
+    timestamp: str = now.strftime(
+
+            f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}"
+            f"%S{time_separator}%f"
+
+    )
+    return timestamp
 
 
 def extract_timestamp_from_bytes(timestamp_bytes: NDArray[np.uint8], time_separator: str = "-") -> str:
@@ -250,14 +236,14 @@ def extract_timestamp_from_bytes(timestamp_bytes: NDArray[np.uint8], time_separa
     microseconds_part = int(microseconds % 1_000_000)
 
     # Creates UTC datetime with microsecond precision
-    timestamp_dt = datetime.datetime.fromtimestamp(seconds, tz=timezone.utc).replace(microsecond=microseconds_part)
+    timestamp_dt = datetime.datetime.fromtimestamp(seconds, tz=datetime.UTC).replace(microsecond=microseconds_part)
 
     # Formats with the specified separator and returns to caller
     formatted_timestamp = timestamp_dt.strftime(
-        (
+
             f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}"
             f"%S{time_separator}%f"
-        )
+
     )
 
     return formatted_timestamp

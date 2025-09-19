@@ -103,27 +103,35 @@ class CPrecisionTimer
      */
     void Delay(const int64_t duration, const bool allow_sleep = false, const bool block = false) const
     {
-        if (!block)
-        {
-            nb::gil_scoped_release release;  // Releases GIL to allow other threads to run while blocking.
-        }
-
         // Converts input delay duration to nanoseconds.
         const auto delay_duration = duration * _precision_duration;
 
-        // If sleep is allowed and delay duration is sufficiently long to resolve with sleep, uses sleep_for() to
-        // release the CPU during blocking.
-        if (allow_sleep && _precision_duration >= milliseconds(1))
-        {
-            std::this_thread::sleep_for(delay_duration);
-        }
+        // Defines a lambda function to perform the actual delay
+        auto perform_delay = [&]() {
+            // If sleep is allowed and delay duration is sufficiently long to resolve with sleep, uses sleep_for() to
+            // release the CPU during blocking.
+            if (allow_sleep && _precision_duration >= milliseconds(1))
+            {
+                std::this_thread::sleep_for(delay_duration);
+            }
+            // If sleep is not allowed or the requested delay is too short, uses a busy-wait delay approach which
+            // uses CPU to improve delay precision.
+            else
+            {
+                const auto start = high_resolution_clock::now();
+                while (duration_cast<nanoseconds>(high_resolution_clock::now() - start) < delay_duration);
+            }
+        };
 
-        // If sleep is not allowed or the requested delay is too short, uses a busy-wait delay approach which uses CPU
-        // to improve delay precision.
+        // Executes the delay with or without GIL based on the block parameter
+        if (!block)
+        {
+            nb::gil_scoped_release release;  // Releases the GIL for the entire scope
+            perform_delay();
+        }
         else
         {
-            const auto start = high_resolution_clock::now();
-            while (duration_cast<nanoseconds>(high_resolution_clock::now() - start) < delay_duration);
+            perform_delay();  // Keeps GIL held
         }
     }
 

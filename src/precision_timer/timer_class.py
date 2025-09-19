@@ -115,7 +115,7 @@ class PrecisionTimer:
             allow_sleep: A boolean flag that allows using CPU-releasing sleep() method to suspend execution for
                 durations above 1 millisecond. Defaults to False.
         """
-        self._timer.DelayNoblock(delay, allow_sleep)
+        self._timer.Delay(delay, allow_sleep, False)
 
     def delay_block(self, delay: int, *, allow_sleep: bool = False) -> None:
         """Delays code execution for the requested period of time while maintaining GIL.
@@ -138,7 +138,7 @@ class PrecisionTimer:
             allow_sleep: A boolean flag that allows using CPU-releasing sleep() method to suspend execution for
                 durations above 1 millisecond. Defaults to False.
         """
-        self._timer.DelayBlock(delay, allow_sleep)
+        self._timer.Delay(delay, allow_sleep, True)
 
     def set_precision(self, precision: Literal["ns", "us", "ms", "s"]) -> None:
         """Changes the precision used by the timer to the input string-option.

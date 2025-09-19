@@ -11,12 +11,27 @@ import datetime
 import numpy as np
 from numpy.typing import NDArray
 from ataraxis_base_utilities import console, ensure_list
+from enum import StrEnum
+
+
+class TimeUnits(StrEnum):
+    """Stores the time units supported by the convert_time() function.
+
+    Use this enumeration to specify the source and destination time units when calling the conversion function.
+    """
+    NANOSECOND = "ns"
+    MICROSECOND = "us"
+    MILLISECOND = "ms"
+    SECOND = "s"
+    MINUTE = "m"
+    HOUR = "h"
+    DAY = "d"
 
 
 def convert_time(
     time: float | list[int | float] | tuple[int | float] | np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any] | NDArray[np.signedinteger[Any] | np.unsignedinteger[Any] | np.floating[Any]],
-    from_units: Literal["ns", "us", "ms", "s", "m", "h", "d"],
-    to_units: Literal["ns", "us", "ms", "s", "m", "h", "d"],
+    from_units: str | TimeUnits,
+    to_units: str | TimeUnits,
     *,
     convert_output: bool = True,
 ) -> float | tuple[float] | NDArray[np.float64] | np.float64:

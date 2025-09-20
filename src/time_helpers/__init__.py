@@ -1,8 +1,5 @@
-"""This package provides general-purpose methods used to work with date and time data.
+"""This package provides general-purpose helper functions used to work with date and time data."""
 
-All methods are directly accessible using package namespace.
-"""
+from .helper_functions import TimeUnits, TimestampFormats, convert_time, get_timestamp, convert_timestamp
 
-from .helper_functions import convert_time, get_timestamp, extract_timestamp_from_bytes
-
-__all__ = ["convert_time", "extract_timestamp_from_bytes", "get_timestamp"]
+__all__ = ["TimeUnits", "TimestampFormats", "convert_time", "convert_timestamp", "get_timestamp"]

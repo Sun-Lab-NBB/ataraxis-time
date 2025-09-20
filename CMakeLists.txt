@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 project(ataraxis-time LANGUAGES CXX)  # Project name != Library name
-set(LIBRARY_NAME ataraxis_time)       # What the user will import
+set(LIBRARY_NAME ataraxis_time)       # What the user imports
 
 # Prevents this instruction set from being executed from contexts other than scikit_build backend.
 if (NOT SKBUILD)

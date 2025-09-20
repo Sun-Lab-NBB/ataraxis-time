@@ -2,11 +2,11 @@
 functionality.
 """
 
-from ataraxis_base_utilities import console
 from enum import StrEnum
 
-# noinspection PyUnresolvedReferences
-from ..precision_timer_ext import CPrecisionTimer
+from ataraxis_base_utilities import console
+
+from ..precision_timer_ext import CPrecisionTimer  # type: ignore[import-not-found]
 
 
 class TimerPrecisions(StrEnum):
@@ -14,6 +14,7 @@ class TimerPrecisions(StrEnum):
 
     Use this enumeration when initializing or reconfiguring the precision used by a PrecisionTimer instance.
     """
+
     NANOSECOND = "ns"
     MICROSECOND = "us"
     MILLISECOND = "ms"
@@ -32,7 +33,7 @@ class PrecisionTimer:
         associated with using different timer methods.
 
     Attributes:
-        _timer: Stores the nanobind-generated C-extension class.
+        _timer: Stores the nanobind-generated C-extension timer class.
 
     Args:
         precision: The desired precision of the timer. Use one of the supported values defined in the TimerPrecisions
@@ -44,10 +45,6 @@ class PrecisionTimer:
     """
 
     def __init__(self, precision: str | TimerPrecisions = TimerPrecisions.MICROSECOND) -> None:
-
-        # Ensures that the precision is stored as a Precision enumeration instance.
-        precision = TimerPrecisions(precision)
-
         # If the input precision is not supported, raises an error.
         if precision not in tuple(TimerPrecisions):
             message = (
@@ -56,6 +53,9 @@ class PrecisionTimer:
                 f"{tuple(TimerPrecisions)}."
             )
             console.error(message=message, error=ValueError)
+
+        # Ensures that the precision is stored as a Precision enumeration instance.
+        precision = TimerPrecisions(precision)
 
         # Otherwise, initializes the C++ class using the input precision.
         self._timer = CPrecisionTimer(precision=precision.value)
@@ -66,14 +66,15 @@ class PrecisionTimer:
 
     @property
     def elapsed(self) -> int:
-        """Returns the time elapsed since class instantiation or the last reset() method call, whichever happened last.
+        """Returns the time elapsed since class instantiation or the last reset() method call,
+        whichever happened last.
         """
-        return self._timer.Elapsed()  
+        return int(self._timer.Elapsed())
 
     @property
     def precision(self) -> str:
         """Returns the units currently used by the instance as a string ('ns', 'us', 'ms', or 's')."""
-        return self._timer.GetPrecision()
+        return str(self._timer.GetPrecision())
 
     def reset(self) -> None:
         """Resets the timer."""
@@ -87,7 +88,7 @@ class PrecisionTimer:
                 units as used by the instance.
             allow_sleep: A boolean flag that allows releasing the CPU while suspending execution for durations above 1
                 millisecond.
-            block: Determines whether to hold (if False) or release (if True) the Global Interpreter Lock (GIL) during
+            block: Determines whether to hold (if True) or release (if False) the Global Interpreter Lock (GIL) during
                 the delay. Releasing the GIL allows other Python threads to run in parallel with the delay.
         """
         self._timer.Delay(delay, allow_sleep, block)
@@ -103,10 +104,6 @@ class PrecisionTimer:
         Raises:
             ValueError: If the input precision is not one of the accepted options.
         """
-
-        # Ensures that the precision is stored as a TimerPrecisions enumeration instance.
-        precision = TimerPrecisions(precision)
-
         # If the input precision is not supported, raises an error.
         if precision not in tuple(TimerPrecisions):
             message = (
@@ -115,6 +112,9 @@ class PrecisionTimer:
                 f"{tuple(TimerPrecisions)}."
             )
             console.error(message=message, error=ValueError)
+
+        # Ensures that the precision is stored as a TimerPrecisions enumeration instance.
+        precision = TimerPrecisions(precision)
 
         # Otherwise, updates the precision used by the C++ class.
         self._timer.SetPrecision(precision=precision.value)

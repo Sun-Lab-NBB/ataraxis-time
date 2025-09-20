@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "ataraxis-time"
 version = "4.0.0"
-description = "Provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and time data."
+description = "Provides a high-precision thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11,<3.14"
@@ -20,7 +20,7 @@ maintainers = [
 
 keywords = [
     "time",
-    "sub-microsecond precision",
+    "high precision",
     "timer",
     "elapsed",
     "delay",
@@ -82,9 +82,9 @@ dev = [
     "types-tqdm>=4,<5",
 ]
 
-# Exposes the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
+# Exposes the 'axt-benchmark' command that allows benchmarking the PrecisionTimer class on the local host-system.
 [project.scripts]
-benchmark-timer = "ataraxis_time:benchmark"
+axt-benchmark = "ataraxis_time:benchmark"
 
 # Additional Scikit-Build configuration section. Used together with CMakeLists.txt to compile the C++ extensions and
 # assemble the library.
@@ -99,15 +99,12 @@ minimum-version = "0.9"
 # Instructs the backend to use setuptools-style build caching in a local directory
 build-dir = "build/{wheel_tag}"
 
-# Builds stable ABI wheels for CPython 3.12+
-wheel.py-api = "cp312"
+# Builds stable ABI wheels for CPython 3.11+
+wheel.py-api = "cp311"
 
 # Specifies additional configuration for the cibuildwheel backend, which is used to build OS- and Platform-specific
 # binary wheels for the project.
 [tool.cibuildwheel]
-
-# Declares and enables compiling with free-threaded support (for future python versions).
-free-threaded-support = true
 
 # Specifies runtime verbosity, which is necessary to see build output from the actual compilation
 build-verbosity = 1
@@ -149,7 +146,10 @@ lint.select = ["ALL"]
 
 # General ignore directives
 lint.ignore = [
-    "W291",  # Conflicts with docstring formatting
+    "W291",    # Conflicts with docstring formatting
+    "C901",    # Conflicts with the benchmark function definition.
+    "PLR0915", # Conflicts with the benchmark function definition.
+    "TRY301",  # Conflicts with the timestamp conversion function logic.
     "COM812",  # Conflicts with the formatter
     "ISC001",  # Conflicts with the formatter
     "TID252",  # Conflicts with library import management strategy

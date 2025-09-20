@@ -1,0 +1,23 @@
+from enum import StrEnum
+
+from _typeshed import Incomplete
+
+from ..precision_timer_ext import CPrecisionTimer as CPrecisionTimer
+
+class TimerPrecisions(StrEnum):
+    NANOSECOND = "ns"
+    MICROSECOND = "us"
+    MILLISECOND = "ms"
+    SECOND = "s"
+
+class PrecisionTimer:
+    _timer: Incomplete
+    def __init__(self, precision: str | TimerPrecisions = ...) -> None: ...
+    def __repr__(self) -> str: ...
+    @property
+    def elapsed(self) -> int: ...
+    @property
+    def precision(self) -> str: ...
+    def reset(self) -> None: ...
+    def delay(self, delay: int, *, allow_sleep: bool = False, block: bool = False) -> None: ...
+    def set_precision(self, precision: str | TimerPrecisions) -> None: ...

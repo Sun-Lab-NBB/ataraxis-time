@@ -7,7 +7,7 @@ project = 'ataraxis-time'
 copyright = '2025, Sun (NeuroAI) lab'
 author = 'Ivan Kondratyev'
 # Extracts the project version from the .toml file.
-release = importlib_metadata.version("ataraxis-base-utilities")
+release = importlib_metadata.version("ataraxis-time")
 
 # -- General configuration ---------------------------------------------------
 extensions = [
@@ -16,7 +16,7 @@ extensions = [
     'sphinx_autodoc_typehints',  # To parse typehints into documentation
     'breathe',                   # To read doxygen-generated xml files (to parse C++ documentation).
     'sphinx_rtd_theme',          # To format the documentation HTML using ReadTheDocs format.
-    'sphinx_click'               # To read docstrings and command-line arguments from click-wrapped python functions.
+    'sphinx_click',              # To read docstrings and command-line arguments from click-wrapped python functions.
     'sphinx_rtd_dark_mode'       # Enables dark mode for RTD theme.
 ]
 

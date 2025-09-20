@@ -13,19 +13,14 @@ Precision Timer
 Timer Benchmark
 ===============
 
-.. automodule:: ataraxis_time.precision_timer.timer_benchmark
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. click:: ataraxis_time.precision_timer.timer_benchmark:benchmark
-   :prog: benchmark-timer
+   :prog: axt-benchmark
    :nested: full
 
 Helper Functions
 ================
 
-.. automodule:: ataraxis_time.time_helpers.helper_functions
+.. automodule:: ataraxis_time.time_helpers
    :members:
    :undoc-members:
    :show-inheritance:

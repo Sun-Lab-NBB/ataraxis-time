@@ -208,7 +208,7 @@ console.echo(f"5 seconds is {time_in_seconds} minutes.")
 #### Timestamps
 Timestamp methods are used to generate and work with microsecond-precise UTC timestamps. They work by connecting to 
 one of the global time-servers and getting the current timestamp for the UTC timezone. The generated timestamp can be 
-returned as and freely converted between the three supported formats: string, bytes' array, and an integer number of 
+returned as and freely converted between the three supported formats: string, bytes’ array, and an integer number of 
 microseconds elapsed since the UTC epoch onset.
 ```
 from ataraxis_time import get_timestamp, convert_timestamp, TimestampFormats
@@ -244,12 +244,6 @@ detailed description of the methods and classes exposed by the components of thi
 The documentation also covers the C++ source code and the axt-benchmark Command-Line-Interface (CLI) command.
 
 ___
-
-## Developers
-
-This section provides installation, dependency, and build-system instructions for the developers that want to
-modify the source code of this library. Additionally, it contains instructions for recreating the conda environments
-that were used during development from the included .yml files.
 
 ## Developers
 

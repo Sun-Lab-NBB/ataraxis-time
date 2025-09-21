@@ -62,8 +62,9 @@ ___
 
 Note, installation from source is ***highly discouraged*** for anyone who is not an active project developer.
 
-1. Download this repository to the local machine using the preferred method, such as git-cloning. Use one of the stable 
-   releases that include precompiled binary and source code distribution (sdist) wheels.
+1. Download this repository to the local machine using the preferred method, such as git-cloning. Use one of the 
+   [stable releases](https://github.com/Sun-Lab-NBB/ataraxis-time/tags) that include precompiled binary and source code 
+   distribution (sdist) wheels.
 2. ```cd``` to the root directory of the project.
 3. Run ```python -m pip install .``` to install the project. Alternatively, if using a distribution with precompiled
    binaries, use ```python -m pip install WHEEL_PATH```, replacing 'WHEEL_PATH' with the path to the wheel file.
@@ -86,8 +87,7 @@ Primarily, the functionality comes through 3 class methods: reset(), elapsed (pr
 
 #### Initialization and Configuration
 The timer takes the 'precision' to use as the only initialization argument. All instances of the timer class are 
-thread- and process-safe and do not interfere with each other. The precision of the timer can be adjusted after 
-initialization if needed, which is more efficient than re-initializing the timer.
+thread- and process-safe and do not interfere with each other.
 
 ```
 from ataraxis_time import PrecisionTimer, TimerPrecisions
@@ -97,12 +97,12 @@ console.enable()
 # Currently, the timer supports 4 'precisions: 'ns' (nanoseconds), 'us' (microseconds), 'ms' (milliseconds), and
 # 's' seconds. All precisions are defined in the TimerPrecisions enumeration.
 timer = PrecisionTimer(TimerPrecisions.MICROSECOND)
-console.echo(timer.precision)
+console.echo(f"Precision: {timer.precision}")
 
 # The precision can be adjusted after initialization if needed. While not recommended, it is possible to provide the
 # precision as a string instead of using the TimerPrecisions enumeration.
 timer.set_precision('ms')  # Switches timer precision to milliseconds
-console.echo(timer.precision)
+console.echo(f"Precision: {timer.precision}")
 ```
 
 #### Interval Timing
@@ -129,7 +129,7 @@ Delay timing functionality is the primary advantage of this library over the sta
 writing, the 'time' library can provide nanosecond-precise delays via a 'busywait' perf_counter_ns() function that does 
 not release the GIL. Alternatively, it can release the GIL via the sleep() function, but it is only accurate 
 up to millisecond precision. PrecisionTimer class can delay for time-periods within microsecond precision, while 
-releasing or holding the GIL:
+releasing or holding the GIL.
 ```
 import threading
 import time
@@ -142,15 +142,14 @@ stop = False
 
 
 def count_in_background():
-    """Background thread that increments counter."""
+    """Background thread that increments the global counter."""
     global counter
     while not stop:
         counter += 1
-        time.sleep(0.001)
 
 
 # Setup
-timer = PrecisionTimer('ms')
+timer = PrecisionTimer('us')
 console.enable()
 
 # Starts the background counter thread
@@ -158,31 +157,33 @@ thread = threading.Thread(target=count_in_background, daemon=True)
 thread.start()
 time.sleep(0.1)
 
-# GIL-releasing millisecond delays.
-console.echo("block=False (holds GIL):")
-for i in range(3):
-    timer.delay(200, block=False)  # 200ms delay
-    console.echo(f"Iteration {i}: counter = {counter}")
-non_blocking_count = counter
-
-# Non-GIL-releasing millisecond delays.
-console.echo("block=True (releases GIL):")
+# GIL-releasing microsecond delay:
+console.echo("block=False (releases GIL):")
 counter = 0  # Resets the counter
-for i in range(3):
-    timer.delay(200, block=True)  # 200ms delay
-    console.echo(f"Iteration {i}: counter = {counter}")
+timer.delay(100, block=False)  # 100us delay
+non_blocking_count = counter
+console.echo(f"counter = {counter}")
+
+# Non-GIL-releasing microsecond delay:
+console.echo("block=True (holds GIL):")
+counter = 0  # Resets the counter
+timer.delay(100, block=True)  # 100us delay
 blocking_count = counter
+console.echo(f"counter = {counter}")
 
 # Cleanup
 stop = True
-console.echo(f"Difference: block=True allows ~{non_blocking_count/blocking_count:.0f}x more counting!")
+
+# With microsecond precisions, blocking runtime often results in the counter not being incremented at all.
+if blocking_count == 0:
+    blocking_count = 1
+console.echo(f"Difference: block=False allows ~{non_blocking_count/blocking_count:.0f}x more counting!")
 thread.join()
 ```
 
 ### Date & Time Helper Functions
 These are minor helper functions that are not directly part of the timer class showcased above. Since these functions 
-are not intended for realtime applications, they are implemented using pure python (slow), rather than the fast 
-c-extension method.
+are not intended for realtime applications, they are implemented entirely in Python.
 
 #### Convert Time
 This helper function performs time-conversions, rounding to 3 Significant Figures for the chosen precision, and works 
@@ -241,7 +242,8 @@ ___
 
 See the [API documentation](https://ataraxis-time-api-docs.netlify.app/) for the
 detailed description of the methods and classes exposed by the components of this library. 
-The documentation also covers the C++ source code and the axt-benchmark Command-Line-Interface (CLI) command.
+__*Note*__, the documentation also covers the C++ source code and the ```axt-benchmark``` Command-Line-Interface 
+(CLI) command.
 
 ___
 
@@ -255,22 +257,22 @@ This section provides installation, dependency, and build-system instructions fo
 
 1. Download this repository to the local machine using the preferred method, such as git-cloning.
 2. ```cd``` to the root project directory.
-3. Install core Sun lab development dependencies into the 'base' mamba environment via the 
+3. Install core Sun lab development dependencies into the ***base*** mamba environment via the 
    ```mamba install tox uv tox-uv``` command.
 4. Use the ```tox -e create``` command to create the project-specific development environment followed by 
-   ```tox -e install``` command to isntall the project into that environment as a library.
+   ```tox -e install``` command to install the project into that environment as a library.
 
 ### Additional Dependencies
 
 In addition to installing the project and all user dependencies, install the following dependencies:
 
-1. [Doxygen](https://www.doxygen.nl/manual/install.html), if you want to generate C++ code documentation.
-2. An appropriate build tool or Docker, if you intend to build binary wheels via
-   [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/) (See the link for information on which dependencies to
-   install).
-3. [Python](https://www.python.org/downloads/) distributions, one for each version supported by the developed project. 
+1. [Python](https://www.python.org/downloads/) distributions, one for each version supported by the developed project. 
    Currently, this library supports the three latest stable versions. It is recommended to use a tool like 
    [pyenv](https://github.com/pyenv/pyenv) to install and manage the required versions.
+2. [Doxygen](https://www.doxygen.nl/manual/install.html), if you want to generate C++ code documentation.
+3. An appropriate build tool or Docker, if you intend to build binary wheels via
+   [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/). See the link for information on which dependencies to
+   install for each development platform.
 
 ### Development Automation
 
@@ -286,7 +288,7 @@ To expedite the task’s runtime, use the ```tox --parallel``` command to run so
 
 Many packages used in 'tox' automation pipelines (uv, mypy, ruff) and 'tox' itself may experience runtime failures. In 
 most cases, this is related to their caching behavior. If an unintelligible error is encountered with 
-any of the automation components, deleting the corresponding .cache (.tox, .ruff_cache, .mypy_cache, etc.) manually  
+any of the automation components, deleting the corresponding .cache (.tox, .ruff_cache, .mypy_cache, etc.) manually 
 or via a CLI command typically solves the issue.
 
 ___

@@ -120,7 +120,7 @@ def convert_time(
 def get_timestamp(
     output_format: str | TimestampFormats = TimestampFormats.STRING, time_separator: str = "-"
 ) -> str | int | NDArray[np.uint8]:
-    """Gets the current Coordinated Universal Time (UTC) timestamp (date and time) and returns it in the requested
+    """Gets the current Coordinated Universal Time (UTC) timestamp (date and time) and returns it using the requested
     output format.
 
     Notes:

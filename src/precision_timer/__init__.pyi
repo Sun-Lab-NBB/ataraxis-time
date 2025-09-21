@@ -1,4 +1,6 @@
-from .timer_class import PrecisionTimer as PrecisionTimer
-from .timer_benchmark import benchmark as benchmark
+from .timer_class import (
+    PrecisionTimer as PrecisionTimer,
+    TimerPrecisions as TimerPrecisions,
+)
 
-__all__ = ["PrecisionTimer", "benchmark"]
+__all__ = ["PrecisionTimer", "TimerPrecisions"]

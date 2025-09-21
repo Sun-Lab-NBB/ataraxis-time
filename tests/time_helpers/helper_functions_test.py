@@ -1,4 +1,4 @@
-"""Tests the functions available through the 'helper_functions' module."""
+"""Tests the functions available through the 'time_helpers' module."""
 
 import re
 from datetime import datetime, timezone
@@ -6,82 +6,30 @@ from datetime import datetime, timezone
 import numpy as np
 import pytest  # type: ignore
 from ataraxis_base_utilities import error_format
-from ataraxis_time.time_helpers import convert_time, get_timestamp, extract_timestamp_from_bytes
+from ataraxis_time import convert_time, get_timestamp, convert_timestamp, TimestampFormats, TimeUnits
 
 
 @pytest.mark.parametrize(
     "config,input_value,expected_result,expected_type",
     [
-        ({"input_type": "scalar", "input_dtype": "int", "convert_output": True}, 1000, 1.000, float),
-        ({"input_type": "scalar", "input_dtype": "float", "convert_output": True}, 1000.5, 1.000, float),
-        ({"input_type": "scalar", "input_dtype": "int", "convert_output": False}, 1000, 1.000, np.float64),
-        (
-            {"input_type": "list", "input_dtype": "int", "convert_output": True},
-            [1000, 2000, 3000],
-            [1.000, 2.000, 3.000],
-            tuple,
-        ),
-        (
-            {"input_type": "list", "input_dtype": "float", "convert_output": True},
-            [1000.5, 2000.5, 3000.5],
-            [1.000, 2.001, 3.001],
-            tuple,
-        ),
-        (
-            {"input_type": "list", "input_dtype": "int", "convert_output": False},
-            [1000, 2000, 3000],
-            np.array([1.000, 2.000, 3.000]),
-            np.ndarray,
-        ),
-        ({"input_type": "numpy_array", "input_dtype": "int", "convert_output": True}, np.array([1000]), 1.000, float),
-        (
-            {"input_type": "numpy_array", "input_dtype": "float", "convert_output": True},
-            np.array([1000.5, 2000.5, 3000.5]),
-            np.array([1.000, 2.001, 3.001]),
-            tuple,
-        ),
-        (
-            {"input_type": "numpy_array", "input_dtype": "int", "convert_output": False},
-            np.array([1000, 2000, 3000]),
-            np.array([1.000, 2.000, 3.000]),
-            np.ndarray,
-        ),
-        (
-            {"input_type": "numpy_scalar", "input_dtype": "int", "convert_output": True},
-            np.array(1000).astype(np.int32),
-            1.000,
-            float,
-        ),
-        (
-            {"input_type": "numpy_scalar", "input_dtype": "float", "convert_output": True},
-            np.array(1000.5).astype(np.float32),
-            1.000,
-            float,
-        ),
-        (
-            {"input_type": "numpy_scalar", "input_dtype": "int", "convert_output": False},
-            np.array(1000).astype(np.uint32),
-            1.000,
-            np.float64,
-        ),
+        ({"input_type": "scalar", "input_dtype": "int", "as_float": True}, 1000, 1.000, float),
+        ({"input_type": "scalar", "input_dtype": "float", "as_float": True}, 1000.5, 1.000, float),
+        ({"input_type": "scalar", "input_dtype": "int", "as_float": False}, 1000, 1.000, np.float64),
+        ({"input_type": "numpy_scalar", "input_dtype": "int", "as_float": True}, np.int32(1000), 1.000, float),
+        ({"input_type": "numpy_scalar", "input_dtype": "float", "as_float": True}, np.float32(1000.5), 1.000, float),
+        ({"input_type": "numpy_scalar", "input_dtype": "int", "as_float": False}, np.uint32(1000), 1.000, np.float64),
     ],
 )
 def test_convert_time(config, input_value, expected_result, expected_type):
     """Verifies the functioning of the convert_time() function.
 
     Evaluates the following input scenarios:
-        0 - Scalar int input, convert_output=True -> float
-        1 - Scalar float input, convert_output=True -> float
-        2 - Scalar int input, convert_output=False -> numpy float
-        3 - List int input, convert_output=True -> tuple[float]
-        4 - List float input, convert_output=True -> tuple[float]
-        5 - One-item List int input, convert_output=False -> numpy float
-        6 - One-item Numpy array int input, convert_output=True -> float
-        7 - Numpy array float input, convert_output=True -> tuple[float]
-        8 - Numpy array int input, convert_output=False -> numpy array [numpy float]
-        9 - Numpy scalar signed int input, convert_output=True -> float
-        10 - Numpy scalar float input, convert_output=True -> float
-        11 - Numpy scalar unsigned int input, convert_output=False -> numpy float
+        0 - Scalar int input, as_float=True -> float
+        1 - Scalar float input, as_float=True -> float
+        2 - Scalar int input, as_float=False -> numpy float64
+        3 - Numpy scalar signed int input, as_float=True -> float
+        4 - Numpy scalar float input, as_float=True -> float
+        5 - Numpy scalar unsigned int input, as_float=False -> numpy float64
 
     Args:
         config: The configuration for the test case.
@@ -90,59 +38,24 @@ def test_convert_time(config, input_value, expected_result, expected_type):
         expected_type: The expected type of the result.
     """
     # Runs the converter
-    result = convert_time(input_value, from_units="ms", to_units="s", convert_output=config["convert_output"])
+    result = convert_time(input_value, from_units="ms", to_units="s", as_float=config["as_float"])
 
     # Verifies the output type
     assert isinstance(result, expected_type)
 
-    # Verifies the output value splitting for scalar / iterable outputs
-    if isinstance(result, (float, np.float64)):
-        assert result == expected_result
-    elif isinstance(result, (list, np.ndarray)):
-        assert np.allclose(result, expected_result)
+    # Verifies the output value
+    assert result == expected_result
 
 
 def test_convert_time_errors() -> None:
     """Verifies the error-handling behavior of the convert_time() method."""
 
-    # This dict is the same as the one used by the method. Here, it is used to reconstruct the expected error messages.
-    conversion_dict: dict = {
-        "d": 86400,  # seconds in a day
-        "h": 3600,  # seconds in an hour
-        "m": 60,  # seconds in a minute
-        "s": 1,  # second
-        "ms": 0.001,  # millisecond
-        "us": 1e-6,  # microsecond
-        "ns": 1e-9,  # nanosecond
-    }
-
-    # Tests multidimensional numpy array invalid 'time' argument input
-    invalid_array = np.zeros(shape=(5, 5))
-    message = (
-        f"Unable to convert input time-values to the requested time-format. Expected a one-dimensional Python or "
-        f"numpy iterable inputs as 'time', but encountered a numpy array with unsupported shape "
-        f"({invalid_array.shape}) and dimensionality ({invalid_array.ndim})."
-    )
-    with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
-        convert_time(invalid_array, from_units="s", to_units="ms")
-
-    # Tests general invalid 'time' argument type input.
-    invalid_type = object()
-    message = (
-        f"Invalid 'time' argument type encountered when converting input time-values to the requested time-format. "
-        f"Expected a valid Python or numpy numeric scalar or iterable with float-convertible elements as input, "
-        f"but encountered {invalid_type} of type {type(invalid_type).__name__}."
-    )
-    with pytest.raises(TypeError, match=error_format(message)):
-        # noinspection PyTypeChecker
-        convert_time(invalid_type, from_units="s", to_units="ms")
-
     # Tests invalid 'from_units' argument value (and, indirectly, type).
     invalid_input: str = "invalid"
     message = (
         f"Unsupported 'from_units' argument value ({invalid_input}) encountered when converting input time-values to "
-        f"the requested time-format. Use one of the supported time-units: {', '.join(conversion_dict.keys())}."
+        f"the requested time-format. Use one of the valid members defined in the TimeUnits enumeration: "
+        f"{', '.join(tuple(TimeUnits))}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -151,65 +64,92 @@ def test_convert_time_errors() -> None:
     # Tests invalid 'to_units' argument value (and, indirectly, type).
     message = (
         f"Unsupported 'to_units' argument value ({invalid_input}) encountered when converting input time-values to "
-        f"the requested time-format. Use one of the supported time-units: {', '.join(conversion_dict.keys())}."
+        f"the requested time-format. Use one of the valid members defined in the TimeUnits enumeration: "
+        f"{', '.join(tuple(TimeUnits))}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
         convert_time(1, from_units="s", to_units=invalid_input)
 
-    # Tests invalid element type inside a list 'time' argument input.
-    message = (
-        f"Invalid element type encountered in the input 'time' argument, when attempting to convert input "
-        f"time-values to the requested time-format. After converting 'time' to a list and iterating over "
-        f"elements, index {1} ({None}) of type {type(None).__name__} is not float-convertible."
-    )
-    invalid_list: list = [1, None, 3]
-    with pytest.raises(TypeError, match=error_format(message)):
-        # noinspection PyTypeChecker
-        convert_time(invalid_list, from_units="s", to_units="ms")
 
-    # Test invalid element type inside a numpy array 'time' argument input (uses the same error message as a list).
-    invalid_array: np.ndarray = np.array([1, None, 3])
-    with pytest.raises(TypeError, match=error_format(message)):
-        # noinspection PyTypeChecker
-        convert_time(invalid_array, from_units="s", to_units="ms")
+def test_get_timestamp_string_format() -> None:
+    """Verifies the functioning of the get_timestamp() method with string output format."""
 
-
-def test_get_timestamp() -> None:
-    """Verifies the functioning of the get_timestamp() method."""
-
-    # Tests default separator with microseconds
+    # Tests default separator with string format (default)
     timestamp = get_timestamp()
+    assert isinstance(timestamp, str)
     assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{6}", timestamp)
 
-    # Tests custom separator with microseconds
-    timestamp = get_timestamp(time_separator="_")
+    # Tests the explicit string format with the default separator
+    timestamp = get_timestamp(output_format=TimestampFormats.STRING)
+    assert isinstance(timestamp, str)
+    assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{6}", timestamp)
+
+    # Tests custom separator with string format
+    timestamp = get_timestamp(output_format=TimestampFormats.STRING, time_separator="_")
+    assert isinstance(timestamp, str)
     assert re.match(r"\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}_\d{6}", timestamp)
 
-    # Tests bytes output
-    timestamp_bytes = get_timestamp(as_bytes=True)
+    # Tests another custom separator
+    timestamp = get_timestamp(output_format=TimestampFormats.STRING, time_separator=":")
+    assert isinstance(timestamp, str)
+    assert re.match(r"\d{4}:\d{2}:\d{2}:\d{2}:\d{2}:\d{2}:\d{6}", timestamp)
+
+
+def test_get_timestamp_bytes_format() -> None:
+    """Verifies the functioning of the get_timestamp() method with bytes' output format."""
+
+    # Tests bytes' output
+    timestamp_bytes = get_timestamp(output_format=TimestampFormats.BYTES)
     assert isinstance(timestamp_bytes, np.ndarray)
     assert timestamp_bytes.dtype == np.uint8
+    assert timestamp_bytes.ndim == 1
 
-    # Verifies the bytes timestamp is the correct length (8 bytes for int64)
+    # Verifies the bytes' timestamp is the correct length (8 bytes for int64)
     assert len(timestamp_bytes) == 8
 
+    # Tests that time_separator is ignored for bytes' format
+    timestamp_bytes2 = get_timestamp(output_format=TimestampFormats.BYTES, time_separator="_")
+    assert isinstance(timestamp_bytes2, np.ndarray)
+    assert timestamp_bytes2.dtype == np.uint8
+    assert len(timestamp_bytes2) == 8
 
-def test_extract_timestamp_from_bytes() -> None:
-    """Verifies the functioning of the extract_timestamp_from_bytes() method."""
+
+def test_get_timestamp_integer_format() -> None:
+    """Verifies the functioning of the get_timestamp() method with integer output format."""
+
+    # Tests integer output
+    timestamp_int = get_timestamp(output_format=TimestampFormats.INTEGER)
+    assert isinstance(timestamp_int, int)
+
+    # Verifies it's a reasonable microsecond timestamp (after the year 2020 and before the year 2050)
+    assert 1577836800000000 < timestamp_int < 2524608000000000
+
+    # Tests that time_separator is ignored for integer format
+    timestamp_int2 = get_timestamp(output_format=TimestampFormats.INTEGER, time_separator="_")
+    assert isinstance(timestamp_int2, int)
+
+    # Verifies timestamps are close (within 1 second)
+    assert abs(timestamp_int2 - timestamp_int) < 1_000_000
+
+
+def test_convert_timestamp_bytes_to_string() -> None:
+    """Verifies the functioning of convert_timestamp() when converting from bytes to string format."""
 
     # Gets a timestamp in bytes
-    timestamp_bytes = get_timestamp(as_bytes=True)
+    timestamp_bytes = get_timestamp(output_format=TimestampFormats.BYTES)
 
-    # Tests the default separator
-    decoded = extract_timestamp_from_bytes(timestamp_bytes)
+    # Converts to string with the default separator
+    decoded = convert_timestamp(timestamp_bytes, output_format=TimestampFormats.STRING)
+    assert isinstance(decoded, str)
     assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{6}", decoded)
 
-    # Tests a custom separator
-    decoded = extract_timestamp_from_bytes(timestamp_bytes, time_separator="_")
+    # Converts to string with custom separator
+    decoded = convert_timestamp(timestamp_bytes, time_separator="_", output_format=TimestampFormats.STRING)
+    assert isinstance(decoded, str)
     assert re.match(r"\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}_\d{6}", decoded)
 
-    # Parses the decoded timestamp
+    # Parses the decoded timestamp to verify components
     components = decoded.split("_")
     assert len(components) == 7  # Year, month, day, hour, minute, second, microsecond
 
@@ -222,7 +162,7 @@ def test_extract_timestamp_from_bytes() -> None:
     second = int(components[5])
     microsecond = int(components[6])
 
-    assert 2024 <= year <= 2025  # Valid year range
+    assert 2024 <= year <= 2026  # Valid year range for current tests
     assert 1 <= month <= 12  # Valid month
     assert 1 <= day <= 31  # Valid day
     assert 0 <= hour <= 23  # Valid hour
@@ -231,58 +171,251 @@ def test_extract_timestamp_from_bytes() -> None:
     assert 0 <= microsecond <= 999999  # Valid microseconds
 
 
+def test_convert_timestamp_integer_to_string() -> None:
+    """Verifies the functioning of convert_timestamp() when converting from integer to string format."""
+
+    # Gets a timestamp as an integer
+    timestamp_int = get_timestamp(output_format=TimestampFormats.INTEGER)
+
+    # Converts to string
+    decoded = convert_timestamp(timestamp_int, output_format=TimestampFormats.STRING)
+    assert isinstance(decoded, str)
+    assert re.match(r"\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{6}", decoded)
+
+    # Converts with custom separator
+    decoded = convert_timestamp(timestamp_int, time_separator="/", output_format=TimestampFormats.STRING)
+    assert isinstance(decoded, str)
+    assert re.match(r"\d{4}/\d{2}/\d{2}/\d{2}/\d{2}/\d{2}/\d{6}", decoded)
+
+
+def test_convert_timestamp_string_to_integer() -> None:
+    """Verifies the functioning of convert_timestamp() when converting from string to integer format."""
+
+    # Gets a timestamp as a string
+    timestamp_str = get_timestamp(output_format=TimestampFormats.STRING)
+
+    # Converts to integer
+    result = convert_timestamp(timestamp_str, output_format=TimestampFormats.INTEGER)
+    assert isinstance(result, int)
+    assert 1577836800000000 < result < 2524608000000000  # Reasonable range
+
+    # Tests with custom separator input
+    timestamp_str = get_timestamp(output_format=TimestampFormats.STRING, time_separator="_")
+    result = convert_timestamp(timestamp_str, time_separator="_", output_format=TimestampFormats.INTEGER)
+    assert isinstance(result, int)
+
+
+def test_convert_timestamp_string_to_bytes() -> None:
+    """Verifies the functioning of convert_timestamp() when converting from string to bytes' format."""
+
+    # Gets a timestamp as a string
+    timestamp_str = get_timestamp(output_format=TimestampFormats.STRING)
+
+    # Converts to bytes
+    result = convert_timestamp(timestamp_str, output_format=TimestampFormats.BYTES)
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.uint8
+    assert len(result) == 8
+
+
+def test_convert_timestamp_bytes_to_integer() -> None:
+    """Verifies the functioning of convert_timestamp() when converting from bytes to integer format."""
+
+    # Gets a timestamp as bytes
+    timestamp_bytes = get_timestamp(output_format=TimestampFormats.BYTES)
+
+    # Converts to integer
+    result = convert_timestamp(timestamp_bytes, output_format=TimestampFormats.INTEGER)
+    assert isinstance(result, int)
+    assert 1577836800000000 < result < 2524608000000000
+
+
+def test_convert_timestamp_integer_to_bytes() -> None:
+    """Verifies the functioning of convert_timestamp() when converting from integer to bytes' format."""
+
+    # Gets a timestamp as an integer
+    timestamp_int = get_timestamp(output_format=TimestampFormats.INTEGER)
+
+    # Converts to bytes
+    result = convert_timestamp(timestamp_int, output_format=TimestampFormats.BYTES)
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.uint8
+    assert len(result) == 8
+
+
 def test_get_timestamp_errors() -> None:
     """Verifies the error-handling behavior of the get_timestamp() method."""
 
     # Tests invalid time_separator type
     invalid_time_separator: int = 123
     message = (
-        f"Invalid 'time_separator' argument type encountered when attempting to obtain the current timestamp. "
+        f"Invalid 'time_separator' argument type encountered when getting the current UTC timestamp. "
         f"Expected {type(str).__name__}, but encountered {invalid_time_separator} of type "
         f"{type(invalid_time_separator).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         # noinspection PyTypeChecker
-        get_timestamp(time_separator=invalid_time_separator)
+        get_timestamp(output_format=TimestampFormats.STRING, time_separator=invalid_time_separator)
 
-
-def test_extract_timestamp_from_bytes_errors() -> None:
-    """Verifies the error-handling behavior of the extract_timestamp_from_bytes() method."""
-
-    # Tests invalid input type
-    invalid_input = [1, 2, 3]  # List instead of numpy array
+    # Tests invalid output_format value
+    invalid_format = "invalid"
     message = (
-        f"Invalid 'timestamp_bytes' argument type encountered when decoding timestamp from input bytes array. "
-        f"Expected a one-dimensional uint8 numpy array, but got {invalid_input} of type "
+        f"Unsupported 'format' argument value ({invalid_format}) encountered when getting the current UTC "
+        f"timestamp. Use one of the valid members defined in the TimestampFormats enumeration: "
+        f"{', '.join(tuple(TimestampFormats))}."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        # noinspection PyTypeChecker
+        get_timestamp(output_format=invalid_format)
+
+
+def test_convert_timestamp_errors() -> None:
+    """Verifies the error-handling behavior of the convert_timestamp() method."""
+
+    # Tests an invalid input type
+    invalid_input = {"key": "value"}  # Dict instead of valid types
+    message = (
+        f"Invalid 'timestamp' argument type encountered when converting timestamp. "
+        f"Expected string, integer, or NumPy array, but got {invalid_input} of type "
         f"{type(invalid_input).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         # noinspection PyTypeChecker
-        extract_timestamp_from_bytes(invalid_input)
+        convert_timestamp(invalid_input)
 
-    # Tests invalid numpy array (wrong size)
-    invalid_array = np.array([1, 2, 3], dtype=np.uint8)  # Wrong size
-    with pytest.raises(ValueError):
-        extract_timestamp_from_bytes(invalid_array)
+    # Tests an invalid numpy array (wrong dtype)
+    invalid_array = np.array([1, 2, 3], dtype=np.float32)
+    message = (
+        f"Invalid 'timestamp' argument type encountered when converting a bytes' timestamp. "
+        f"Expected a one-dimensional uint8 numpy array, but got {invalid_array} of type "
+        f"{type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape {invalid_array.shape}."
+    )
+    with pytest.raises(TypeError, match=error_format(message)):
+        convert_timestamp(invalid_array)
+
+    # Tests an invalid numpy array (wrong dimensions)
+    invalid_array = np.array([[1, 2], [3, 4]], dtype=np.uint8)
+    message = (
+        f"Invalid 'timestamp' argument type encountered when converting a bytes' timestamp. "
+        f"Expected a one-dimensional uint8 numpy array, but got {invalid_array} of type "
+        f"{type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape {invalid_array.shape}."
+    )
+    with pytest.raises(TypeError, match=error_format(message)):
+        convert_timestamp(invalid_array)
+
+    # Tests invalid time_separator type
+    invalid_separator: float = 3.14
+    message = (
+        f"Invalid 'time_separator' argument type encountered when converting timestamp. "
+        f"Expected {type(str).__name__}, but encountered {invalid_separator} of type "
+        f"{type(invalid_separator).__name__}."
+    )
+    with pytest.raises(TypeError, match=error_format(message)):
+        # noinspection PyTypeChecker
+        convert_timestamp("2024-01-01-12-00-00-000000", time_separator=invalid_separator)
+
+    # Tests invalid output_format value
+    invalid_format = "invalid"
+    message = (
+        f"Unsupported 'output_format' argument value ({invalid_format}) encountered when converting "
+        f"timestamp. Use one of the valid members defined in the TimestampFormats enumeration: "
+        f"{', '.join(tuple(TimestampFormats))}."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        # noinspection PyTypeChecker
+        convert_timestamp(12345, output_format=invalid_format)
+
+    # Tests an invalid string format (wrong number of parts)
+    invalid_string = "2024-01-01"
+    message = (
+        f"Invalid timestamp string format encountered when converting timestamp. "
+        f"Expected format YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        convert_timestamp(invalid_string)
+
+    # Tests an invalid string format (non-numeric parts)
+    invalid_string = "2024-01-01-12-00-00-abcdef"
+    message = (
+        f"Invalid timestamp string format encountered when converting timestamp. "
+        f"Expected format YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        convert_timestamp(invalid_string)
 
 
-def test_timestamp_roundtrip() -> None:
-    """Verifies that encoding and decoding a timestamp preserves the information."""
+def test_timestamp_roundtrip_all_formats() -> None:
+    """Verifies that converting between all timestamp formats preserves the information."""
 
-    # Gets current timestamp in bytes
-    timestamp_bytes = get_timestamp(as_bytes=True)
+    # Get an initial timestamp in all formats
+    original_str = get_timestamp(output_format=TimestampFormats.STRING)
+    original_int = get_timestamp(output_format=TimestampFormats.INTEGER)
+    original_bytes = get_timestamp(output_format=TimestampFormats.BYTES)
 
-    # Decodes it back to string
-    decoded = extract_timestamp_from_bytes(timestamp_bytes)
+    # String -> Integer -> String
+    str_to_int = convert_timestamp(original_str, output_format=TimestampFormats.INTEGER)
+    int_to_str = convert_timestamp(str_to_int, output_format=TimestampFormats.STRING)
+    assert int_to_str == original_str
 
-    # Gets a fresh timestamp for comparison structure
-    fresh = get_timestamp()
+    # String -> Bytes -> String
+    str_to_bytes = convert_timestamp(original_str, output_format=TimestampFormats.BYTES)
+    bytes_to_str = convert_timestamp(str_to_bytes, output_format=TimestampFormats.STRING)
+    assert bytes_to_str == original_str
 
-    # Verifies the structure matches (same number of components, same separators)
-    assert len(decoded.split("-")) == len(fresh.split("-"))
+    # Integer -> Bytes -> Integer
+    int_to_bytes = convert_timestamp(original_int, output_format=TimestampFormats.BYTES)
+    bytes_to_int = convert_timestamp(int_to_bytes, output_format=TimestampFormats.INTEGER)
+    assert bytes_to_int == original_int
 
-    # Verifies the decoded timestamp represents a valid datetime
-    components = decoded.split("-")
+    # Integer -> String -> Integer
+    int_to_str = convert_timestamp(original_int, output_format=TimestampFormats.STRING)
+    str_to_int = convert_timestamp(int_to_str, output_format=TimestampFormats.INTEGER)
+    assert str_to_int == original_int
+
+    # Bytes -> String -> Bytes
+    bytes_to_str = convert_timestamp(original_bytes, output_format=TimestampFormats.STRING)
+    str_to_bytes = convert_timestamp(bytes_to_str, output_format=TimestampFormats.BYTES)
+    assert np.array_equal(str_to_bytes, original_bytes)
+
+    # Bytes -> Integer -> Bytes
+    bytes_to_int = convert_timestamp(original_bytes, output_format=TimestampFormats.INTEGER)
+    int_to_bytes = convert_timestamp(bytes_to_int, output_format=TimestampFormats.BYTES)
+    assert np.array_equal(int_to_bytes, original_bytes)
+
+
+def test_timestamp_custom_separator_roundtrip() -> None:
+    """Verifies that custom separators work correctly in roundtrip conversions."""
+
+    # Test with underscore separator
+    original = get_timestamp(output_format=TimestampFormats.STRING, time_separator="_")
+    to_int = convert_timestamp(original, time_separator="_", output_format=TimestampFormats.INTEGER)
+    back_to_str = convert_timestamp(to_int, time_separator="_", output_format=TimestampFormats.STRING)
+    assert back_to_str == original
+
+    # Test with colon separator
+    original = get_timestamp(output_format=TimestampFormats.STRING, time_separator=":")
+    to_bytes = convert_timestamp(original, time_separator=":", output_format=TimestampFormats.BYTES)
+    back_to_str = convert_timestamp(to_bytes, time_separator=":", output_format=TimestampFormats.STRING)
+    assert back_to_str == original
+
+    # Test conversion between different separators
+    original = get_timestamp(output_format=TimestampFormats.STRING, time_separator="-")
+    to_int = convert_timestamp(original, time_separator="-", output_format=TimestampFormats.INTEGER)
+    with_new_sep = convert_timestamp(to_int, time_separator="_", output_format=TimestampFormats.STRING)
+    assert original.replace("-", "_") == with_new_sep
+
+
+def test_timestamp_datetime_validity() -> None:
+    """Verifies that all timestamp formats represent valid datetime objects."""
+
+    # Get timestamp in integer format
+    timestamp_int = get_timestamp(output_format=TimestampFormats.INTEGER)
+
+    # Convert to string and parse
+    timestamp_str = convert_timestamp(timestamp_int, output_format=TimestampFormats.STRING)
+    components = timestamp_str.split("-")
+
+    # Create datetime object and verify it's valid
     dt = datetime(
         year=int(components[0]),
         month=int(components[1]),
@@ -291,5 +424,10 @@ def test_timestamp_roundtrip() -> None:
         minute=int(components[4]),
         second=int(components[5]),
         microsecond=int(components[6]),
+        tzinfo=timezone.utc,
     )
     assert isinstance(dt, datetime)
+
+    # Verify the datetime converts back to the same microseconds
+    reconstructed_microseconds = int(dt.timestamp() * 1_000_000)
+    assert abs(reconstructed_microseconds - timestamp_int) < 1  # Allow for rounding

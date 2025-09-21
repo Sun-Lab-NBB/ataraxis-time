@@ -1,5 +1,4 @@
-# Defines the build system used for the project. In this case, uses nanobind to link C++ extensions to Python packages
-# and scikit-build-core to compile the C++ code and build python wheels.
+# Defines the build system used for the project.
 [build-system]
 requires = ["scikit-build-core>=0,<1", "nanobind>=2,<3"]
 build-backend = "scikit_build_core.build"
@@ -7,13 +6,13 @@ build-backend = "scikit_build_core.build"
 # Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "3.0.0"
-description = "Provides a sub-microsecond-precise thread-safe timer and helper methods to work with date and time data."
+version = "4.0.0"
+description = "Provides a high-precision thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 authors = [
-    { name = "Ivan Kondratyev", email = "ik278@cornell.edu" },
+    { name = "Ivan Kondratyev" },
 ]
 maintainers = [
     { name = "Ivan Kondratyev", email = "ik278@cornell.edu" },
@@ -21,7 +20,7 @@ maintainers = [
 
 keywords = [
     "time",
-    "sub-microsecond precision",
+    "high precision",
     "timer",
     "elapsed",
     "delay",
@@ -49,99 +48,43 @@ classifiers = [
     # Supported Operating Systems
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
-    "Operating System :: MacOS :: MacOS X"
+    "Operating System :: MacOS :: MacOS X",
+    # Typing
+    "Typing :: Typed"
 ]
 
-# Project-wide dependencies
+# Runtime project dependencies.
 dependencies = [
     "numpy>=2,<3",
     "click>=8,<9",
     "tqdm>=4,<5",
-    "ataraxis-base-utilities>=3,<4",
+    "ataraxis-base-utilities>=4,<5",
 ]
 
 [project.urls]
 Homepage = "https://github.com/Sun-Lab-NBB/ataraxis-time"
 Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 
-# Specifies additional dependencies that can be installed alongside the main library. Also, this is the section that
-# stores conda, condarun and noconda lists that facilitate setting up dependencies via conda where possible.
+# Specifies additional dependencies that can be installed alongside the main library.
 [project.optional-dependencies]
 
-# Runtime dependencies known to be installable with conda for all development platforms
-# (OSX ARM64, WIN AMD64, LIN AMD64). This specification is used by ataraxis-automation to resolve as many
-# project dependencies with conda over pip as possible.
-condarun = [
-    "numpy>=2,<3",
-    "click>=8,<9",
-    "tqdm>=4,<5",
-]
+# Dependencies that support developing this project.
+dev = [
+    # Tox
+    "tox>=4,<5",
+    "uv>=0,<1",
+    "tox-uv>=1,<2",
 
-# Dependencies known to be installable with conda for all development platforms (OSX ARM64, WIN AMD64, LIN AMD64).
-conda = [
-    # Testing
-    "pytest>=8,<9",
-    "pytest-cov>=6,<7",
-    "pytest-xdist>=3,<4",
-
-    # Coverage Reports
-    "coverage[toml]>=7,<8",
-    "junitparser>=3,<4",
-
-    # Documentation
-    "sphinx>=8,<9",
-    "importlib_metadata>=8,<9",
-    "sphinx-rtd-theme>=3,<4",
-    "sphinx-click>=6,<7",
-    "sphinx-autodoc-typehints>=2,<3",
-    "breathe>=4,<5",
-
-    # Linting and Stub-generation
-    "mypy>=1,<2",
-    "ruff>=0,<1",
+    # Development Automation
+    "ataraxis-automation>=6,<7",
 
     # Types
     "types-tqdm>=4,<5",
-
-    # Building
-    "nanobind>=2,<3",
-    "scikit-build-core>=0,<1",
-
-    # Distribution
-    "twine>=5,<6",
-    "grayskull>=2,<3",
-
-    # Miscellaneous helpers
-    "black>=24,<25",
 ]
 
-# Dependencies known to not be installable with conda for at least one supported development platform
-# (OSX ARM64, WIN AMD64, LIN AMD64).
-noconda = [
-    # Tox
-    "tox>=4,<5",
-    "tox-uv>=1,<2",
-    "uv>=0,<1",
-
-    # Building
-    "cibuildwheel[uv]>=2,<3",
-    "build>=1,<2",
-
-    # Automation
-    "ataraxis-automation>=4,<5",
-]
-
-# A shorthand specification that installs tox and all packages required for development tasks. This specification can
-# be used by developers to quickly install all necessary components for working on this project. Has to be installed
-# from pip.
-dev = [
-    "ataraxis-time[conda]",
-    "ataraxis-time[noconda]"
-]
-
-# Exposes the shorthand 'benchmark_timer' command to allow users to quickly benchmark the timer class on their systems.
+# Exposes the 'axt-benchmark' command that allows benchmarking the PrecisionTimer class on the local host-system.
 [project.scripts]
-benchmark-timer = "ataraxis_time:benchmark"
+axt-benchmark = "ataraxis_time:benchmark"
 
 # Additional Scikit-Build configuration section. Used together with CMakeLists.txt to compile the C++ extensions and
 # assemble the library.
@@ -156,47 +99,41 @@ minimum-version = "0.9"
 # Instructs the backend to use setuptools-style build caching in a local directory
 build-dir = "build/{wheel_tag}"
 
-# Builds stable ABI wheels for CPython 3.12+
-wheel.py-api = "cp312"
+# Builds stable ABI wheels for CPython 3.11+
+wheel.py-api = "cp311"
 
 # Specifies additional configuration for the cibuildwheel backend, which is used to build OS- and Platform-specific
-# binary wheels for the project. Technically, this step can be outsourced to GitHub actions, but, for now, it is only
-# available locally (via 'tox -e build' command).
+# binary wheels for the project.
 [tool.cibuildwheel]
-
-# Declares and enables compiling with free-threaded support (for future python versions).
-free-threaded-support = true
 
 # Specifies runtime verbosity, which is necessary to see build output from the actual compilation
 build-verbosity = 1
 
-# Builds wheels for AMD64 and ARM64 for all platforms and x86 for Linux and Windows. Currently, only these fairly
-# common architectures are supported. This set of requirements is adjusted to work for each supported platform.
+# Builds wheels for AMD64 and ARM64 for all platforms and x86 for Linux and Windows.
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
 [tool.cibuildwheel.linux]
-# Note, to cross-compile on Linux, you need to first install this for Docker https://hub.docker.com/r/tonistiigi/binfmt.
+# Note. To cross-compile on Linux install this for Docker https://hub.docker.com/r/tonistiigi/binfmt.
 archs = ["i686", "aarch64", "x86_64"]
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "ARM64", "x86"]
 
-# Instructs the frontend to use uv over pip, which significantly improves build speed (but may not work in some cases).
+# Instructs the frontend to use uv over pip, which significantly improves the build speed.
 build-frontend = "build[uv]"
 
 # Runs pytest to ensure that each binary wheel was built correctly. Uses pytest-xdist to optimize testing speed
 # by using '-n (default: logical)' number of parallel workers and 'loadgroup' balancing strategy. This combination of
-# parameters results in the best speed-to-safety ratio. Make sure you know how to specify test groups, which is
-# respected by 'loadgroup' and can be used to prevent parallel access to non-sharable hardware resources.
+# parameters results in the best speed-to-safety ratio.
 test-command = "pytest {project}/tests -n logical --dist loadgroup"
 test-requires = ["pytest", "pytest-xdist"]
 
-# Specifies the OSx deployment target, which is needed for full C++17 support (not available in all OSx versions).
+# Specifies the macOS deployment target, which is needed for full C++17 support (not available in all macOS versions).
 [tool.cibuildwheel.macos.environment]
 MACOSX_DEPLOYMENT_TARGET = "15.1"
 
 # Ruff Configuration.
 [tool.ruff]
-line-length = 120         # Maximum column length is set to 120 for this project.
+line-length = 120         # The maximum column length is set to 120 for this project
 indent-width = 4          # Same as black, indents are 4 spaces
 target-version = "py311"  # Targets the lowest supported version of python
 src = ["src"]             # The name of the source directory
@@ -209,8 +146,13 @@ lint.select = ["ALL"]
 
 # General ignore directives
 lint.ignore = [
+    "W291",    # Conflicts with docstring formatting
+    "C901",    # Conflicts with the benchmark function definition.
+    "PLR0915", # Conflicts with the benchmark function definition.
+    "TRY301",  # Conflicts with the timestamp conversion function logic.
     "COM812",  # Conflicts with the formatter
     "ISC001",  # Conflicts with the formatter
+    "TID252",  # Conflicts with library import management strategy
     "PT001",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
     "PT023",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
     "D107",    # Project-specific, __init__ is documented inside the main class docstring where applicable
@@ -223,7 +165,7 @@ lint.ignore = [
 quote-style = "double"             # Uses double quotes for strings
 indent-style = "space"             # Uses space for indents
 skip-magic-trailing-comma = false  # Like black, ignores trailing commas
-line-ending = "auto"               # Automatically detects and standardizes line ending character
+line-ending = "auto"               # Automatically detects and standardizes line-ending character
 
 # Docstrings and comments' line length
 [tool.ruff.lint.pycodestyle]
@@ -249,8 +191,27 @@ length-sort = true                 # Places shorter imports first
 
 # MyPy configuration section.
 [tool.mypy]
-disallow_untyped_defs = true  # Enforces function annotation
-warn_unused_ignores = true    # Warns against using 'type: ignore' for packages that have type stubs available.
+# Strict mode settings (equivalent to --strict)
+warn_unused_configs = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_reexport = true
+strict_equality = true
+
+# Extra checks (equivalent to --extra-checks)
+extra_checks = true
+
+# Pretty output (equivalent to --pretty)
+pretty = true
+
 exclude = [
     "ataraxis-time-\\d+", # Ignores temporary folder created by setuptools when building the sdist
     "venv.*/",            # Ignores virtual environments
@@ -269,3 +230,15 @@ source = ["src/", ".tox/*/lib/python*/site-packages/"]  # Maps coverage measured
 # Same as above, specifies the output directory for the coverage .html report
 [tool.coverage.html]
 directory = "reports/coverage_html"
+
+# Specifies additional ignore directives
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __del__",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+]

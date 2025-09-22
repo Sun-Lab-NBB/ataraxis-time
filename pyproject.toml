@@ -126,7 +126,7 @@ test-requires = ["pytest", "pytest-xdist"]
 
 # Specifies the macOS deployment target, which is needed for full C++17 support (not available in all macOS versions).
 [tool.cibuildwheel.macos.environment]
-MACOSX_DEPLOYMENT_TARGET = "15.6"
+MACOSX_DEPLOYMENT_TARGET = "26.0"
 
 # Ruff Configuration.
 [tool.ruff]

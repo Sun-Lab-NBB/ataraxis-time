@@ -99,9 +99,6 @@ minimum-version = "0.9"
 # Instructs the backend to use setuptools-style build caching in a local directory
 build-dir = "build/{wheel_tag}"
 
-# Builds stable ABI wheels for CPython 3.12+
-wheel.py-api = "cp312"
-
 # Specifies additional configuration for the cibuildwheel backend, which is used to build OS- and Platform-specific
 # binary wheels for the project.
 [tool.cibuildwheel]

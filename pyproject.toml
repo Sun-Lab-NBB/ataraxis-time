@@ -84,7 +84,7 @@ dev = [
 
 # Exposes the 'axt-benchmark' command that allows benchmarking the PrecisionTimer class on the local host-system.
 [project.scripts]
-axt-benchmark = "ataraxis_time:benchmark"
+axt-benchmark = "ataraxis_time.precision_timer.timer_benchmark:benchmark"
 
 # Additional Scikit-Build configuration section. Used together with CMakeLists.txt to compile the C++ extensions and
 # assemble the library.

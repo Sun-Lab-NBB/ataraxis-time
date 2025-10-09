@@ -30,9 +30,8 @@ set(SKBUILD_SABI_SUPPORTED ${Python_SABI_SUPPORTED})
 
 # Imports the necessary nanobind components. Note, the Python version has to match the minimum python version supported
 # by the library (declared via pyproject.toml).
-find_package(Python 3.11
-  REQUIRED COMPONENTS Interpreter Development.Module
-  OPTIONAL_COMPONENTS Development.SABIModule)
+find_package(Python 3.12
+  REQUIRED COMPONENTS Interpreter Development.Module)
 
 # Detects the installed nanobind package and imports it into CMake. The nanobind package itself is installed before
 # the build is executed due to being the building_backend requirement.
@@ -46,7 +45,6 @@ find_package(nanobind CONFIG REQUIRED)
 # module.
 nanobind_add_module(
   precision_timer_ext
-  STABLE_ABI
   NB_STATIC
   src/c_extensions/precision_timer_ext.cpp
 )

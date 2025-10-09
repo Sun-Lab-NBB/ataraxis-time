@@ -6,11 +6,11 @@ build-backend = "scikit_build_core.build"
 # Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "4.0.0"
+version = "5.0.0"
 description = "Provides a high-precision thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.12,<3.15"
 authors = [
     { name = "Ivan Kondratyev" },
 ]
@@ -40,9 +40,9 @@ classifiers = [
     # License
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     # Supported Python Versions
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     # Core language (C++)
     "Programming Language :: C++",
     # Supported Operating Systems
@@ -76,7 +76,7 @@ dev = [
     "tox-uv>=1,<2",
 
     # Development Automation
-    "ataraxis-automation>=6,<7",
+    "ataraxis-automation>=7,<8",
 
     # Types
     "types-tqdm>=4,<5",
@@ -132,7 +132,7 @@ MACOSX_DEPLOYMENT_TARGET = "15.0"
 [tool.ruff]
 line-length = 120         # The maximum column length is set to 120 for this project
 indent-width = 4          # Same as black, indents are 4 spaces
-target-version = "py311"  # Targets the lowest supported version of python
+target-version = "py312"  # Targets the lowest supported version of python
 src = ["src"]             # The name of the source directory
 
 # Excludes 'service' .py files, such as sphinx configuration file from linting.

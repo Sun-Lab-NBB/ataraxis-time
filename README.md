@@ -65,8 +65,9 @@ Note, installation from source is ***highly discouraged*** for anyone who is not
 1. Download this repository to the local machine using the preferred method, such as git-cloning. Use one of the 
    [stable releases](https://github.com/Sun-Lab-NBB/ataraxis-time/tags) that include precompiled binary and source code 
    distribution (sdist) wheels.
-2. ```cd``` to the root directory of the project.
-3. Run ```python -m pip install .``` to install the project. Alternatively, if using a distribution with precompiled
+2. If the downloaded distribution is stored as a compressed archive, unpack it using the appropriate decompression tool.
+3. ```cd``` to the root directory of the prepared project distribution.
+4. Run ```python -m pip install .``` to install the project. Alternatively, if using a distribution with precompiled
    binaries, use ```python -m pip install WHEEL_PATH```, replacing 'WHEEL_PATH' with the path to the wheel file.
 
 ### pip
@@ -253,13 +254,15 @@ This section provides installation, dependency, and build-system instructions fo
 
 ### Installing the Project
 
-***Note!*** This installation method requires **mamba version 2.3.2 or above**.
+***Note!*** This installation method requires **mamba version 2.3.2 or above**. Currently, all Sun lab automation 
+pipelines require that mamba is installed through the [miniforge3](https://github.com/conda-forge/miniforge) installer.
 
 1. Download this repository to the local machine using the preferred method, such as git-cloning.
-2. ```cd``` to the root project directory.
-3. Install core Sun lab development dependencies into the ***base*** mamba environment via the 
+2. If the downloaded distribution is stored as a compressed archive, unpack it using the appropriate decompression tool.
+3. ```cd``` to the root directory of the prepared project distribution.
+4. Install the core Sun lab development dependencies into the ***base*** mamba environment via the 
    ```mamba install tox uv tox-uv``` command.
-4. Use the ```tox -e create``` command to create the project-specific development environment followed by 
+5. Use the ```tox -e create``` command to create the project-specific development environment followed by 
    ```tox -e install``` command to install the project into that environment as a library.
 
 ### Additional Dependencies
@@ -295,8 +298,8 @@ ___
 
 ## Versioning
 
-This project uses [semantic versioning](https://semver.org/). For the versions available, see the 
-[tags on this repository](https://github.com/Sun-Lab-NBB/ataraxis-time/tags).
+This project uses [semantic versioning](https://semver.org/). See the 
+[tags on this repository](https://github.com/Sun-Lab-NBB/ataraxis-time/tags) for the available project releases.
 
 ---
 
@@ -314,7 +317,7 @@ ___
 
 ## Acknowledgments
 
-- All Sun Lab [members](https://neuroai.github.io/sunlab/people) for providing the inspiration and comments during the
+- All Sun lab [members](https://neuroai.github.io/sunlab/people) for providing the inspiration and comments during the
   development of this library.
 - [elapsedMillis](https://github.com/pfeerick/elapsedMillis/blob/master/elapsedMillis.h) project for providing the 
   inspiration for the API and the functionality of the timer class.

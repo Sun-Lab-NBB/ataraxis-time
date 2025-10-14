@@ -145,7 +145,7 @@ def benchmark(  # pragma: no cover
     # identical to the busywait benchmark otherwise.
     delay_results_sleep = []
     # Loops over all precisions
-    for index, precision in enumerate((TimerPrecisions.MILLISECOND, TimerPrecisions.MICROSECOND), start=2):
+    for index, precision in enumerate((TimerPrecisions.MILLISECOND, TimerPrecisions.SECOND), start=2):
         # noinspection PyTypeChecker
         timer.set_precision(precision=precision)
         deltas_block = []

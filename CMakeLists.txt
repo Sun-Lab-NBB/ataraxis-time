@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 4.1.0)
 
 project(ataraxis-time LANGUAGES CXX)  # Project name != Library name
 set(LIBRARY_NAME ataraxis_time)       # What the user imports
@@ -23,10 +23,6 @@ if (NOT SKBUILD)
   code distributions under /envs directory.
   ")
 endif()
-
-# Verifies that the target Python version supports Stable Application Binary Interface (SABI) and, if so, uses it for
-# compilation.
-set(SKBUILD_SABI_SUPPORTED ${Python_SABI_SUPPORTED})
 
 # Imports the necessary nanobind components. Note, the Python version has to match the minimum python version supported
 # by the library (declared via pyproject.toml).

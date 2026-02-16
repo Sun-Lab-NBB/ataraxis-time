@@ -50,5 +50,5 @@ install(FILES src/py.typed DESTINATION ${LIBRARY_NAME})  # Includes py.typed
 install(FILES src/__init__.py DESTINATION ${LIBRARY_NAME})  # Includes the main package init
 
 install(TARGETS precision_timer_ext LIBRARY DESTINATION ${LIBRARY_NAME})  # C++ Extension binding (via nanobind).
-install(DIRECTORY src/precision_timer DESTINATION ${LIBRARY_NAME})  # Pure Python package, uses C++ extension.
-install(DIRECTORY src/time_helpers DESTINATION ${LIBRARY_NAME})  # Pure Python package, provides helper methods
+install(DIRECTORY src/timers DESTINATION ${LIBRARY_NAME})  # Pure Python package, uses C++ extension.
+install(DIRECTORY src/utilities DESTINATION ${LIBRARY_NAME})  # Pure Python package, provides time utilities.

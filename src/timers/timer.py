@@ -1,10 +1,12 @@
 """Provides the PrecisionTimer class that exposes a high-level API for the bound C++ timer's functionality."""
 
 from enum import StrEnum
+from collections.abc import Generator
 
 from ataraxis_base_utilities import console
 
 from ..precision_timer_ext import CPrecisionTimer  # type: ignore[import-not-found]
+from ..utilities.time_utilities import convert_time
 
 
 class TimerPrecisions(StrEnum):
@@ -41,6 +43,7 @@ class PrecisionTimer:
 
     Attributes:
         _timer: The nanobind-generated C-extension timer class.
+        _laps: A list of recorded lap times.
 
     Raises:
         ValueError: If the input precision is not one of the accepted options.
@@ -61,6 +64,9 @@ class PrecisionTimer:
         # Initializes the C++ timer class with the validated precision.
         self._timer = CPrecisionTimer(precision=precision.value)
 
+        # Initializes the lap tracking list.
+        self._laps: list[int] = []
+
     def __repr__(self) -> str:
         """Returns a string representation of the PrecisionTimer instance."""
         return f"PrecisionTimer(precision={self.precision}, elapsed_time = {self.elapsed} {self.precision}.)"
@@ -78,8 +84,9 @@ class PrecisionTimer:
         return str(self._timer.GetPrecision())
 
     def reset(self) -> None:
-        """Resets the timer."""
+        """Resets the timer and clears all recorded laps."""
         self._timer.Reset()
+        self._laps.clear()
 
     def delay(self, delay: int, *, allow_sleep: bool = False, block: bool = False) -> None:
         """Delays program execution for the requested period of time.
@@ -118,3 +125,99 @@ class PrecisionTimer:
 
         # Updates the precision used by the C++ timer class.
         self._timer.SetPrecision(precision=precision.value)
+
+    def format_elapsed(self, *, max_fields: int = 2) -> str:
+        """Returns the current elapsed time as a human-readable string.
+
+        Converts the elapsed time to seconds internally, then breaks it into descending unit components
+        (d, h, m, s, ms, us, ns). Auto-selects the largest non-zero unit as the starting point and includes
+        up to max_fields unit segments.
+
+        Args:
+            max_fields: The maximum number of unit segments to include in the output. Defaults to 2, e.g.
+                "2h 30m" instead of "2h 30m 15s 200ms".
+
+        Returns:
+            A human-readable string representation of the elapsed time, e.g. "2h 30m", "1.5ms", "500ns".
+        """
+        # Gets the current elapsed time and converts it to seconds for uniform processing.
+        elapsed = self.elapsed
+        precision = self.precision
+        elapsed_seconds = float(convert_time(elapsed, from_units=precision, to_units="s", as_float=True))
+
+        # Defines units in descending order with their second-based thresholds.
+        units: list[tuple[str, float]] = [
+            ("d", 86400.0),
+            ("h", 3600.0),
+            ("m", 60.0),
+            ("s", 1.0),
+            ("ms", 0.001),
+            ("us", 1e-6),
+            ("ns", 1e-9),
+        ]
+
+        # Handles zero elapsed time.
+        if elapsed_seconds == 0:
+            return f"0{precision}"
+
+        # Decomposes the elapsed seconds into unit components.
+        remaining = elapsed_seconds
+        parts: list[str] = []
+        for unit_name, unit_seconds in units:
+            if len(parts) >= max_fields:  # pragma: no cover
+                break
+            if remaining >= unit_seconds:
+                count = remaining / unit_seconds
+                if len(parts) == max_fields - 1 or unit_name == units[-1][0]:
+                    # Last field: use decimal representation for remainder.
+                    # Rounds to avoid floating point noise.
+                    rounded = round(count, 3)
+                    # Uses integer representation if the value is a whole number.
+                    if rounded == int(rounded):  # pragma: no cover
+                        parts.append(f"{int(rounded)}{unit_name}")
+                    else:
+                        parts.append(f"{rounded}{unit_name}")
+                    break
+                whole = int(count)
+                if whole > 0:
+                    parts.append(f"{whole}{unit_name}")
+                    remaining -= whole * unit_seconds
+
+        return " ".join(parts)
+
+    def lap(self) -> int:
+        """Records the current elapsed time as a lap, resets the timer, and returns the lap duration.
+
+        Returns:
+            The elapsed time captured as the lap duration, in the timer's current precision units.
+        """
+        duration = self.elapsed
+        self._laps.append(duration)
+        self._timer.Reset()
+        return duration
+
+    @property
+    def laps(self) -> tuple[int, ...]:
+        """Returns all recorded lap times as a tuple."""
+        return tuple(self._laps)
+
+    def poll(self, interval: int, *, allow_sleep: bool = True, block: bool = False) -> Generator[int, None, None]:
+        """Infinite generator that yields an iteration count after each delay cycle.
+
+        Each iteration calls self.delay() with the specified interval and parameters. The caller should break
+        out of the loop when done.
+
+        Args:
+            interval: The delay interval in the timer's current precision units.
+            allow_sleep: A boolean flag that allows releasing the CPU while suspending execution for durations above
+                1 millisecond.
+            block: Determines whether to hold or release the GIL during the delay.
+
+        Yields:
+            The iteration count (starting from 1) after each delay cycle.
+        """
+        count = 0
+        while True:
+            self.delay(interval, allow_sleep=allow_sleep, block=block)
+            count += 1
+            yield count

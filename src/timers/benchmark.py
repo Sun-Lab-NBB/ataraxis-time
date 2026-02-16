@@ -8,8 +8,8 @@ import click  # pragma: no cover
 import numpy as np  # pragma: no cover
 from ataraxis_base_utilities import LogLevel, console  # pragma: no cover
 
-from .timer_class import PrecisionTimer, TimerPrecisions  # pragma: no cover
-from ..time_helpers import TimeUnits, convert_time  # pragma: no cover
+from .timer import PrecisionTimer, TimerPrecisions  # pragma: no cover
+from ..utilities import TimeUnits, convert_time  # pragma: no cover
 
 
 @click.command()

@@ -28,7 +28,7 @@ ___
 - Supports Windows, Linux, and macOS.
 - Microsecond precision on modern CPUs (~ 3 GHz+) during delay and interval timing.
 - Releases GIL during (non-blocking) delay timing even when using microsecond and nanosecond precision.
-- GPL 3 License.
+- Apache 2.0 License.
 
 ___
 
@@ -311,7 +311,7 @@ ___
 
 ## License
 
-This project is licensed under the GPL3 License: see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2.0 License: see the [LICENSE](LICENSE) file for details.
 
 ___
 

@@ -19,7 +19,7 @@ if (NOT SKBUILD)
    or
    $ python -m pip install .[dev]
   ======================================================================================================================
-  For your convenience, OS-specific copies of the environments used for development are also included for all source
+  For your convenience, OS-specific copies of the environments used for development are also included in all source
   code distributions under /envs directory.
   ")
 endif()

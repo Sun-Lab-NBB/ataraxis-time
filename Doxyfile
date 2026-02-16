@@ -4,7 +4,7 @@
 # parsed and merged with python code documentation by sphinx via 'breathe' bridge.
 
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "ataraxis-timer"
+PROJECT_NAME           = "ataraxis-time"
 OUTPUT_DIRECTORY       = docs/source/doxygen
 OUTPUT_LANGUAGE        = English
 INPUT                  = src/c_extensions

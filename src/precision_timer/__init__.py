@@ -1,6 +1,4 @@
-"""This package provides the PrecisionTimer class and support functions used to work with the class and benchmark its
-performance.
-"""
+"""Provides the PrecisionTimer class and support functions for timer usage and benchmarking."""
 
 from .timer_class import PrecisionTimer, TimerPrecisions
 

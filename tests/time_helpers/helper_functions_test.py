@@ -1,4 +1,4 @@
-"""Tests the functions available through the 'time_helpers' module."""
+"""Contains tests for classes and functions provided by the helper_functions.py module."""
 
 import re
 from datetime import datetime, timezone
@@ -20,22 +20,9 @@ from ataraxis_time import convert_time, get_timestamp, convert_timestamp, Timest
         ({"input_type": "numpy_scalar", "input_dtype": "int", "as_float": False}, np.uint32(1000), 1.000, np.float64),
     ],
 )
-def test_convert_time(config, input_value, expected_result, expected_type):
-    """Verifies the functioning of the convert_time() function.
-
-    Evaluates the following input scenarios:
-        0 - Scalar int input, as_float=True -> float
-        1 - Scalar float input, as_float=True -> float
-        2 - Scalar int input, as_float=False -> numpy float64
-        3 - Numpy scalar signed int input, as_float=True -> float
-        4 - Numpy scalar float input, as_float=True -> float
-        5 - Numpy scalar unsigned int input, as_float=False -> numpy float64
-
-    Args:
-        config: The configuration for the test case.
-        input_value: The input value to be converted.
-        expected_result: The expected result after conversion.
-        expected_type: The expected type of the result.
+def test_convert_time(config, input_value, expected_result, expected_type) -> None:
+    """Verifies the functioning of the convert_time() function across scalar int, scalar float, numpy signed int,
+    numpy float, and numpy unsigned int inputs with both as_float=True and as_float=False configurations.
     """
     # Runs the converter
     result = convert_time(input_value, from_units="ms", to_units="s", as_float=config["as_float"])
@@ -53,9 +40,8 @@ def test_convert_time_errors() -> None:
     # Tests invalid 'from_units' argument value (and, indirectly, type).
     invalid_input: str = "invalid"
     message = (
-        f"Unsupported 'from_units' argument value ({invalid_input}) encountered when converting input time-values to "
-        f"the requested time-format. Use one of the valid members defined in the TimeUnits enumeration: "
-        f"{', '.join(tuple(TimeUnits))}."
+        f"Unable to convert time value. The 'from_units' must be one of the valid members defined in the "
+        f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {invalid_input}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -63,9 +49,8 @@ def test_convert_time_errors() -> None:
 
     # Tests invalid 'to_units' argument value (and, indirectly, type).
     message = (
-        f"Unsupported 'to_units' argument value ({invalid_input}) encountered when converting input time-values to "
-        f"the requested time-format. Use one of the valid members defined in the TimeUnits enumeration: "
-        f"{', '.join(tuple(TimeUnits))}."
+        f"Unable to convert time value. The 'to_units' must be one of the valid members defined in the "
+        f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {invalid_input}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -249,9 +234,8 @@ def test_get_timestamp_errors() -> None:
     # Tests invalid time_separator type
     invalid_time_separator: int = 123
     message = (
-        f"Invalid 'time_separator' argument type encountered when getting the current UTC timestamp. "
-        f"Expected {type(str).__name__}, but encountered {invalid_time_separator} of type "
-        f"{type(invalid_time_separator).__name__}."
+        f"Unable to get UTC timestamp. The 'time_separator' must be a string, but got "
+        f"{invalid_time_separator} of type {type(invalid_time_separator).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -260,9 +244,8 @@ def test_get_timestamp_errors() -> None:
     # Tests invalid output_format value
     invalid_format = "invalid"
     message = (
-        f"Unsupported 'format' argument value ({invalid_format}) encountered when getting the current UTC "
-        f"timestamp. Use one of the valid members defined in the TimestampFormats enumeration: "
-        f"{', '.join(tuple(TimestampFormats))}."
+        f"Unable to get UTC timestamp. The 'output_format' must be one of the valid members defined in the "
+        f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {invalid_format}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -275,9 +258,8 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid input type
     invalid_input = {"key": "value"}  # Dict instead of valid types
     message = (
-        f"Invalid 'timestamp' argument type encountered when converting timestamp. "
-        f"Expected string, integer, or NumPy array, but got {invalid_input} of type "
-        f"{type(invalid_input).__name__}."
+        f"Unable to convert timestamp. The 'timestamp' must be a string, integer, or NumPy array, but got "
+        f"{invalid_input} of type {type(invalid_input).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -286,9 +268,9 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid numpy array (wrong dtype)
     invalid_array = np.array([1, 2, 3], dtype=np.float32)
     message = (
-        f"Invalid 'timestamp' argument type encountered when converting a bytes' timestamp. "
-        f"Expected a one-dimensional uint8 numpy array, but got {invalid_array} of type "
-        f"{type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape {invalid_array.shape}."
+        f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array, "
+        f"but got {invalid_array} of type {type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape "
+        f"{invalid_array.shape}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         convert_timestamp(invalid_array)
@@ -296,9 +278,9 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid numpy array (wrong dimensions)
     invalid_array = np.array([[1, 2], [3, 4]], dtype=np.uint8)
     message = (
-        f"Invalid 'timestamp' argument type encountered when converting a bytes' timestamp. "
-        f"Expected a one-dimensional uint8 numpy array, but got {invalid_array} of type "
-        f"{type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape {invalid_array.shape}."
+        f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array, "
+        f"but got {invalid_array} of type {type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape "
+        f"{invalid_array.shape}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         convert_timestamp(invalid_array)
@@ -306,9 +288,8 @@ def test_convert_timestamp_errors() -> None:
     # Tests invalid time_separator type
     invalid_separator: float = 3.14
     message = (
-        f"Invalid 'time_separator' argument type encountered when converting timestamp. "
-        f"Expected {type(str).__name__}, but encountered {invalid_separator} of type "
-        f"{type(invalid_separator).__name__}."
+        f"Unable to convert timestamp. The 'time_separator' must be a string, but got "
+        f"{invalid_separator} of type {type(invalid_separator).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -317,9 +298,8 @@ def test_convert_timestamp_errors() -> None:
     # Tests invalid output_format value
     invalid_format = "invalid"
     message = (
-        f"Unsupported 'output_format' argument value ({invalid_format}) encountered when converting "
-        f"timestamp. Use one of the valid members defined in the TimestampFormats enumeration: "
-        f"{', '.join(tuple(TimestampFormats))}."
+        f"Unable to convert timestamp. The 'output_format' must be one of the valid members defined in the "
+        f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {invalid_format}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
@@ -328,8 +308,8 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid string format (wrong number of parts)
     invalid_string = "2024-01-01"
     message = (
-        f"Invalid timestamp string format encountered when converting timestamp. "
-        f"Expected format YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
+        f"Unable to convert string timestamp. The timestamp must follow the format "
+        f"YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         convert_timestamp(invalid_string)
@@ -337,8 +317,8 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid string format (non-numeric parts)
     invalid_string = "2024-01-01-12-00-00-abcdef"
     message = (
-        f"Invalid timestamp string format encountered when converting timestamp. "
-        f"Expected format YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
+        f"Unable to convert string timestamp. The timestamp must follow the format "
+        f"YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         convert_timestamp(invalid_string)

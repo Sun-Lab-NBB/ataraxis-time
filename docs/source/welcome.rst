@@ -1,8 +1,7 @@
 Welcome to ataraxis-time API documentation page
 ===============================================
 
-ataraxis-time is a Python library that provides a high-precision thread-safe timer and helper methods to work with date
-and time data.
+Provides a high-precision thread-safe timer and helper methods to work with date and time data.
 
 This library is part of the broader 'Ataraxis' science-automation project, developed in the
 `Sun (NeuroAI) lab <https://neuroai.github.io/sunlab/>`_ at Cornell University.

@@ -1,6 +1,4 @@
-"""This module provides the PrecisionTimer class that provides a high-level API for accessing the bound C++ timer's
-functionality.
-"""
+"""Provides the PrecisionTimer class that exposes a high-level API for the bound C++ timer's functionality."""
 
 from enum import StrEnum
 
@@ -10,15 +8,19 @@ from ..precision_timer_ext import CPrecisionTimer  # type: ignore[import-not-fou
 
 
 class TimerPrecisions(StrEnum):
-    """Stores the timer precision modes supported by the PrecisionTimer instances.
+    """Defines the timer precision modes supported by PrecisionTimer instances.
 
     Use this enumeration when initializing or reconfiguring the precision used by a PrecisionTimer instance.
     """
 
     NANOSECOND = "ns"
+    """Nanosecond precision."""
     MICROSECOND = "us"
+    """Microsecond precision."""
     MILLISECOND = "ms"
+    """Millisecond precision."""
     SECOND = "s"
+    """Second precision."""
 
 
 class PrecisionTimer:
@@ -32,36 +34,35 @@ class PrecisionTimer:
         advised to benchmark the class before deploying it in time-critical projects to characterize the overhead
         associated with using different timer methods.
 
-    Attributes:
-        _timer: Stores the nanobind-generated C-extension timer class.
-
     Args:
         precision: The desired precision of the timer. Use one of the supported values defined in the TimerPrecisions
             enumeration. Currently, accepted precision values are 'ns' (nanoseconds), 'us' (microseconds),
             'ms' (milliseconds), and 's' (seconds).
+
+    Attributes:
+        _timer: The nanobind-generated C-extension timer class.
 
     Raises:
         ValueError: If the input precision is not one of the accepted options.
     """
 
     def __init__(self, precision: str | TimerPrecisions = TimerPrecisions.MICROSECOND) -> None:
-        # If the input precision is not supported, raises an error.
+        # Validates the input precision against supported options.
         if precision not in tuple(TimerPrecisions):
             message = (
-                f"Unsupported precision argument value ({precision}) encountered when initializing PrecisionTimer "
-                f"class. Use one of the supported precision options defined in the TimerPrecisions enumeration: "
-                f"{tuple(TimerPrecisions)}."
+                f"Unable to initialize PrecisionTimer class. The precision must be one of the supported options "
+                f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {precision}."
             )
             console.error(message=message, error=ValueError)
 
-        # Ensures that the precision is stored as a Precision enumeration instance.
+        # Converts the precision to a TimerPrecisions enumeration instance.
         precision = TimerPrecisions(precision)
 
-        # Otherwise, initializes the C++ class using the input precision.
+        # Initializes the C++ timer class with the validated precision.
         self._timer = CPrecisionTimer(precision=precision.value)
 
     def __repr__(self) -> str:
-        """Returns a string representation of the instance."""
+        """Returns a string representation of the PrecisionTimer instance."""
         return f"PrecisionTimer(precision={self.precision}, elapsed_time = {self.elapsed} {self.precision}.)"
 
     @property
@@ -91,7 +92,7 @@ class PrecisionTimer:
             block: Determines whether to hold (if True) or release (if False) the Global Interpreter Lock (GIL) during
                 the delay. Releasing the GIL allows other Python threads to run in parallel with the delay.
         """
-        self._timer.Delay(delay, allow_sleep, block)
+        self._timer.Delay(duration=delay, allow_sleep=allow_sleep, block=block)
 
     def set_precision(self, precision: str | TimerPrecisions) -> None:
         """Changes the precision used by the timer to the input option.
@@ -104,17 +105,16 @@ class PrecisionTimer:
         Raises:
             ValueError: If the input precision is not one of the accepted options.
         """
-        # If the input precision is not supported, raises an error.
+        # Validates the input precision against supported options.
         if precision not in tuple(TimerPrecisions):
             message = (
-                f"Unsupported precision argument value ({precision}) encountered when initializing PrecisionTimer "
-                f"class. Use one of the supported precision options defined in the TimerPrecisions enumeration: "
-                f"{tuple(TimerPrecisions)}."
+                f"Unable to set PrecisionTimer precision. The precision must be one of the supported options "
+                f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {precision}."
             )
             console.error(message=message, error=ValueError)
 
-        # Ensures that the precision is stored as a TimerPrecisions enumeration instance.
+        # Converts the precision to a TimerPrecisions enumeration instance.
         precision = TimerPrecisions(precision)
 
-        # Otherwise, updates the precision used by the C++ class.
+        # Updates the precision used by the C++ timer class.
         self._timer.SetPrecision(precision=precision.value)

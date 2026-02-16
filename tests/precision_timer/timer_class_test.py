@@ -1,14 +1,13 @@
-"""Tests the functionality of the PrecisionTimer class.
+"""Contains tests for the PrecisionTimer class and TimerPrecisions enumeration provided by the timer_class.py module.
 
-This is not a performance benchmark! This test suite only verifies that commands run without errors and that their
+This is not a performance benchmark. This test suite only verifies that commands run without errors and that their
 runtime appears to be correct. Due to the nature of this library, programmatic tests are likely to have a wide range of
 execution times across all supported platform+architecture combinations. The only way to be sure the library is
 appropriate for any particular system is to use the benchmarking script shipped with the library. Passing this test
-suite is not enough to conclude the library is appropriate for any particular use case, it is only enough to
-conclude it runs without errors.
+suite is not enough to conclude the library is appropriate for any particular use case, it is only enough to conclude it
+runs without errors.
 """
 
-# Imports
 import time as tm
 import threading
 
@@ -23,7 +22,7 @@ end_flag: bool = False
 
 
 def update_global_counter() -> None:
-    """A simple function that continuously increments a global counter.
+    """Continuously increments a global counter until the end_flag is set.
 
     Used to test blocking vs. non-blocking delay functionality.
     """
@@ -89,7 +88,7 @@ def verify_interval_method(timer: PrecisionTimer, precision: str, interval: int)
 
 
 def test_initialization_and_precision_control() -> None:
-    """Tests PrecisionTimer class initialization and precision manipulation (retrieval and setting) functionality."""
+    """Verifies PrecisionTimer class initialization and precision manipulation (retrieval and setting) functionality."""
     # Initializes the class using microsecond precision (default)
     timer = PrecisionTimer()
     assert timer.precision == "us"
@@ -127,7 +126,7 @@ def test_initialization_and_precision_control() -> None:
 
 
 def test_timer_precisions_enum() -> None:
-    """Tests the TimerPrecisions enumeration functionality."""
+    """Verifies the TimerPrecisions enumeration functionality."""
     # Verifies all expected enum values exist
     assert TimerPrecisions.NANOSECOND == "ns"
     assert TimerPrecisions.MICROSECOND == "us"
@@ -151,27 +150,25 @@ def test_timer_precisions_enum() -> None:
 
 
 def test_initialization_and_precision_control_errors() -> None:
-    """Tests PrecisionTimer class initialization and precision manipulation (retrieval and setting) error handling."""
+    """Verifies PrecisionTimer class initialization and precision manipulation (retrieval and setting) error handling."""
     # Verifies that attempting to initialize the class with an invalid precision fails as expected
     invalid_precision = "invalid_precision"
     message = (
-        f"Unsupported precision argument value ({invalid_precision}) encountered when initializing PrecisionTimer "
-        f"class. Use one of the supported precision options defined in the TimerPrecisions enumeration: "
-        f"{tuple(TimerPrecisions)}."
+        f"Unable to initialize PrecisionTimer class. The precision must be one of the supported options "
+        f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {invalid_precision}."
     )
     # noinspection PyTypeChecker
     with pytest.raises(ValueError, match=error_format(message)):
         # noinspection PyTypeChecker
         PrecisionTimer(invalid_precision)
 
-    # Initialize a valid timer for testing set_precision errors
+    # Initializes a valid timer for testing set_precision errors
     timer = PrecisionTimer("us")
 
     # Verifies that attempting to set the precision of an initialized class to an unsupported value fails as expected
     message = (
-        f"Unsupported precision argument value ({invalid_precision}) encountered when initializing PrecisionTimer "
-        f"class. Use one of the supported precision options defined in the TimerPrecisions enumeration: "
-        f"{tuple(TimerPrecisions)}."
+        f"Unable to set PrecisionTimer precision. The precision must be one of the supported options "
+        f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {invalid_precision}."
     )
     # noinspection PyTypeChecker
     with pytest.raises(ValueError, match=error_format(message)):
@@ -196,14 +193,11 @@ def test_elapsed_property() -> None:
 
 @pytest.mark.parametrize("precision", ["ns", "us", "ms", "s"])
 def test_interval_timing(precision: str) -> None:
-    """Tests interval timing functionality of the PrecisionTimer class.
+    """Verifies the interval timing functionality of the PrecisionTimer class for the given precision.
 
-    Does not test runtime precision. Use benchmark_timer script for that purpose. This test just ensures
+    Does not test runtime precision. Use the benchmark_timer script for that purpose. This test just ensures
     that commands run without errors. Uses 'mark' fixture to generate a version of this test for all supported
     precisions and, ideally, should be executed in-parallel with other tests.
-
-    Args:
-        precision: The precision to test, one of 'ns', 'us', 'ms', 's'.
     """
     # noinspection PyTypeChecker
     timer = PrecisionTimer(precision)
@@ -214,15 +208,10 @@ def test_interval_timing(precision: str) -> None:
 @pytest.mark.parametrize("allow_sleep", [False, True])
 @pytest.mark.parametrize("block", [False, True])
 def test_delay_timing(precision: str, allow_sleep: bool, block: bool) -> None:
-    """Tests delay functionality of the PrecisionTimer class with different blocking modes.
+    """Verifies the delay functionality of the PrecisionTimer class with different blocking modes.
 
-    Similar to how interval timing is tested, this function does not evaluate delay method precision! Use benchmark
-    command to benchmark delay precision on your particular system.
-
-    Args:
-        precision: The precision to test, one of 'ns', 'us', 'ms', 's'.
-        allow_sleep: Whether to allow sleep instead of busy-wait.
-        block: Whether to block (release GIL) or not during delay.
+    Similar to how interval timing is tested, this function does not evaluate delay method precision. Use the
+    benchmark command to benchmark delay precision on your particular system.
     """
     # noinspection PyTypeChecker
     timer = PrecisionTimer(precision)
@@ -230,7 +219,7 @@ def test_delay_timing(precision: str, allow_sleep: bool, block: bool) -> None:
 
 
 def test_delay_with_enum_precision() -> None:
-    """Tests that delay method works correctly when timer is initialized with TimerPrecisions enum."""
+    """Verifies that delay method works correctly when timer is initialized with TimerPrecisions enum."""
     # Test with each enum value
     for precision_enum in TimerPrecisions:
         timer = PrecisionTimer(precision_enum)
@@ -275,7 +264,7 @@ def test_threaded_delay() -> None:
 
 
 def test_precision_switching() -> None:
-    """Tests that precision can be switched dynamically during timer operation."""
+    """Verifies that precision can be switched dynamically during timer operation."""
     timer = PrecisionTimer(TimerPrecisions.NANOSECOND)
     assert timer.precision == "ns"
 
@@ -301,7 +290,7 @@ def test_precision_switching() -> None:
 
 
 def test_timer_with_different_initialization_methods() -> None:
-    """Tests that PrecisionTimer can be initialized with different argument types."""
+    """Verifies that PrecisionTimer can be initialized with different argument types."""
     # Test initialization with string lowercase
     timer1 = PrecisionTimer("ns")
     assert timer1.precision == "ns"
@@ -324,7 +313,7 @@ def test_timer_with_different_initialization_methods() -> None:
 
 
 def test_reset_functionality() -> None:
-    """Tests the reset method works correctly with different precisions."""
+    """Verifies the reset method works correctly with different precisions."""
     for precision in TimerPrecisions:
         timer = PrecisionTimer(precision)
 

@@ -6,7 +6,7 @@ build-backend = "scikit_build_core.build"
 # Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "5.0.0"
+version = "6.0.0"
 description = "Provides a high-precision thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = "Apache-2.0"
@@ -29,7 +29,8 @@ keywords = [
     "non-blocking",
     "blocking",
     "date",
-    "ataraxis"
+    "ataraxis",
+    "sunlab"
 ]
 
 classifiers = [

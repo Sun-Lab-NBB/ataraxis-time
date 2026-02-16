@@ -1,21 +1,13 @@
 /**
- * @file precision_timer_ext.cpp
- * @brief The C++ extension module that defines and implements the CPrecisionTimer class.
+ * @file
  *
- * @section description Description:
- * This module instantiates the CPrecisionTimer class using the fastest system clock available through the 'chrono'
- * library, which allows the timer to resolve sub-microsecond timer-intervals on sufficiently fast CPUs. This module
- * works on Windows, macOS, and Linux.
+ * @brief Defines and implements the CPrecisionTimer class as a nanobind-bound C++ extension module.
  *
- * @note This module is bound to python using (<a href="https://github.com/wjakob/nanobind">nanobind</a>) project and is
- * designed to be further wrapped with a pure-python PrecisionTimer wrapper instantiated by the __init__.py of the
- * python module. The binding code is stored in the same file as source code (at the end of this file).
+ * Uses the fastest system clock available through the 'chrono' library, which allows the timer to resolve
+ * sub-microsecond intervals on sufficiently fast CPUs. This module works on Windows, macOS, and Linux.
  *
- * @section dependencies Dependencies:
- * - nanobind/nanobind.h: For nanobind-based binding to Python.
- * - nanobind/stl/string.h: To enable working with python string arguments.
- * - chrono: To work with system-exposed time sources.
- * - thread: To control GIL-locking behavior of noblock methods.
+ * @note This module is bound to Python using nanobind and is designed to be further wrapped with a pure-Python
+ * PrecisionTimer class. The binding code is stored at the end of this file.
  */
 
 // Dependencies:
@@ -56,12 +48,6 @@ class CPrecisionTimer
     {
         SetPrecision(precision);
     }
-
-    /**
-     * @brief Destroys the CPrecisionTimer class.
-     */
-    ~CPrecisionTimer()
-    = default;
 
     /**
      * @brief Resets the timer.
@@ -141,7 +127,7 @@ class CPrecisionTimer
      * This method can be used to dynamically change the precision used by a class instance during runtime.
      *
      * @param precision The new precision to use. Supported values are: 'ns' (nanoseconds),
-     * 'us' (microseconds), ms' (milliseconds), and 's' (seconds).'
+     * 'us' (microseconds), 'ms' (milliseconds), and 's' (seconds).
      */
     void SetPrecision(const std::string& precision)
     {
@@ -165,6 +151,9 @@ class CPrecisionTimer
     {
         return _precision;
     }
+
+    /// Destroys the CPrecisionTimer class.
+    ~CPrecisionTimer() = default;
 
   private:
     /// Stores the reference value used to calculate elapsed time.
@@ -203,13 +192,10 @@ class CPrecisionTimer
 };
 
 /**
- * @brief The nanobind module that binds (exposes) the CPrecisionTimer class to the Python API.
+ * @brief Binds the CPrecisionTimer class to the Python API via nanobind.
  *
- * This nanobind module wraps the CPrecisionTimer class and exposes it to Python via its API.
- *
- * @note The module is available as 'precision_timer_ext' and has to be properly bound to a python package via CMake
- * configuration. Each method exposed to Python API below uses the names given as the first argument to each 'def'
- * method.
+ * The module is available as 'precision_timer_ext' and must be bound to a Python package via CMake configuration.
+ * Each method exposed to the Python API uses the name given as the first argument to each 'def' call.
  */
 // NOLINTNEXTLINE(performance-unnecessary-value-param)
 NB_MODULE(precision_timer_ext, m)

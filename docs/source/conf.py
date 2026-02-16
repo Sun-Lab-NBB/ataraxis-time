@@ -4,7 +4,7 @@ import importlib_metadata
 # -- Project information -----------------------------------------------------
 project = 'ataraxis-time'
 # noinspection PyShadowingBuiltins
-copyright = '2025, Sun (NeuroAI) lab'
+copyright = '2026, Sun (NeuroAI) lab'
 author = 'Ivan Kondratyev'
 # Extracts the project version from the .toml file.
 release = importlib_metadata.version("ataraxis-time")
@@ -13,19 +13,17 @@ release = importlib_metadata.version("ataraxis-time")
 extensions = [
     'sphinx.ext.autodoc',        # To build documentation from python source code docstrings.
     'sphinx.ext.napoleon',       # To read google-style docstrings (works with autodoc module).
+    'sphinx_click',              # Must load before sphinx_autodoc_typehints to avoid mock import shadowing.
     'sphinx_autodoc_typehints',  # To parse typehints into documentation
     'breathe',                   # To read doxygen-generated xml files (to parse C++ documentation).
-    'sphinx_rtd_theme',          # To format the documentation HTML using ReadTheDocs format.
-    'sphinx_click',              # To read docstrings and command-line arguments from click-wrapped python functions.
-    'sphinx_rtd_dark_mode'       # Enables dark mode for RTD theme.
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 
 # Breathe configuration
-breathe_projects = {"ataraxis-time": "./doxygen/xml"}  # Specifies the source of the C++ documentation.
-breathe_default_project = "ataraxis-time"  # Specifies the default project name if C++ documentation is not available.
+breathe_projects = {"ataraxis-time": "./doxygen/xml"}
+breathe_default_project = "ataraxis-time"
 
 # Google-style docstring parsing configuration for napoleon extension
 napoleon_google_docstring = True
@@ -51,8 +49,5 @@ typehints_formatter = None
 typehints_use_signature = False
 typehints_use_signature_return = False
 
-# Disables the dark mode by default.
-default_dark_mode = False
-
 # -- Options for HTML output -------------------------------------------------
-html_theme = 'sphinx_rtd_theme'  # Directs sphinx to use RTD theme
+html_theme = 'furo'

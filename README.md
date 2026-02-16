@@ -1,6 +1,6 @@
 # ataraxis-time
 
-A Python library that provides a high-precision thread-safe timer and helper methods to work with date and time data.
+Provides a high-precision thread-safe timer and helper methods to work with date and time data.
 
 ![PyPI - Version](https://img.shields.io/pypi/v/ataraxis-time)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ataraxis-time)

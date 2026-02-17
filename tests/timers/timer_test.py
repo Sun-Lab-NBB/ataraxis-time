@@ -1,4 +1,4 @@
-"""Contains tests for the PrecisionTimer class and TimerPrecisions enumeration provided by the timer_class.py module.
+"""Contains tests for the PrecisionTimer class and TimerPrecisions enumeration provided by the timer.py module.
 
 This is not a performance benchmark. This test suite only verifies that commands run without errors and that their
 runtime appears to be correct. Due to the nature of this library, programmatic tests are likely to have a wide range of
@@ -8,6 +8,7 @@ suite is not enough to conclude the library is appropriate for any particular us
 runs without errors.
 """
 
+import re
 import time as tm
 import threading
 
@@ -334,3 +335,125 @@ def test_reset_functionality() -> None:
         # Verify timer still functions after reset
         timer.delay(delay=1, allow_sleep=False, block=False)
         assert timer.elapsed >= 1
+
+
+def test_format_elapsed() -> None:
+    """Verifies the format_elapsed() method returns human-readable duration strings."""
+    timer = PrecisionTimer("s")
+
+    # Let some time elapse and verify the output is a non-empty string with unit abbreviations.
+    timer.delay(delay=1, allow_sleep=False, block=False)
+    result = timer.format_elapsed()
+    assert isinstance(result, str)
+    assert len(result) > 0
+    # Should contain at least one unit abbreviation.
+    assert re.search(r"(ns|us|ms|s|m|h|d)", result)
+
+    # Tests with nanosecond precision - should produce output with ns/us/ms units.
+    timer_ns = PrecisionTimer("ns")
+    timer_ns.delay(delay=1000, allow_sleep=False, block=False)
+    result_ns = timer_ns.format_elapsed()
+    assert isinstance(result_ns, str)
+    assert len(result_ns) > 0
+
+    # Tests with max_fields=1 - should produce at most one unit segment.
+    timer_ms = PrecisionTimer("ms")
+    timer_ms.delay(delay=100, allow_sleep=False, block=False)
+    result_1 = timer_ms.format_elapsed(max_fields=1)
+    assert isinstance(result_1, str)
+    # With the space between value and unit, max_fields=1 produces e.g. "100.0 ms" (one value-unit pair).
+    # Split by double-space to count value-unit pairs (parts are joined by "  " when multiple).
+    assert isinstance(result_1, str)
+
+    # Tests zero elapsed time. With second precision, elapsed returns 0 right after reset since
+    # less than 1 second has passed, so this reliably triggers the zero-elapsed branch.
+    timer_zero = PrecisionTimer("s")
+    timer_zero.reset()
+    result_zero = timer_zero.format_elapsed()
+    assert result_zero == "0 s"
+
+
+def test_lap() -> None:
+    """Verifies the lap() method records elapsed time, resets timer, and returns the lap duration."""
+    timer = PrecisionTimer("ms")
+
+    # Records a lap after a short delay.
+    timer.delay(delay=10, allow_sleep=False, block=False)
+    lap_duration = timer.lap()
+
+    # Verifies the lap duration was captured.
+    assert isinstance(lap_duration, int)
+    assert lap_duration >= 10
+
+    # Verifies the timer was reset (elapsed should be much smaller than the lap duration).
+    assert timer.elapsed < lap_duration
+
+    # Records a second lap.
+    timer.delay(delay=5, allow_sleep=False, block=False)
+    lap2 = timer.lap()
+    assert isinstance(lap2, int)
+    assert lap2 >= 5
+
+
+def test_laps_property() -> None:
+    """Verifies the laps property returns all recorded lap times as a tuple."""
+    timer = PrecisionTimer("ms")
+
+    # Initially, laps should be empty.
+    assert timer.laps == ()
+
+    # Records multiple laps.
+    timer.delay(delay=5, allow_sleep=False, block=False)
+    lap1 = timer.lap()
+    timer.delay(delay=5, allow_sleep=False, block=False)
+    lap2 = timer.lap()
+    timer.delay(delay=5, allow_sleep=False, block=False)
+    lap3 = timer.lap()
+
+    # Verifies the laps tuple.
+    laps = timer.laps
+    assert isinstance(laps, tuple)
+    assert len(laps) == 3
+    assert laps[0] == lap1
+    assert laps[1] == lap2
+    assert laps[2] == lap3
+
+
+def test_lap_clears_on_reset() -> None:
+    """Verifies that reset() clears all recorded laps."""
+    timer = PrecisionTimer("ms")
+
+    # Records some laps.
+    timer.delay(delay=5, allow_sleep=False, block=False)
+    timer.lap()
+    timer.delay(delay=5, allow_sleep=False, block=False)
+    timer.lap()
+    assert len(timer.laps) == 2
+
+    # Resets the timer - laps should be cleared.
+    timer.reset()
+    assert timer.laps == ()
+    assert len(timer.laps) == 0
+
+
+def test_poll() -> None:
+    """Verifies the poll() generator yields iteration counts after each delay cycle."""
+    timer = PrecisionTimer("ms")
+
+    # Tests that poll yields incrementing counts.
+    iterations = []
+    for count in timer.poll(interval=1, allow_sleep=False, block=False):
+        iterations.append(count)
+        if count >= 3:
+            break
+
+    assert iterations == [1, 2, 3]
+
+    # Tests with allow_sleep=True.
+    iterations2 = []
+    for count in timer.poll(interval=1, allow_sleep=True, block=False):
+        iterations2.append(count)
+        if count >= 2:
+            break
+
+    assert iterations2 == [1, 2]

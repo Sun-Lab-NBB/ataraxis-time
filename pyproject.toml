@@ -72,7 +72,7 @@ Documentation = "https://ataraxis-time-api-docs.netlify.app/"
 
 # Exposes the 'axt-benchmark' command that allows benchmarking the PrecisionTimer class on the local host-system.
 [project.scripts]
-axt-benchmark = "ataraxis_time.precision_timer.timer_benchmark:benchmark"
+axt-benchmark = "ataraxis_time.timers.benchmark:benchmark"
 
 # Development dependencies (PEP 735). Not published to PyPI.
 [dependency-groups]

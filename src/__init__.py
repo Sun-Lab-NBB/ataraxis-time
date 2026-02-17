@@ -6,15 +6,34 @@ the `source code repository <https://github.com/Sun-Lab-NBB/ataraxis-time>`_ for
 Authors: Ivan Kondratyev (Inkaros)
 """
 
-from .time_helpers import TimeUnits, TimestampFormats, convert_time, get_timestamp, convert_timestamp
-from .precision_timer import PrecisionTimer, TimerPrecisions
+from .timers import Timeout, PrecisionTimer, TimerPrecisions
+from .utilities import (
+    TimeUnits,
+    TimestampFormats,
+    TimestampPrecisions,
+    convert_time,
+    to_timedelta,
+    get_timestamp,
+    from_timedelta,
+    parse_timestamp,
+    interval_to_rate,
+    rate_to_interval,
+    convert_timestamp,
+)
 
 __all__ = [
     "PrecisionTimer",
     "TimeUnits",
+    "Timeout",
     "TimerPrecisions",
     "TimestampFormats",
+    "TimestampPrecisions",
     "convert_time",
     "convert_timestamp",
+    "from_timedelta",
     "get_timestamp",
+    "interval_to_rate",
+    "parse_timestamp",
+    "rate_to_interval",
+    "to_timedelta",
 ]

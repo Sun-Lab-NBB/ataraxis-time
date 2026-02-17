@@ -2,10 +2,10 @@
    extension. Use it to declare Python and C++ extension documentation sub-directories via appropriate modules
    (automodule, doxygenfile and sphinx-click).
 
-Precision Timer
-===============
+Timers
+======
 
-.. automodule:: ataraxis_time.precision_timer.timer_class
+.. automodule:: ataraxis_time.timers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,14 +13,14 @@ Precision Timer
 Timer Benchmark
 ===============
 
-.. click:: ataraxis_time.precision_timer.timer_benchmark:benchmark
+.. click:: ataraxis_time.timers.benchmark:benchmark
    :prog: axt-benchmark
    :nested: full
 
-Helper Functions
-================
+Utilities
+=========
 
-.. automodule:: ataraxis_time.time_helpers
+.. automodule:: ataraxis_time.utilities
    :members:
    :undoc-members:
    :show-inheritance:

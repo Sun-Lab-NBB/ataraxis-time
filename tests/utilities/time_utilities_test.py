@@ -1,12 +1,24 @@
-"""Contains tests for classes and functions provided by the helper_functions.py module."""
+"""Contains tests for classes and functions provided by the time_utilities.py module."""
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pytest  # type: ignore
 from ataraxis_base_utilities import error_format
-from ataraxis_time import convert_time, get_timestamp, convert_timestamp, TimestampFormats, TimeUnits
+from ataraxis_time import (
+    TimestampFormats,
+    TimestampPrecisions,
+    TimeUnits,
+    convert_time,
+    convert_timestamp,
+    from_timedelta,
+    get_timestamp,
+    interval_to_rate,
+    parse_timestamp,
+    rate_to_interval,
+    to_timedelta,
+)
 
 
 @pytest.mark.parametrize(
@@ -305,20 +317,30 @@ def test_convert_timestamp_errors() -> None:
         # noinspection PyTypeChecker
         convert_timestamp(12345, output_format=invalid_format)
 
-    # Tests an invalid string format (wrong number of parts)
-    invalid_string = "2024-01-01"
+    # Tests invalid precision value.
+    invalid_precision = "invalid"
     message = (
-        f"Unable to convert string timestamp. The timestamp must follow the format "
-        f"YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
+        f"Unable to convert timestamp. The 'precision' must be one of the valid members defined in the "
+        f"TimestampPrecisions enumeration ({', '.join(tuple(TimestampPrecisions))}), but got {invalid_precision}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
-        convert_timestamp(invalid_string)
+        convert_timestamp(12345, precision=invalid_precision)
+
+    # Tests a string with too many parts (>7). The internal ValueError is caught and re-raised with the generic
+    # format error message.
+    too_many_parts = "2024-01-01-12-00-00-000000-extra"
+    message = (
+        f"Unable to convert string timestamp. The timestamp must follow the format "
+        f"YYYY-MM-DD-HH-MM-SS-ffffff (1 to 7 parts), but got '{too_many_parts}'."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        convert_timestamp(too_many_parts)
 
     # Tests an invalid string format (non-numeric parts)
     invalid_string = "2024-01-01-12-00-00-abcdef"
     message = (
         f"Unable to convert string timestamp. The timestamp must follow the format "
-        f"YYYY-MM-DD-HH-MM-SS-ffffff, but got '{invalid_string}'."
+        f"YYYY-MM-DD-HH-MM-SS-ffffff (1 to 7 parts), but got '{invalid_string}'."
     )
     with pytest.raises(ValueError, match=error_format(message)):
         convert_timestamp(invalid_string)
@@ -411,3 +433,356 @@ def test_timestamp_datetime_validity() -> None:
     # Verify the datetime converts back to the same microseconds
     reconstructed_microseconds = int(dt.timestamp() * 1_000_000)
     assert abs(reconstructed_microseconds - timestamp_int) < 1  # Allow for rounding
+
+
+def test_timestamp_precisions_enum() -> None:
+    """Verifies the TimestampPrecisions enumeration functionality."""
+    # Verifies all expected enum values exist.
+    assert TimestampPrecisions.YEAR == "year"
+    assert TimestampPrecisions.MONTH == "month"
+    assert TimestampPrecisions.DAY == "day"
+    assert TimestampPrecisions.HOUR == "hour"
+    assert TimestampPrecisions.MINUTE == "minute"
+    assert TimestampPrecisions.SECOND == "second"
+    assert TimestampPrecisions.MICROSECOND == "microsecond"
+
+    # Verifies the enumeration has exactly the expected members.
+    expected = {"YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND", "MICROSECOND"}
+    actual = {member.name for member in TimestampPrecisions}
+    assert actual == expected
+
+
+def test_get_timestamp_precision() -> None:
+    """Verifies the precision parameter of get_timestamp() for all formats and precision levels."""
+    # Tests string format with various precision levels.
+    # MICROSECOND (default) should produce 7-part string.
+    ts_full = get_timestamp(output_format=TimestampFormats.STRING)
+    assert isinstance(ts_full, str)
+    assert len(ts_full.split("-")) == 7
+
+    # SECOND: 6 parts (YYYY-MM-DD-HH-MM-SS)
+    ts_second = get_timestamp(output_format=TimestampFormats.STRING, precision=TimestampPrecisions.SECOND)
+    assert isinstance(ts_second, str)
+    assert len(ts_second.split("-")) == 6
+
+    # MINUTE: 5 parts
+    ts_minute = get_timestamp(output_format=TimestampFormats.STRING, precision=TimestampPrecisions.MINUTE)
+    assert isinstance(ts_minute, str)
+    assert len(ts_minute.split("-")) == 5
+
+    # HOUR: 4 parts
+    ts_hour = get_timestamp(output_format=TimestampFormats.STRING, precision=TimestampPrecisions.HOUR)
+    assert isinstance(ts_hour, str)
+    assert len(ts_hour.split("-")) == 4
+
+    # DAY: 3 parts
+    ts_day = get_timestamp(output_format=TimestampFormats.STRING, precision=TimestampPrecisions.DAY)
+    assert isinstance(ts_day, str)
+    assert len(ts_day.split("-")) == 3
+
+    # MONTH: 2 parts
+    ts_month = get_timestamp(output_format=TimestampFormats.STRING, precision=TimestampPrecisions.MONTH)
+    assert isinstance(ts_month, str)
+    assert len(ts_month.split("-")) == 2
+
+    # YEAR: 1 part
+    ts_year = get_timestamp(output_format=TimestampFormats.STRING, precision=TimestampPrecisions.YEAR)
+    assert isinstance(ts_year, str)
+    assert len(ts_year.split("-")) == 1
+
+    # Tests integer format with precision truncation.
+    int_full = get_timestamp(output_format=TimestampFormats.INTEGER, precision=TimestampPrecisions.MICROSECOND)
+    int_day = get_timestamp(output_format=TimestampFormats.INTEGER, precision=TimestampPrecisions.DAY)
+    assert isinstance(int_full, int)
+    assert isinstance(int_day, int)
+    # Day-precision should zero out hours, minutes, seconds, microseconds.
+    assert int_day <= int_full
+    # The day-truncated value should be at a day boundary (divisible by microseconds in a day minus timezone offset).
+    assert int_day % 1_000_000 == 0  # At least microseconds should be zeroed.
+
+    # Tests bytes format with precision truncation.
+    bytes_full = get_timestamp(output_format=TimestampFormats.BYTES, precision=TimestampPrecisions.MICROSECOND)
+    bytes_day = get_timestamp(output_format=TimestampFormats.BYTES, precision=TimestampPrecisions.DAY)
+    assert isinstance(bytes_full, np.ndarray)
+    assert isinstance(bytes_day, np.ndarray)
+
+    # Tests invalid precision.
+    message = (
+        f"Unable to get UTC timestamp. The 'precision' must be one of the valid members defined in the "
+        f"TimestampPrecisions enumeration ({', '.join(tuple(TimestampPrecisions))}), but got invalid."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        get_timestamp(precision="invalid")
+
+
+def test_convert_timestamp_variable_length_strings() -> None:
+    """Verifies convert_timestamp() correctly handles variable-length string inputs (1-7 parts)."""
+    # 7 parts (full): standard behavior.
+    result = convert_timestamp("2024-06-15-12-30-45-123456", output_format=TimestampFormats.STRING)
+    assert isinstance(result, str)
+    assert result == "2024-06-15-12-30-45-123456"
+
+    # 6 parts: missing microsecond (defaults to 0).
+    result = convert_timestamp("2024-06-15-12-30-45", output_format=TimestampFormats.STRING)
+    assert isinstance(result, str)
+    assert result == "2024-06-15-12-30-45-000000"
+
+    # 5 parts: missing second and microsecond.
+    result = convert_timestamp("2024-06-15-12-30", output_format=TimestampFormats.STRING)
+    assert isinstance(result, str)
+    assert result == "2024-06-15-12-30-00-000000"
+
+    # 3 parts: just date.
+    result = convert_timestamp("2024-06-15", output_format=TimestampFormats.STRING)
+    assert isinstance(result, str)
+    assert result == "2024-06-15-00-00-00-000000"
+
+    # 1 part: just year.
+    result = convert_timestamp("2024", output_format=TimestampFormats.STRING)
+    assert isinstance(result, str)
+    assert result == "2024-01-01-00-00-00-000000"
+
+    # Tests roundtrip: variable-length string to integer and back to full string.
+    int_result = convert_timestamp("2024-06-15-12-30", output_format=TimestampFormats.INTEGER)
+    assert isinstance(int_result, int)
+    str_result = convert_timestamp(int_result, output_format=TimestampFormats.STRING)
+    assert str_result == "2024-06-15-12-30-00-000000"
+
+
+def test_convert_timestamp_precision() -> None:
+    """Verifies the precision parameter of convert_timestamp() for output truncation."""
+    full_ts = "2024-06-15-12-30-45-123456"
+
+    # Convert string to string with day precision.
+    result = convert_timestamp(full_ts, output_format=TimestampFormats.STRING, precision=TimestampPrecisions.DAY)
+    assert isinstance(result, str)
+    assert len(result.split("-")) == 3
+
+    # Convert string to string with minute precision.
+    result = convert_timestamp(full_ts, output_format=TimestampFormats.STRING, precision=TimestampPrecisions.MINUTE)
+    assert isinstance(result, str)
+    assert len(result.split("-")) == 5
+
+    # Convert integer to string with hour precision.
+    int_ts = convert_timestamp(full_ts, output_format=TimestampFormats.INTEGER)
+    result = convert_timestamp(int_ts, output_format=TimestampFormats.STRING, precision=TimestampPrecisions.HOUR)
+    assert isinstance(result, str)
+    assert len(result.split("-")) == 4
+
+
+def test_parse_timestamp() -> None:
+    """Verifies the parse_timestamp() function with various format strings and output formats."""
+    # Tests parsing a standard ISO-style date string.
+    result = parse_timestamp("2024-06-15 12:30:45", "%Y-%m-%d %H:%M:%S")
+    assert isinstance(result, int)
+    assert result > 0
+
+    # Verifies the parsed value matches expected microseconds.
+    expected_dt = datetime(2024, 6, 15, 12, 30, 45, tzinfo=timezone.utc)
+    expected_us = int(expected_dt.timestamp() * 1_000_000)
+    assert result == expected_us
+
+    # Tests string output format.
+    result_str = parse_timestamp("2024-06-15 12:30:45", "%Y-%m-%d %H:%M:%S", output_format=TimestampFormats.STRING)
+    assert isinstance(result_str, str)
+    assert result_str == "2024-06-15-12-30-45-000000"
+
+    # Tests bytes output format.
+    result_bytes = parse_timestamp("2024-06-15 12:30:45", "%Y-%m-%d %H:%M:%S", output_format=TimestampFormats.BYTES)
+    assert isinstance(result_bytes, np.ndarray)
+    assert result_bytes.dtype == np.uint8
+    assert len(result_bytes) == 8
+
+    # Tests with custom time_separator for string output.
+    result_sep = parse_timestamp(
+        "2024-06-15 12:30:45", "%Y-%m-%d %H:%M:%S", output_format=TimestampFormats.STRING, time_separator="_"
+    )
+    assert isinstance(result_sep, str)
+    assert "_" in result_sep
+
+    # Tests with precision truncation.
+    result_day = parse_timestamp(
+        "2024-06-15 12:30:45",
+        "%Y-%m-%d %H:%M:%S",
+        output_format=TimestampFormats.STRING,
+        precision=TimestampPrecisions.DAY,
+    )
+    assert isinstance(result_day, str)
+    assert len(result_day.split("-")) == 3
+    assert result_day == "2024-06-15"
+
+    # Tests parsing a date-only format.
+    result_date = parse_timestamp("15/06/2024", "%d/%m/%Y")
+    assert isinstance(result_date, int)
+    expected_dt = datetime(2024, 6, 15, tzinfo=timezone.utc)
+    assert result_date == int(expected_dt.timestamp() * 1_000_000)
+
+    # Tests parsing with microseconds.
+    result_us = parse_timestamp("2024-06-15 12:30:45.123456", "%Y-%m-%d %H:%M:%S.%f")
+    assert isinstance(result_us, int)
+    expected_dt = datetime(2024, 6, 15, 12, 30, 45, 123456, tzinfo=timezone.utc)
+    assert result_us == int(expected_dt.timestamp() * 1_000_000)
+
+
+def test_parse_timestamp_errors() -> None:
+    """Verifies the error-handling behavior of the parse_timestamp() function."""
+    # Tests an invalid format string that doesn't match the date string.
+    message = (
+        f"Unable to parse timestamp. The date string '2024-06-15' could not be parsed with the format "
+        f"string '%Y/%m/%d'."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        parse_timestamp("2024-06-15", "%Y/%m/%d")
+
+    # Tests an invalid precision value.
+    message = (
+        f"Unable to parse timestamp. The 'precision' must be one of the valid members defined in the "
+        f"TimestampPrecisions enumeration ({', '.join(tuple(TimestampPrecisions))}), but got invalid."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        parse_timestamp("2024-06-15", "%Y-%m-%d", precision="invalid")
+
+    # Tests an invalid output_format.
+    message = (
+        f"Unable to parse timestamp. The 'output_format' must be one of the valid members defined in the "
+        f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got invalid."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        # noinspection PyTypeChecker
+        parse_timestamp("2024-06-15", "%Y-%m-%d", output_format="invalid")
+
+
+def test_rate_to_interval() -> None:
+    """Verifies the rate_to_interval() function with various rates and units."""
+    # 1 Hz = 1,000,000 microseconds.
+    result = rate_to_interval(1.0, to_units=TimeUnits.MICROSECOND)
+    assert isinstance(result, np.float64)
+    assert result == 1_000_000.0
+
+    # 1 Hz = 1 second.
+    result = rate_to_interval(1.0, to_units=TimeUnits.SECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 1.0
+
+    # 60 Hz = ~16666.667 microseconds.
+    result = rate_to_interval(60.0, to_units=TimeUnits.MICROSECOND, as_float=True)
+    assert isinstance(result, float)
+    assert abs(result - 16666.667) < 1.0
+
+    # 1000 Hz = 1 millisecond.
+    result = rate_to_interval(1000.0, to_units=TimeUnits.MILLISECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 1.0
+
+    # Tests with numpy input.
+    result = rate_to_interval(np.float64(10.0), to_units=TimeUnits.SECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 0.1
+
+
+def test_interval_to_rate() -> None:
+    """Verifies the interval_to_rate() function with various intervals and units."""
+    # 1,000,000 microseconds = 1 Hz.
+    result = interval_to_rate(1_000_000.0, from_units=TimeUnits.MICROSECOND)
+    assert isinstance(result, np.float64)
+    assert result == 1.0
+
+    # 1 second = 1 Hz.
+    result = interval_to_rate(1.0, from_units=TimeUnits.SECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 1.0
+
+    # 1 millisecond = 1000 Hz.
+    result = interval_to_rate(1.0, from_units=TimeUnits.MILLISECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 1000.0
+
+    # Tests roundtrip: rate -> interval -> rate. Uses tolerant comparison due to rounding in convert_time.
+    original_rate = 30.0
+    interval = rate_to_interval(original_rate, to_units=TimeUnits.MICROSECOND, as_float=True)
+    recovered_rate = interval_to_rate(interval, from_units=TimeUnits.MICROSECOND, as_float=True)
+    assert abs(recovered_rate - original_rate) < 1.0
+
+
+def test_rate_interval_errors() -> None:
+    """Verifies error handling for rate_to_interval() and interval_to_rate()."""
+    # Tests zero rate.
+    message = f"Unable to convert rate to interval. The 'rate' must be greater than 0, but got 0."
+    with pytest.raises(ValueError, match=error_format(message)):
+        rate_to_interval(0)
+
+    # Tests negative rate.
+    message = f"Unable to convert rate to interval. The 'rate' must be greater than 0, but got -1.0."
+    with pytest.raises(ValueError, match=error_format(message)):
+        rate_to_interval(-1.0)
+
+    # Tests zero interval.
+    message = f"Unable to convert interval to rate. The 'interval' must be greater than 0, but got 0."
+    with pytest.raises(ValueError, match=error_format(message)):
+        interval_to_rate(0)
+
+    # Tests negative interval.
+    message = f"Unable to convert interval to rate. The 'interval' must be greater than 0, but got -5.0."
+    with pytest.raises(ValueError, match=error_format(message)):
+        interval_to_rate(-5.0)
+
+
+def test_to_timedelta() -> None:
+    """Verifies the to_timedelta() function with various units."""
+    # 1 second.
+    td = to_timedelta(1.0, from_units=TimeUnits.SECOND)
+    assert isinstance(td, timedelta)
+    assert td == timedelta(seconds=1)
+
+    # 1000 milliseconds = 1 second.
+    td = to_timedelta(1000.0, from_units=TimeUnits.MILLISECOND)
+    assert isinstance(td, timedelta)
+    assert td == timedelta(seconds=1)
+
+    # 1 hour.
+    td = to_timedelta(1.0, from_units=TimeUnits.HOUR)
+    assert isinstance(td, timedelta)
+    assert td == timedelta(hours=1)
+
+    # 1 day.
+    td = to_timedelta(1.0, from_units=TimeUnits.DAY)
+    assert isinstance(td, timedelta)
+    assert td == timedelta(days=1)
+
+    # 500,000 microseconds = 0.5 seconds.
+    td = to_timedelta(500_000, from_units=TimeUnits.MICROSECOND)
+    assert isinstance(td, timedelta)
+    assert td == timedelta(seconds=0.5)
+
+
+def test_from_timedelta() -> None:
+    """Verifies the from_timedelta() function with various units."""
+    # 1 second timedelta to seconds.
+    result = from_timedelta(timedelta(seconds=1), to_units=TimeUnits.SECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 1.0
+
+    # 1 second timedelta to milliseconds.
+    result = from_timedelta(timedelta(seconds=1), to_units=TimeUnits.MILLISECOND, as_float=True)
+    assert isinstance(result, float)
+    assert result == 1000.0
+
+    # 1 hour timedelta to minutes.
+    result = from_timedelta(timedelta(hours=1), to_units=TimeUnits.MINUTE, as_float=True)
+    assert isinstance(result, float)
+    assert result == 60.0
+
+    # Returns np.float64 by default.
+    result = from_timedelta(timedelta(seconds=5), to_units=TimeUnits.SECOND)
+    assert isinstance(result, np.float64)
+    assert result == 5.0
+
+
+def test_timedelta_roundtrip() -> None:
+    """Verifies that to_timedelta and from_timedelta produce consistent roundtrip conversions."""
+    # Roundtrip: value -> timedelta -> value.
+    for units in [TimeUnits.SECOND, TimeUnits.MILLISECOND, TimeUnits.MINUTE, TimeUnits.HOUR]:
+        original = 42.0
+        td = to_timedelta(original, from_units=units)
+        recovered = from_timedelta(td, to_units=units, as_float=True)
+        assert abs(recovered - original) < 0.01

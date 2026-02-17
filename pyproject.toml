@@ -6,7 +6,7 @@ build-backend = "scikit_build_core.build"
 # Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "6.0.0"
+version = "6.0.1"
 description = "Provides a high-precision thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = "Apache-2.0"
@@ -60,7 +60,6 @@ dependencies = [
 
     # CLI
     "click>=8,<9",
-    "tqdm>=4,<5",
 
     # Sun Lab
     "ataraxis-base-utilities>=6,<7",
@@ -85,8 +84,6 @@ dev = [
     # Development Automation
     "ataraxis-automation>=8,<9",
 
-    # Types
-    "types-tqdm>=4,<5",
 ]
 
 # Additional Scikit-Build configuration section. Used together with CMakeLists.txt to compile the C++ extensions and

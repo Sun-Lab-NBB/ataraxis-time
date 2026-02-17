@@ -3,7 +3,6 @@
 import time as tm  # pragma: no cover
 from typing import Any  # pragma: no cover
 
-from tqdm import tqdm  # pragma: no cover
 import click  # pragma: no cover
 import numpy as np  # pragma: no cover
 from ataraxis_base_utilities import LogLevel, console  # pragma: no cover
@@ -56,8 +55,9 @@ def benchmark(  # pragma: no cover
     """Benchmarks the PrecisionTimer class performance on the local host-system. Use this command to determine the
     actual precision of the timer for the local Operating System and CPU clock combination.
     """
-    # Enables the console for output.
+    # Enables the console and progress bar display for output.
     console.enable()
+    console.enable_progress()
 
     # Initializes the timer class to benchmark.
     timer: PrecisionTimer = PrecisionTimer(precision="ns")
@@ -80,8 +80,8 @@ def benchmark(  # pragma: no cover
         timer.set_precision(precision=precision)
         elapsed_deltas = []
         # Executes the requested number of benchmarking cycles for each precision.
-        for _ in tqdm(
-            range(interval_cycles), desc=f"Running interval timing benchmark for {precision} precision timer"
+        for _ in console.track(
+            range(interval_cycles), description=f"Running interval timing benchmark for {precision} precision timer"
         ):
             # Converts the interval delay to the precision used by the elapsed timer and runs a busywait loop.
             interval: float = convert_time(time=interval_delay, from_units=TimeUnits.SECOND, to_units=precision.lower())
@@ -109,8 +109,8 @@ def benchmark(  # pragma: no cover
         deltas_block: list[float] = []
         deltas_noblock: list[float] = []
 
-        for _ in tqdm(
-            range(delay_cycles[index]), desc=f"Running busywait delay benchmark for {precision} precision timer"
+        for _ in console.track(
+            range(delay_cycles[index]), description=f"Running busywait delay benchmark for {precision} precision timer"
         ):
             # Tests blocking delay.
             start = tm.perf_counter_ns()
@@ -145,8 +145,8 @@ def benchmark(  # pragma: no cover
         deltas_block = []
         deltas_noblock = []
 
-        for _ in tqdm(
-            range(delay_cycles[index]), desc=f"Running sleep delay benchmark for {precision} precision timer"
+        for _ in console.track(
+            range(delay_cycles[index]), description=f"Running sleep delay benchmark for {precision} precision timer"
         ):
             # Tests blocking delay.
             start = tm.perf_counter_ns()
@@ -172,34 +172,49 @@ def benchmark(  # pragma: no cover
             )
         )
 
-    # Displays the test results using click.echo for formatted table output.
-    click.echo("\nResults:")
-    click.echo("Interval Timing:")
-    click.echo("Precision | Interval Time | Mean Recorded Time | Std Recorded Time")
-    click.echo("----------+---------------+--------------------+------------------")
+    # Displays the test results using console.echo with raw mode to preserve table formatting.
+    console.echo(message="\nResults:", raw=True)
+    console.echo(message="Interval Timing:", raw=True)
+    console.echo(message="Precision | Interval Time | Mean Recorded Time | Std Recorded Time", raw=True)
+    console.echo(message="----------+---------------+--------------------+------------------", raw=True)
     for precision, mean, std in interval_results:
-        click.echo(
-            f"{precision:9} | "
+        console.echo(
+            message=f"{precision:9} | "
             f"{convert_time(time=interval_delay, from_units=TimeUnits.SECOND, to_units=precision):13} | "
-            f"{mean:18.3f} | {std:16.3f}"
+            f"{mean:18.3f} | {std:16.3f}",
+            raw=True,
         )
 
-    click.echo("\nBusy-wait Delay Timing:")
-    click.echo("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")
-    click.echo("----------+----------------+-----------------+----------------+-------------------+-----------------")
+    console.echo(message="\nBusy-wait Delay Timing:", raw=True)
+    console.echo(
+        message="Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time",
+        raw=True,
+    )
+    console.echo(
+        message="----------+----------------+-----------------+----------------+-------------------+-----------------",
+        raw=True,
+    )
     for precision, delay_duration, block_mean, block_std, noblock_mean, noblock_std in delay_results_busywait:
-        click.echo(
-            f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | {noblock_mean:17.3f} | "
-            f"{noblock_std:16.3f}"
+        console.echo(
+            message=f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | "
+            f"{noblock_mean:17.3f} | {noblock_std:16.3f}",
+            raw=True,
         )
 
-    click.echo("\nSleep Delay Timing:")
-    click.echo("Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time")
-    click.echo("----------+----------------+-----------------+----------------+-------------------+-----------------")
+    console.echo(message="\nSleep Delay Timing:", raw=True)
+    console.echo(
+        message="Precision | Delay Duration | Mean Block Time | Std Block Time | Mean Noblock Time | Std Noblock Time",
+        raw=True,
+    )
+    console.echo(
+        message="----------+----------------+-----------------+----------------+-------------------+-----------------",
+        raw=True,
+    )
     for precision, delay_duration, block_mean, block_std, noblock_mean, noblock_std in delay_results_sleep:
-        click.echo(
-            f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | {noblock_mean:17.3f} | "
-            f"{noblock_std:16.3f}"
+        console.echo(
+            message=f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | "
+            f"{noblock_mean:17.3f} | {noblock_std:16.3f}",
+            raw=True,
         )
 
     console.echo(message="Benchmark: Complete.", level=LogLevel.SUCCESS)

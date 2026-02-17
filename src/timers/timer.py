@@ -5,8 +5,8 @@ from collections.abc import Generator
 
 from ataraxis_base_utilities import console
 
-from ..precision_timer_ext import CPrecisionTimer  # type: ignore[import-not-found]
 from ..utilities import convert_time
+from ..precision_timer_ext import CPrecisionTimer  # type: ignore[import-not-found]
 
 
 class TimerPrecisions(StrEnum):

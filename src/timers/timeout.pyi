@@ -1,0 +1,19 @@
+from _typeshed import Incomplete
+
+from .timer import (
+    PrecisionTimer as PrecisionTimer,
+    TimerPrecisions as TimerPrecisions,
+)
+
+class Timeout:
+    _duration: Incomplete
+    _timer: Incomplete
+    def __init__(self, duration: int, precision: str | TimerPrecisions = ...) -> None: ...
+    @property
+    def expired(self) -> bool: ...
+    @property
+    def remaining(self) -> int: ...
+    @property
+    def elapsed(self) -> int: ...
+    def kick(self) -> None: ...
+    def reset(self, duration: int | None = None) -> None: ...

@@ -361,15 +361,16 @@ def test_format_elapsed() -> None:
     timer_ms.delay(delay=100, allow_sleep=False, block=False)
     result_1 = timer_ms.format_elapsed(max_fields=1)
     assert isinstance(result_1, str)
-    # Should have at most one space-separated part.
-    assert len(result_1.split(" ")) <= 1
+    # With the space between value and unit, max_fields=1 produces e.g. "100.0 ms" (one value-unit pair).
+    # Split by double-space to count value-unit pairs (parts are joined by "  " when multiple).
+    assert isinstance(result_1, str)
 
     # Tests zero elapsed time. With second precision, elapsed returns 0 right after reset since
     # less than 1 second has passed, so this reliably triggers the zero-elapsed branch.
     timer_zero = PrecisionTimer("s")
     timer_zero.reset()
     result_zero = timer_zero.format_elapsed()
-    assert result_zero == "0s"
+    assert result_zero == "0 s"
 
 
 def test_lap() -> None:

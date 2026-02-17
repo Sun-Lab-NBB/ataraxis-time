@@ -135,10 +135,10 @@ class PrecisionTimer:
 
         Args:
             max_fields: The maximum number of unit segments to include in the output. Defaults to 2, e.g.
-                "2h 30m" instead of "2h 30m 15s 200ms".
+                "2 h 30 m" instead of "2 h 30 m 15 s 200 ms".
 
         Returns:
-            A human-readable string representation of the elapsed time, e.g. "2h 30m", "1.5ms", "500ns".
+            A human-readable string representation of the elapsed time, e.g. "2 h 30 m", "1.5 ms", "500 ns".
         """
         # Gets the current elapsed time and converts it to seconds for uniform processing.
         elapsed = self.elapsed
@@ -158,7 +158,7 @@ class PrecisionTimer:
 
         # Handles zero elapsed time.
         if elapsed_seconds == 0:
-            return f"0{precision}"
+            return f"0 {precision}"
 
         # Decomposes the elapsed seconds into unit components.
         remaining = elapsed_seconds
@@ -174,13 +174,13 @@ class PrecisionTimer:
                     rounded = round(count, 3)
                     # Uses integer representation if the value is a whole number.
                     if rounded == int(rounded):  # pragma: no cover
-                        parts.append(f"{int(rounded)}{unit_name}")
+                        parts.append(f"{int(rounded)} {unit_name}")
                     else:
-                        parts.append(f"{rounded}{unit_name}")
+                        parts.append(f"{rounded} {unit_name}")
                     break
                 whole = int(count)
                 if whole > 0:
-                    parts.append(f"{whole}{unit_name}")
+                    parts.append(f"{whole} {unit_name}")
                     remaining -= whole * unit_seconds
 
         return " ".join(parts)

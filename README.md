@@ -21,7 +21,8 @@ depends on the particular system configuration and utilization, most modern CPUs
 precision using this timer. Due to using a C-extension to provide interval and delay timing functionality, the library
 is thread- and process-safe and releases the GIL when using the appropriate delay command configuration. Additionally,
 the library offers a set of standalone helper functions for manipulating date and time data, including timestamp
-generation and parsing, time-unit conversion, rate-interval conversion, and timedelta interoperability.
+generation and parsing, time-unit conversion, rate-interval conversion, and timedelta interoperability. This library is
+part of the [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework for AI-assisted scientific hardware control.
 
 ## Features
 
@@ -453,6 +454,13 @@ Run any environment using `tox -e ENVIRONMENT`. For example, `tox -e lint`.
 ***Note,*** all pull requests for this project have to successfully complete the `tox` task before
 being merged. To expedite the task's runtime, use the `tox --parallel` command to run some tasks
 in parallel.
+
+### AI-Assisted Development
+
+Claude Code skills and other AI development assets for this project are distributed through the
+[ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace as part of the **automation** plugin. Install the
+plugin from the marketplace to make all associated skills and development tools available to compatible AI coding
+agents.
 
 ### Automation Troubleshooting
 

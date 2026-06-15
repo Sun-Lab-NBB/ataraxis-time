@@ -60,9 +60,10 @@ This library is a hybrid Python + C++ extension that provides high-precision thr
 The C++ layer uses the `chrono` library to interface with the system's highest available precision clock, exposed
 to Python through nanobind bindings.
 
-The library is organized into three packages:
+The library is organized into two Python packages (`timers`, `utilities`) plus the `c_extensions` C++ source:
 
-- **`c_extensions`**: C++ source compiled via CMake and scikit-build-core. The `CPrecisionTimer` class provides
+- **`c_extensions`**: C++ source compiled via CMake and scikit-build-core into the top-level `precision_timer_ext`
+  binary module (it is not an importable Python package). The `CPrecisionTimer` class provides
   nanosecond-resolution elapsed timing and busywait/sleep delay methods with optional GIL release.
 - **`timers`**: Python wrapper layer. `PrecisionTimer` wraps the C++ extension with a high-level API including
   lap tracking, polling, and human-readable time formatting. `Timeout` provides a timeout guard built on
@@ -85,8 +86,9 @@ import in `timer.py` is expected and should not be removed.
   requires interactive CLI execution and cannot be unit tested.
 - **File ordering**: Constants appear first, then enumerations, then public functions/classes, then private
   functions. This ordering is enforced by `/python-style`.
-- **convert_time flexibility**: The `convert_time()` function accepts both `int` and `float` inputs and returns
-  the same type by default (`as_float=False` returns `int`, `as_float=True` returns `float`).
+- **convert_time return type**: The `convert_time()` function always returns a floating-point value. By default
+  (`as_float=False`) it returns a NumPy 64-bit float scalar (`np.float64`); with `as_float=True` it returns a
+  Python `float`.
 
 ### Development commands
 
@@ -114,5 +116,6 @@ per-Python-version and aggregated by the `coverage` tox environment. Test files 
 |-----------------|--------------------------------------------|-----------------------------------------------|
 | `axt-benchmark` | `ataraxis_time.timers.benchmark:benchmark` | Benchmarks PrecisionTimer on the local system |
 
-The benchmark uses Click for argument parsing and tqdm for progress display. It tests interval timing, busywait
-delay, and sleep delay across all four precision modes.
+The benchmark uses Click for argument parsing and the `ataraxis-base-utilities` console (`console.track` /
+`console.enable_progress`, tqdm-backed) for progress display. It tests interval timing and busywait delay across
+all four precision modes, and sleep delay for the `ms` and `s` modes only.

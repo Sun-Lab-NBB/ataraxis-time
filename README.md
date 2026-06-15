@@ -220,7 +220,7 @@ import time as tm
 timer = PrecisionTimer('us')
 tm.sleep(2.5)  # Simulates work
 print(f"Elapsed: {timer.format_elapsed()}")  # e.g. "2 s 500.117 ms"
-print(f"Detailed: {timer.format_elapsed(max_fields=3)}")  # e.g. "2 s 500 ms 117.0 us"
+print(f"Detailed: {timer.format_elapsed(max_fields=3)}")  # e.g. "2 s 500 ms 117 us"
 ```
 
 #### Polling

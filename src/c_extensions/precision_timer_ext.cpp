@@ -46,6 +46,10 @@ class CPrecisionTimer
     explicit CPrecisionTimer(const std::string& precision = "us")
     {
         SetPrecision(precision);
+
+        // Establishes the initial reference point so that elapsed time is measured from instantiation, matching the
+        // behavior documented by the Elapsed() method.
+        Reset();
     }
 
     /// Resets the timer.

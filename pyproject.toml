@@ -29,8 +29,7 @@ keywords = [
     "non-blocking",
     "blocking",
     "date",
-    "ataraxis",
-    "sunlab"
+    "ataraxis"
 ]
 
 classifiers = [
@@ -61,7 +60,7 @@ dependencies = [
     # CLI
     "click>=8,<9",
 
-    # Sun Lab
+    # Ataraxis framework
     "ataraxis-base-utilities>=6,<7",
 ]
 
@@ -105,15 +104,6 @@ build-dir = "build/{wheel_tag}"
 build-verbosity = 1
 skip = ["*t-*"]               # Skip free-threaded wheels
 
-# Builds wheels for AMD64 and ARM64 for all platforms and x86 for Linux and Windows.
-[tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
-[tool.cibuildwheel.linux]
-# Note. To cross-compile on Linux install this for Docker https://hub.docker.com/r/tonistiigi/binfmt.
-archs = ["i686", "aarch64", "x86_64"]
-[tool.cibuildwheel.windows]
-archs = ["AMD64", "ARM64", "x86"]
-
 # Instructs the frontend to use uv over pip, which significantly improves the build speed.
 build-frontend = "build[uv]"
 
@@ -122,6 +112,15 @@ build-frontend = "build[uv]"
 # parameters results in the best speed-to-safety ratio.
 test-command = "pytest {project}/tests -n logical --dist loadgroup"
 test-requires = ["pytest", "pytest-xdist"]
+
+# Builds wheels for AMD64 and ARM64 for all platforms and x86 for Linux and Windows.
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+[tool.cibuildwheel.linux]
+# Note. To cross-compile on Linux install this for Docker https://hub.docker.com/r/tonistiigi/binfmt.
+archs = ["i686", "aarch64", "x86_64"]
+[tool.cibuildwheel.windows]
+archs = ["AMD64", "ARM64", "x86"]
 
 # Specifies the macOS deployment target, which is needed for full C++17 support (not available in all macOS versions).
 [tool.cibuildwheel.macos.environment]

@@ -6,6 +6,8 @@ import numpy as np
 from numpy.typing import NDArray as NDArray
 
 _DT_MAX_PARTS: int
+_TIMESTAMP_DTYPE: np.dtype[Any]
+_PRECISION_PARTS: dict[str, int]
 
 class TimeUnits(StrEnum):
     NANOSECOND = "ns"
@@ -29,8 +31,6 @@ class TimestampPrecisions(StrEnum):
     MINUTE = "minute"
     SECOND = "second"
     MICROSECOND = "microsecond"
-
-_PRECISION_PARTS: dict[str, int]
 
 def convert_time(
     time: float | np.integer[Any] | np.floating[Any],

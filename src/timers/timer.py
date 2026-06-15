@@ -69,7 +69,7 @@ class PrecisionTimer:
 
     def __repr__(self) -> str:
         """Returns a string representation of the PrecisionTimer instance."""
-        return f"PrecisionTimer(precision={self.precision}, elapsed_time = {self.elapsed} {self.precision}.)"
+        return f"PrecisionTimer(precision={self.precision}, elapsed={self.elapsed})"
 
     @property
     def elapsed(self) -> int:
@@ -81,7 +81,7 @@ class PrecisionTimer:
     @property
     def precision(self) -> str:
         """Returns the units currently used by the instance as a string ('ns', 'us', 'ms', or 's')."""
-        return str(self._timer.GetPrecision())
+        return str(self._timer.get_precision())
 
     def reset(self) -> None:
         """Resets the timer and clears all recorded laps."""
@@ -94,8 +94,8 @@ class PrecisionTimer:
         Args:
             delay: The integer period of time to wait for. The method assumes the delay is given in the same precision
                 units as used by the instance.
-            allow_sleep: A boolean flag that allows releasing the CPU while suspending execution for durations above 1
-                millisecond.
+            allow_sleep: Determines whether the timer may use sleep instead of busy-wait to suspend execution.
+                Sleep is only used when the timer precision is 'ms' or 's'.
             block: Determines whether to hold (if True) or release (if False) the Global Interpreter Lock (GIL) during
                 the delay. Releasing the GIL allows other Python threads to run in parallel with the delay.
         """
@@ -143,7 +143,7 @@ class PrecisionTimer:
         # Gets the current elapsed time and converts it to seconds for uniform processing.
         elapsed = self.elapsed
         precision = self.precision
-        elapsed_seconds = float(convert_time(elapsed, from_units=precision, to_units="s", as_float=True))
+        elapsed_seconds = float(convert_time(time=elapsed, from_units=precision, to_units="s", as_float=True))
 
         # Defines units in descending order with their second-based thresholds.
         units: list[tuple[str, float]] = [
@@ -202,15 +202,15 @@ class PrecisionTimer:
         return tuple(self._laps)
 
     def poll(self, interval: int, *, allow_sleep: bool = True, block: bool = False) -> Generator[int, None, None]:
-        """Infinite generator that yields an iteration count after each delay cycle.
+        """Yields an iteration count after each delay cycle.
 
         Each iteration calls self.delay() with the specified interval and parameters. The caller should break
         out of the loop when done.
 
         Args:
             interval: The delay interval in the timer's current precision units.
-            allow_sleep: A boolean flag that allows releasing the CPU while suspending execution for durations above
-                1 millisecond.
+            allow_sleep: Determines whether the timer may use sleep instead of busy-wait to suspend execution.
+                Sleep is only used when the timer precision is 'ms' or 's'.
             block: Determines whether to hold or release the GIL during the delay.
 
         Yields:
@@ -218,6 +218,6 @@ class PrecisionTimer:
         """
         count = 0
         while True:
-            self.delay(interval, allow_sleep=allow_sleep, block=block)
+            self.delay(delay=interval, allow_sleep=allow_sleep, block=block)
             count += 1
             yield count

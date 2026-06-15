@@ -26,7 +26,6 @@ using namespace nb::literals;
 using namespace std::chrono;
 
 /**
- * @class CPrecisionTimer
  * @brief Provides methods for sub-microsecond-precise interval timing and blocking / non-blocking code execution
  * delays.
  *
@@ -47,11 +46,13 @@ class CPrecisionTimer
     explicit CPrecisionTimer(const std::string& precision = "us")
     {
         SetPrecision(precision);
+
+        // Establishes the initial reference point so that elapsed time is measured from instantiation, matching the
+        // behavior documented by the Elapsed() method.
+        Reset();
     }
 
-    /**
-     * @brief Resets the timer.
-     */
+    /// Resets the timer.
     void Reset()
     {
         // Re-bases the start_time to use the current time obtained using the highest resolution clock.
@@ -61,7 +62,7 @@ class CPrecisionTimer
     /**
      * @brief Returns the time elapsed since the last reset() method call or class instantiation.
      *
-     * @returns int64_t The elapsed time, using the current class precision units.
+     * @returns The elapsed time, using the current class precision units.
      */
     [[nodiscard]] int64_t Elapsed() const
     {
@@ -80,9 +81,9 @@ class CPrecisionTimer
      * @warning If sleeping is allowed, there is an overhead of up to 1 millisecond due to scheduling on the Windows OS.
      *
      * @param duration The time to block for. Uses the same units as the instance's precision parameter.
-     * @param allow_sleep Determines whether the method should use sleep for delay durations above 1 millisecond. Sleep
-     * may be beneficial in some cases as it reduces the CPU load at the expense of an additional overhead compared to
-     * the default busy-wait delay approach.
+     * @param allow_sleep Determines whether the method may use sleep instead of busy-wait. Sleep is used only when
+     * the instance precision is 'ms' or 's', regardless of the requested delay duration. It reduces CPU load at the
+     * expense of additional overhead compared to the default busy-wait delay approach.
      * @param block Determines whether the method should release the GIL, allowing concurrent execution of other
      * Python threads. If false, the method releases the GIL. If true, the method maintains the GIL, preventing other
      * Python threads from running.
@@ -94,8 +95,8 @@ class CPrecisionTimer
 
         // Defines a lambda function to perform the actual delay
         auto perform_delay = [&]() {
-            // If sleep is allowed and delay duration is sufficiently long to resolve with sleep, uses sleep_for() to
-            // release the CPU during blocking.
+            // If sleep is allowed and the instance precision is coarse enough (ms or s) to resolve the delay with
+            // sleep, uses sleep_for() to release the CPU during blocking.
             if (allow_sleep && _precision_duration >= milliseconds(1))
             {
                 std::this_thread::sleep_for(delay_duration);
@@ -142,14 +143,16 @@ class CPrecisionTimer
         }
     }
 
-    /**
-     * @brief Returns the current precision (time-units) of the timer.
-     *
-     * @returns std::string The current precision of the timer ('ns', 'us', 'ms', or 's').
-     */
-    [[nodiscard]] std::string GetPrecision() const
+    /// Returns the current precision of the timer ('ns', 'us', 'ms', or 's').
+    [[nodiscard]] std::string get_precision() const
     {
         return _precision;
+    }
+
+    /// Returns a string representation of the CPrecisionTimer instance.
+    std::string Repr() const
+    {
+        return "CPrecisionTimer(precision=" + _precision + ")";
     }
 
     /// Destroys the CPrecisionTimer class.
@@ -175,7 +178,7 @@ class CPrecisionTimer
      * other methods in the future.
      *
      * @param nanoseconds The value in nanoseconds to be converted to the desired precision.
-     * @returns int64_t The converted time-value, rounded to the whole number.
+     * @returns The converted time-value, truncated to the whole number via integer division toward zero.
      */
     [[nodiscard]]
     int64_t ConvertToPrecision(const int64_t nanoseconds) const
@@ -218,6 +221,7 @@ NB_MODULE(precision_timer_ext, m)
             "block"_a = false,
             "Delays for the requested period of time while releasing or maintaining the GIL."
         )
-        .def("GetPrecision", &CPrecisionTimer::GetPrecision, "Returns the current precision of the timer.")
-        .def("SetPrecision", &CPrecisionTimer::SetPrecision, "precision"_a, "Sets the class precision to new units.");
+        .def("get_precision", &CPrecisionTimer::get_precision, "Returns the current precision of the timer.")
+        .def("SetPrecision", &CPrecisionTimer::SetPrecision, "precision"_a, "Sets the class precision to new units.")
+        .def("__repr__", &CPrecisionTimer::Repr);
 }

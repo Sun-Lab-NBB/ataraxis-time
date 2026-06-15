@@ -8,17 +8,18 @@ any source code.
 
 ## Style guide compliance
 
-You MUST follow the Sun Lab style conventions when working in this project. Invoke the appropriate skill before
-making any changes to the corresponding file type:
+You MUST follow the Ataraxis framework style conventions when working in this project. Invoke the appropriate
+skill before making any changes to the corresponding file type:
 
-| File type          | Required skill     |
-|--------------------|--------------------|
-| Python source code | `/python-style`    |
-| C++ source code    | `/cpp-style`       |
-| `pyproject.toml`   | `/pyproject-style` |
-| `tox.ini`          | `/tox-config`      |
-| `README.md`        | `/readme-style`    |
-| Commit messages    | `/commit`          |
+| File type             | Required skill     |
+|-----------------------|--------------------|
+| Python source code    | `/python-style`    |
+| C++ source code       | `/cpp-style`       |
+| `pyproject.toml`      | `/pyproject-style` |
+| `tox.ini`             | `/tox-config`      |
+| `README.md`           | `/readme-style`    |
+| Sphinx docs (`docs/`) | `/api-docs`        |
+| Commit messages       | `/commit`          |
 
 You MUST use `console.error(message=message, error=ErrorType)` from `ataraxis-base-utilities` for all error
 handling in Python source files. Do not use bare `raise` statements. Error messages follow the format:
@@ -30,7 +31,7 @@ imports. For example, `src/timers/` imports from `src/utilities/` via `from ..ut
 
 ## Cross-referenced library verification
 
-This project depends on the following Sun Lab library:
+This project depends on the following Ataraxis framework library:
 
 | Library                 | Import name                | Role                                             |
 |-------------------------|----------------------------|--------------------------------------------------|
@@ -41,16 +42,23 @@ The `console` object is not enabled in this library's top-level `__init__.py`. I
 
 ## Available skills
 
-| Skill               | Description                                                   |
-|---------------------|---------------------------------------------------------------|
-| `/explore-codebase` | Performs in-depth codebase exploration at session start       |
-| `/python-style`     | Applies Sun Lab Python coding conventions                     |
-| `/cpp-style`        | Applies Sun Lab C++ coding conventions                        |
-| `/pyproject-style`  | Applies Sun Lab pyproject.toml conventions                    |
-| `/tox-config`       | Applies Sun Lab tox.ini conventions                           |
-| `/readme-style`     | Applies Sun Lab README.md conventions                         |
-| `/commit`           | Drafts style-compliant commit messages from local changes     |
-| `/skill-design`     | Generates and verifies skill files and CLAUDE.md instructions |
+| Skill                   | Description                                                                       |
+|-------------------------|-----------------------------------------------------------------------------------|
+| `/explore-codebase`     | Perform in-depth codebase exploration at session start                            |
+| `/explore-dependencies` | Build a live API snapshot of installed Ataraxis dependencies                      |
+| `/python-style`         | Apply Ataraxis framework Python coding conventions (REQUIRED for Python code)     |
+| `/cpp-style`            | Apply Ataraxis framework C++ coding conventions (REQUIRED for C++ code)           |
+| `/readme-style`         | Apply Ataraxis framework README conventions (REQUIRED for README files)           |
+| `/pyproject-style`      | Apply Ataraxis framework pyproject.toml conventions (REQUIRED for pyproject.toml) |
+| `/tox-config`           | Apply Ataraxis framework tox.ini conventions (REQUIRED for tox.ini)               |
+| `/api-docs`             | Apply Ataraxis framework API documentation conventions (REQUIRED for docs files)  |
+| `/project-layout`       | Apply Ataraxis framework project directory structure conventions                  |
+| `/skill-design`         | Generate and verify skill files and CLAUDE.md project instructions                |
+| `/audit-facts`          | Audit documentation files for factual accuracy against the source code            |
+| `/audit-style`          | Audit source, config, and documentation files for style-guide compliance          |
+| `/commit`               | Draft Ataraxis framework style-compliant git commit messages                      |
+| `/pr`                   | Draft Ataraxis framework style-compliant pull request summaries                   |
+| `/release`              | Draft Ataraxis framework style-compliant release notes                            |
 
 ## Project context
 
@@ -60,9 +68,10 @@ This library is a hybrid Python + C++ extension that provides high-precision thr
 The C++ layer uses the `chrono` library to interface with the system's highest available precision clock, exposed
 to Python through nanobind bindings.
 
-The library is organized into three packages:
+The library is organized into two Python packages (`timers`, `utilities`) plus the `c_extensions` C++ source:
 
-- **`c_extensions`**: C++ source compiled via CMake and scikit-build-core. The `CPrecisionTimer` class provides
+- **`c_extensions`**: C++ source compiled via CMake and scikit-build-core into the top-level `precision_timer_ext`
+  binary module (it is not an importable Python package). The `CPrecisionTimer` class provides
   nanosecond-resolution elapsed timing and busywait/sleep delay methods with optional GIL release.
 - **`timers`**: Python wrapper layer. `PrecisionTimer` wraps the C++ extension with a high-level API including
   lap tracking, polling, and human-readable time formatting. `Timeout` provides a timeout guard built on
@@ -85,8 +94,9 @@ import in `timer.py` is expected and should not be removed.
   requires interactive CLI execution and cannot be unit tested.
 - **File ordering**: Constants appear first, then enumerations, then public functions/classes, then private
   functions. This ordering is enforced by `/python-style`.
-- **convert_time flexibility**: The `convert_time()` function accepts both `int` and `float` inputs and returns
-  the same type by default (`as_float=False` returns `int`, `as_float=True` returns `float`).
+- **convert_time return type**: The `convert_time()` function always returns a floating-point value. By default
+  (`as_float=False`) it returns a NumPy 64-bit float scalar (`np.float64`); with `as_float=True` it returns a
+  Python `float`.
 
 ### Development commands
 
@@ -114,5 +124,6 @@ per-Python-version and aggregated by the `coverage` tox environment. Test files 
 |-----------------|--------------------------------------------|-----------------------------------------------|
 | `axt-benchmark` | `ataraxis_time.timers.benchmark:benchmark` | Benchmarks PrecisionTimer on the local system |
 
-The benchmark uses Click for argument parsing and tqdm for progress display. It tests interval timing, busywait
-delay, and sleep delay across all four precision modes.
+The benchmark uses Click for argument parsing and the `ataraxis-base-utilities` console (`console.track` /
+`console.enable_progress`, tqdm-backed) for progress display. It tests interval timing and busywait delay across
+all four precision modes, and sleep delay for the `ms` and `s` modes only.

@@ -35,6 +35,10 @@ class Timeout:
         self._timer = PrecisionTimer(precision=precision)
         self._timer.reset()
 
+    def __repr__(self) -> str:
+        """Returns a string representation of the Timeout instance."""
+        return f"Timeout(duration={self._duration}, remaining={self.remaining})"
+
     @property
     def expired(self) -> bool:
         """Returns True if the timeout duration has elapsed."""

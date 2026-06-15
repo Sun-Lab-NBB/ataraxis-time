@@ -1,10 +1,10 @@
 """Contains tests for the Timeout class provided by the timeout.py module."""
 
-import time as tm
+import time
 
-import pytest  # type: ignore
-from ataraxis_base_utilities import error_format
+import pytest
 from ataraxis_time import Timeout, TimerPrecisions
+from ataraxis_base_utilities import error_format
 
 
 def test_timeout_initialization() -> None:
@@ -41,7 +41,7 @@ def test_timeout_expired() -> None:
     timeout = Timeout(duration=1, precision=TimerPrecisions.NANOSECOND)
 
     # Waits briefly to ensure the timeout expires.
-    tm.sleep(0.001)  # 1 ms - more than enough for 1 ns to elapse.
+    time.sleep(0.001)  # 1 ms - more than enough for 1 ns to elapse.
     assert timeout.expired
 
 
@@ -57,7 +57,7 @@ def test_timeout_remaining() -> None:
 
     # After expiry, remaining should be 0.
     timeout_short = Timeout(duration=1, precision=TimerPrecisions.NANOSECOND)
-    tm.sleep(0.001)
+    time.sleep(0.001)
     assert timeout_short.remaining == 0
 
 
@@ -69,7 +69,7 @@ def test_timeout_elapsed() -> None:
     elapsed1 = timeout.elapsed
     assert elapsed1 >= 0
 
-    tm.sleep(0.01)
+    time.sleep(0.01)
     elapsed2 = timeout.elapsed
     assert elapsed2 > elapsed1
 
@@ -79,7 +79,7 @@ def test_timeout_kick() -> None:
     timeout = Timeout(duration=5_000_000, precision=TimerPrecisions.MICROSECOND)
 
     # Let some time pass.
-    tm.sleep(0.01)
+    time.sleep(0.01)
     elapsed_before = timeout.elapsed
     assert elapsed_before > 0
 
@@ -96,7 +96,7 @@ def test_timeout_reset() -> None:
     timeout = Timeout(duration=5_000_000, precision=TimerPrecisions.MICROSECOND)
 
     # Let some time pass.
-    tm.sleep(0.01)
+    time.sleep(0.01)
 
     # Reset without changing duration.
     timeout.reset()
@@ -112,12 +112,12 @@ def test_timeout_reset() -> None:
 def test_timeout_errors() -> None:
     """Verifies error handling for invalid Timeout initialization and reset."""
     # Tests zero duration.
-    message = f"Unable to initialize the Timeout class. The 'duration' must be greater than 0, but got 0."
+    message = "Unable to initialize the Timeout class. The 'duration' must be greater than 0, but got 0."
     with pytest.raises(ValueError, match=error_format(message)):
         Timeout(duration=0)
 
     # Tests negative duration.
-    message = f"Unable to initialize the Timeout class. The 'duration' must be greater than 0, but got -100."
+    message = "Unable to initialize the Timeout class. The 'duration' must be greater than 0, but got -100."
     with pytest.raises(ValueError, match=error_format(message)):
         Timeout(duration=-100)
 
@@ -132,10 +132,10 @@ def test_timeout_errors() -> None:
 
     # Tests reset with invalid duration.
     timeout = Timeout(duration=5_000, precision=TimerPrecisions.MILLISECOND)
-    message = f"Unable to reset Timeout. The 'duration' must be greater than 0, but got 0."
+    message = "Unable to reset Timeout. The 'duration' must be greater than 0, but got 0."
     with pytest.raises(ValueError, match=error_format(message)):
         timeout.reset(duration=0)
 
-    message = f"Unable to reset Timeout. The 'duration' must be greater than 0, but got -50."
+    message = "Unable to reset Timeout. The 'duration' must be greater than 0, but got -50."
     with pytest.raises(ValueError, match=error_format(message)):
         timeout.reset(duration=-50)

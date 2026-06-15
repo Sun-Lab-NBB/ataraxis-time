@@ -9,20 +9,19 @@ runs without errors.
 """
 
 import re
-import time as tm
+import time
 import threading
 
-import pytest  # type: ignore
+import pytest
 from ataraxis_time import PrecisionTimer, TimerPrecisions
 from ataraxis_base_utilities import error_format
-from ataraxis_time.precision_timer_ext import CPrecisionTimer  # type: ignore
 
 # Global variables used for block/no-block threaded testing
 global_counter: int = 0
 end_flag: bool = False
 
 
-def update_global_counter() -> None:
+def _update_global_counter() -> None:
     """Continuously increments a global counter until the end_flag is set.
 
     Used to test blocking vs. non-blocking delay functionality.
@@ -30,10 +29,10 @@ def update_global_counter() -> None:
     global global_counter
     while not end_flag:
         global_counter += 1
-        tm.sleep(0.02)  # Release GIL
+        time.sleep(0.02)  # Release GIL
 
 
-def verify_delay_method(
+def _verify_delay_method(
     timer: PrecisionTimer,
     precision: str,
     delay: int,
@@ -51,20 +50,18 @@ def verify_delay_method(
         This method does not evaluate the precision of the timer, only its ability to execute the runtime.
 
     Args:
-        timer: The PrecisionTimer class instance used by the main test function.
-        precision: The precision string-option to use for the test. Has to be one of the precisions supported by the
-            PrecisionTimer class: 'ns', 'us', 'ms', 's'
-        delay: The integer period of time to delay for, 'precision' argument defines the units of the delay.
-        allow_sleep: A boolean flag that determines whether the delay method is allowed to use sleep instead of a
-            busy-wait loop. Defaults to False.
-        block: A boolean flag that determines whether to hold or release the GIL during the delay. Defaults to False.
+        timer: The instance used by the calling test function.
+        precision: The precision option to use for the test. Must be one of the options supported by the
+            PrecisionTimer class: 'ns', 'us', 'ms', or 's'.
+        delay: The period of time to delay for. The 'precision' argument defines the units.
+        allow_sleep: Determines whether the delay method may use sleep instead of a busy-wait loop. Defaults to False.
+        block: Determines whether to hold or release the GIL during the delay. Defaults to False.
     """
-    # noinspection PyTypeChecker
-    timer.set_precision(precision=precision)  # Switches the timer to the input precision
+    timer.set_precision(precision=precision)
     timer.delay(delay=delay, allow_sleep=allow_sleep, block=block)
 
 
-def verify_interval_method(timer: PrecisionTimer, precision: str, interval: int) -> None:
+def _verify_interval_method(timer: PrecisionTimer, precision: str, interval: int) -> None:
     """Streamlines testing interval timing method runtimes by offering a generalized test template.
 
     This method reduces the boilerplate code usage by providing a template that can be used to quickly test the
@@ -75,13 +72,11 @@ def verify_interval_method(timer: PrecisionTimer, precision: str, interval: int)
         This method does not evaluate the precision of the timer, only its ability to execute the runtime.
 
     Args:
-         timer: The PrecisionTimer class instance used by the main test function.
-         precision: The precision string-option to use for the test. Has to be one of the precisions supported by the
-            PrecisionTimer class: 'ns', 'us', 'ms', 's'
-        interval: The integer period of time that should be interval-timed, 'precision' argument defines the units of
-            the interval.
+        timer: The instance used by the calling test function.
+        precision: The precision option to use for the test. Must be one of the options supported by the
+            PrecisionTimer class: 'ns', 'us', 'ms', or 's'.
+        interval: The period of time that should be interval-timed. The 'precision' argument defines the units.
     """
-    # noinspection PyTypeChecker
     timer.set_precision(precision=precision)
     timer.reset()
     while timer.elapsed < interval:
@@ -89,7 +84,7 @@ def verify_interval_method(timer: PrecisionTimer, precision: str, interval: int)
 
 
 def test_initialization_and_precision_control() -> None:
-    """Verifies PrecisionTimer class initialization and precision manipulation (retrieval and setting) functionality."""
+    """Verifies PrecisionTimer initialization and precision-control functionality."""
     # Initializes the class using microsecond precision (default)
     timer = PrecisionTimer()
     assert timer.precision == "us"
@@ -110,20 +105,19 @@ def test_initialization_and_precision_control() -> None:
     timer.set_precision(TimerPrecisions.MILLISECOND)
     assert timer.precision == "ms"
 
-    # Tests case insensitivity by using uppercase (this will work through StrEnum's __new__)
+    # Switches to nanosecond precision using a string.
     timer.set_precision("ns")
     assert timer.precision == "ns"
 
     # Verifies the representation method of the class
     timer.set_precision("s")
-    expected_start = "PrecisionTimer(precision=s, elapsed_time = "
-    expected_end = " s.)"
+    expected_start = "PrecisionTimer(precision=s, elapsed="
 
     # Checks if the __repr__ method returns the expected string. Specifically, verifies the entire string except for
     # the 'elapsed' parameter, as it is almost impossible to predict.
     repr_string = repr(timer)
-    assert expected_start in repr_string
-    assert expected_end in repr_string
+    assert repr_string.startswith(expected_start)
+    assert repr_string.endswith(")")
 
 
 def test_timer_precisions_enum() -> None:
@@ -144,23 +138,20 @@ def test_timer_precisions_enum() -> None:
     actual_values = {member.value for member in TimerPrecisions}
     assert actual_values == expected_values
 
-    # Verifies case-insensitive string conversion works through StrEnum
-    assert TimerPrecisions("ns") == TimerPrecisions.NANOSECOND
+    # Verifies string-value to enum conversion through StrEnum.
     assert TimerPrecisions("ns") == TimerPrecisions.NANOSECOND
     assert TimerPrecisions("us") == TimerPrecisions.MICROSECOND
 
 
 def test_initialization_and_precision_control_errors() -> None:
-    """Verifies PrecisionTimer class initialization and precision manipulation (retrieval and setting) error handling."""
+    """Verifies PrecisionTimer initialization and precision-control error handling."""
     # Verifies that attempting to initialize the class with an invalid precision fails as expected
     invalid_precision = "invalid_precision"
     message = (
         f"Unable to initialize PrecisionTimer class. The precision must be one of the supported options "
         f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {invalid_precision}."
     )
-    # noinspection PyTypeChecker
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         PrecisionTimer(invalid_precision)
 
     # Initializes a valid timer for testing set_precision errors
@@ -171,9 +162,7 @@ def test_initialization_and_precision_control_errors() -> None:
         f"Unable to set PrecisionTimer precision. The precision must be one of the supported options "
         f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {invalid_precision}."
     )
-    # noinspection PyTypeChecker
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         timer.set_precision(invalid_precision)
 
 
@@ -200,9 +189,8 @@ def test_interval_timing(precision: str) -> None:
     that commands run without errors. Uses 'mark' fixture to generate a version of this test for all supported
     precisions and, ideally, should be executed in-parallel with other tests.
     """
-    # noinspection PyTypeChecker
     timer = PrecisionTimer(precision)
-    verify_interval_method(timer=timer, precision=precision, interval=1)
+    _verify_interval_method(timer=timer, precision=precision, interval=1)
 
 
 @pytest.mark.parametrize("precision", ["ns", "us", "ms", "s"])
@@ -214,9 +202,8 @@ def test_delay_timing(precision: str, allow_sleep: bool, block: bool) -> None:
     Similar to how interval timing is tested, this function does not evaluate delay method precision. Use the
     benchmark command to benchmark delay precision on your particular system.
     """
-    # noinspection PyTypeChecker
     timer = PrecisionTimer(precision)
-    verify_delay_method(timer=timer, precision=precision, delay=1, allow_sleep=allow_sleep, block=block)
+    _verify_delay_method(timer=timer, precision=precision, delay=1, allow_sleep=allow_sleep, block=block)
 
 
 def test_delay_with_enum_precision() -> None:
@@ -240,12 +227,13 @@ def test_threaded_delay() -> None:
     timer = PrecisionTimer("s")
 
     # Starts a separate thread that updates the global_counter
-    counter_thread = threading.Thread(target=update_global_counter)
-    counter_thread.daemon = True  # Set as a daemon, so it automatically closes when the main program exits
+    counter_thread = threading.Thread(target=_update_global_counter)
+    # Configures the thread as a daemon, so it closes automatically when the main program exits.
+    counter_thread.daemon = True
     counter_thread.start()
 
     # Short delay to ensure the counter-thread has started
-    tm.sleep(0.1)
+    time.sleep(0.1)
 
     # Verifies that blocking delay (block=True) prevents the thread from running during the delay period
     # because it holds the GIL
@@ -261,7 +249,7 @@ def test_threaded_delay() -> None:
 
     # Eliminates the thread to avoid nanobind leak warnings
     end_flag = True
-    tm.sleep(0.1)
+    time.sleep(0.1)
 
 
 def test_precision_switching() -> None:
@@ -280,7 +268,7 @@ def test_precision_switching() -> None:
     timer.set_precision("ms")
     assert timer.precision == "ms"
 
-    # Switch to seconds using uppercase string
+    # Switch to seconds using a string.
     timer.set_precision("s")
     assert timer.precision == "s"
 
@@ -292,23 +280,23 @@ def test_precision_switching() -> None:
 
 def test_timer_with_different_initialization_methods() -> None:
     """Verifies that PrecisionTimer can be initialized with different argument types."""
-    # Test initialization with string lowercase
+    # Initializes with the nanosecond precision string.
     timer1 = PrecisionTimer("ns")
     assert timer1.precision == "ns"
 
-    # Test initialization with string uppercase
+    # Initializes with the microsecond precision string.
     timer2 = PrecisionTimer("us")
     assert timer2.precision == "us"
 
-    # Test initialization with string mixed case
+    # Initializes with the millisecond precision string.
     timer3 = PrecisionTimer("ms")
     assert timer3.precision == "ms"
 
-    # Test initialization with TimerPrecisions enum
+    # Initializes with the TimerPrecisions enum.
     timer4 = PrecisionTimer(TimerPrecisions.SECOND)
     assert timer4.precision == "s"
 
-    # Test default initialization (should be microseconds)
+    # Initializes with the default precision (microseconds).
     timer5 = PrecisionTimer()
     assert timer5.precision == "us"
 
@@ -361,9 +349,6 @@ def test_format_elapsed() -> None:
     timer_ms.delay(delay=100, allow_sleep=False, block=False)
     result_1 = timer_ms.format_elapsed(max_fields=1)
     assert isinstance(result_1, str)
-    # With the space between value and unit, max_fields=1 produces e.g. "100.0 ms" (one value-unit pair).
-    # Split by double-space to count value-unit pairs (parts are joined by "  " when multiple).
-    assert isinstance(result_1, str)
 
     # Tests zero elapsed time. With second precision, elapsed returns 0 right after reset since
     # less than 1 second has passed, so this reliably triggers the zero-elapsed branch.
@@ -371,6 +356,19 @@ def test_format_elapsed() -> None:
     timer_zero.reset()
     result_zero = timer_zero.format_elapsed()
     assert result_zero == "0 s"
+
+
+def test_format_elapsed_fractional_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verifies format_elapsed() renders the final unit segment as a decimal for non-whole unit counts."""
+    timer = PrecisionTimer("ms")
+
+    # Pins the elapsed time and precision so the final field resolves to a fractional unit count
+    # (1500 ms == 1.5 s). Real elapsed times cannot reliably reproduce this, so patching is the only
+    # deterministic way to exercise the decimal-rendering branch.
+    monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 1500))
+    monkeypatch.setattr(PrecisionTimer, "precision", property(lambda _self: "ms"))
+
+    assert timer.format_elapsed(max_fields=1) == "1.5 s"
 
 
 def test_lap() -> None:

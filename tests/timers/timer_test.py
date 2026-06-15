@@ -59,7 +59,6 @@ def verify_delay_method(
             busy-wait loop. Defaults to False.
         block: A boolean flag that determines whether to hold or release the GIL during the delay. Defaults to False.
     """
-    # noinspection PyTypeChecker
     timer.set_precision(precision=precision)  # Switches the timer to the input precision
     timer.delay(delay=delay, allow_sleep=allow_sleep, block=block)
 
@@ -81,7 +80,6 @@ def verify_interval_method(timer: PrecisionTimer, precision: str, interval: int)
         interval: The integer period of time that should be interval-timed, 'precision' argument defines the units of
             the interval.
     """
-    # noinspection PyTypeChecker
     timer.set_precision(precision=precision)
     timer.reset()
     while timer.elapsed < interval:
@@ -158,9 +156,7 @@ def test_initialization_and_precision_control_errors() -> None:
         f"Unable to initialize PrecisionTimer class. The precision must be one of the supported options "
         f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {invalid_precision}."
     )
-    # noinspection PyTypeChecker
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         PrecisionTimer(invalid_precision)
 
     # Initializes a valid timer for testing set_precision errors
@@ -171,9 +167,7 @@ def test_initialization_and_precision_control_errors() -> None:
         f"Unable to set PrecisionTimer precision. The precision must be one of the supported options "
         f"defined in the TimerPrecisions enumeration ({tuple(TimerPrecisions)}), but got {invalid_precision}."
     )
-    # noinspection PyTypeChecker
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         timer.set_precision(invalid_precision)
 
 
@@ -200,7 +194,6 @@ def test_interval_timing(precision: str) -> None:
     that commands run without errors. Uses 'mark' fixture to generate a version of this test for all supported
     precisions and, ideally, should be executed in-parallel with other tests.
     """
-    # noinspection PyTypeChecker
     timer = PrecisionTimer(precision)
     verify_interval_method(timer=timer, precision=precision, interval=1)
 
@@ -214,7 +207,6 @@ def test_delay_timing(precision: str, allow_sleep: bool, block: bool) -> None:
     Similar to how interval timing is tested, this function does not evaluate delay method precision. Use the
     benchmark command to benchmark delay precision on your particular system.
     """
-    # noinspection PyTypeChecker
     timer = PrecisionTimer(precision)
     verify_delay_method(timer=timer, precision=precision, delay=1, allow_sleep=allow_sleep, block=block)
 

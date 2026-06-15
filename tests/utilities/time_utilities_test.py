@@ -56,7 +56,6 @@ def test_convert_time_errors() -> None:
         f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {invalid_input}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         convert_time(1, from_units=invalid_input, to_units="ms")
 
     # Tests invalid 'to_units' argument value (and, indirectly, type).
@@ -65,7 +64,6 @@ def test_convert_time_errors() -> None:
         f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {invalid_input}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         convert_time(1, from_units="s", to_units=invalid_input)
 
 
@@ -250,7 +248,6 @@ def test_get_timestamp_errors() -> None:
         f"{invalid_time_separator} of type {type(invalid_time_separator).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
-        # noinspection PyTypeChecker
         get_timestamp(output_format=TimestampFormats.STRING, time_separator=invalid_time_separator)
 
     # Tests invalid output_format value
@@ -260,7 +257,6 @@ def test_get_timestamp_errors() -> None:
         f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {invalid_format}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         get_timestamp(output_format=invalid_format)
 
 
@@ -274,7 +270,6 @@ def test_convert_timestamp_errors() -> None:
         f"{invalid_input} of type {type(invalid_input).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
-        # noinspection PyTypeChecker
         convert_timestamp(invalid_input)
 
     # Tests an invalid numpy array (wrong dtype)
@@ -304,7 +299,6 @@ def test_convert_timestamp_errors() -> None:
         f"{invalid_separator} of type {type(invalid_separator).__name__}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
-        # noinspection PyTypeChecker
         convert_timestamp("2024-01-01-12-00-00-000000", time_separator=invalid_separator)
 
     # Tests invalid output_format value
@@ -314,7 +308,6 @@ def test_convert_timestamp_errors() -> None:
         f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {invalid_format}."
     )
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         convert_timestamp(12345, output_format=invalid_format)
 
     # Tests invalid precision value.
@@ -648,7 +641,6 @@ def test_parse_timestamp_errors() -> None:
         f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got invalid."
     )
     with pytest.raises(ValueError, match=error_format(message)):
-        # noinspection PyTypeChecker
         parse_timestamp("2024-06-15", "%Y-%m-%d", output_format="invalid")
 
 

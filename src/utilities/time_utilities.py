@@ -238,7 +238,6 @@ def get_timestamp(
         f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {output_format}."
     )
     console.error(message=message, error=ValueError)
-    # noinspection PyUnreachableCode
     raise ValueError(message)  # pragma: no cover
 
 
@@ -391,7 +390,6 @@ def convert_timestamp(
         f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {output_format}."
     )
     console.error(message=message, error=ValueError)
-    # noinspection PyUnreachableCode
     raise ValueError(message)  # pragma: no cover
 
 
@@ -480,7 +478,6 @@ def parse_timestamp(
         f"TimestampFormats enumeration ({', '.join(tuple(TimestampFormats))}), but got {output_format}."
     )
     console.error(message=message, error=ValueError)
-    # noinspection PyUnreachableCode
     raise ValueError(message)  # pragma: no cover
 
 

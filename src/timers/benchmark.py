@@ -63,7 +63,6 @@ def benchmark(  # pragma: no cover
     timer: PrecisionTimer = PrecisionTimer(precision="ns")
 
     # Extracts the set of precisions to be benchmarked.
-    # noinspection PyTypeChecker
     precisions: tuple[TimerPrecisions, ...] = tuple(TimerPrecisions)
 
     # Notifies the user that the benchmark has started.
@@ -104,7 +103,6 @@ def benchmark(  # pragma: no cover
     # tested precision. A separate test suite below benchmarks sleep-based delay methods.
     delay_results_busywait = []
     for index, precision in enumerate(precisions):
-        # noinspection PyTypeChecker
         timer.set_precision(precision=precision)
         deltas_block: list[float] = []
         deltas_noblock: list[float] = []
@@ -140,7 +138,6 @@ def benchmark(  # pragma: no cover
     # busywait benchmark otherwise.
     delay_results_sleep = []
     for index, precision in enumerate((TimerPrecisions.MILLISECOND, TimerPrecisions.SECOND), start=2):
-        # noinspection PyTypeChecker
         timer.set_precision(precision=precision)
         deltas_block = []
         deltas_noblock = []

@@ -358,6 +358,19 @@ def test_format_elapsed() -> None:
     assert result_zero == "0 s"
 
 
+def test_format_elapsed_fractional_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verifies format_elapsed() renders the final unit segment as a decimal for non-whole unit counts."""
+    timer = PrecisionTimer("ms")
+
+    # Pins the elapsed time and precision so the final field resolves to a fractional unit count
+    # (1500 ms == 1.5 s). Real elapsed times cannot reliably reproduce this, so patching is the only
+    # deterministic way to exercise the decimal-rendering branch.
+    monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 1500))
+    monkeypatch.setattr(PrecisionTimer, "precision", property(lambda _self: "ms"))
+
+    assert timer.format_elapsed(max_fields=1) == "1.5 s"
+
+
 def test_lap() -> None:
     """Verifies the lap() method records elapsed time, resets timer, and returns the lap duration."""
     timer = PrecisionTimer("ms")

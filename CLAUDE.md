@@ -11,14 +11,15 @@ any source code.
 You MUST follow the Ataraxis framework style conventions when working in this project. Invoke the appropriate
 skill before making any changes to the corresponding file type:
 
-| File type          | Required skill     |
-|--------------------|--------------------|
-| Python source code | `/python-style`    |
-| C++ source code    | `/cpp-style`       |
-| `pyproject.toml`   | `/pyproject-style` |
-| `tox.ini`          | `/tox-config`      |
-| `README.md`        | `/readme-style`    |
-| Commit messages    | `/commit`          |
+| File type             | Required skill     |
+|-----------------------|--------------------|
+| Python source code    | `/python-style`    |
+| C++ source code       | `/cpp-style`       |
+| `pyproject.toml`      | `/pyproject-style` |
+| `tox.ini`             | `/tox-config`      |
+| `README.md`           | `/readme-style`    |
+| Sphinx docs (`docs/`) | `/api-docs`        |
+| Commit messages       | `/commit`          |
 
 You MUST use `console.error(message=message, error=ErrorType)` from `ataraxis-base-utilities` for all error
 handling in Python source files. Do not use bare `raise` statements. Error messages follow the format:
@@ -41,16 +42,23 @@ The `console` object is not enabled in this library's top-level `__init__.py`. I
 
 ## Available skills
 
-| Skill               | Description                                                   |
-|---------------------|---------------------------------------------------------------|
-| `/explore-codebase` | Performs in-depth codebase exploration at session start       |
-| `/python-style`     | Applies Ataraxis framework Python coding conventions          |
-| `/cpp-style`        | Applies Ataraxis framework C++ coding conventions             |
-| `/pyproject-style`  | Applies Ataraxis framework pyproject.toml conventions         |
-| `/tox-config`       | Applies Ataraxis framework tox.ini conventions                |
-| `/readme-style`     | Applies Ataraxis framework README.md conventions              |
-| `/commit`           | Drafts style-compliant commit messages from local changes     |
-| `/skill-design`     | Generates and verifies skill files and CLAUDE.md instructions |
+| Skill                   | Description                                                                       |
+|-------------------------|-----------------------------------------------------------------------------------|
+| `/explore-codebase`     | Perform in-depth codebase exploration at session start                            |
+| `/explore-dependencies` | Build a live API snapshot of installed Ataraxis dependencies                      |
+| `/python-style`         | Apply Ataraxis framework Python coding conventions (REQUIRED for Python code)     |
+| `/cpp-style`            | Apply Ataraxis framework C++ coding conventions (REQUIRED for C++ code)           |
+| `/readme-style`         | Apply Ataraxis framework README conventions (REQUIRED for README files)           |
+| `/pyproject-style`      | Apply Ataraxis framework pyproject.toml conventions (REQUIRED for pyproject.toml) |
+| `/tox-config`           | Apply Ataraxis framework tox.ini conventions (REQUIRED for tox.ini)               |
+| `/api-docs`             | Apply Ataraxis framework API documentation conventions (REQUIRED for docs files)  |
+| `/project-layout`       | Apply Ataraxis framework project directory structure conventions                  |
+| `/skill-design`         | Generate and verify skill files and CLAUDE.md project instructions                |
+| `/audit-facts`          | Audit documentation files for factual accuracy against the source code            |
+| `/audit-style`          | Audit source, config, and documentation files for style-guide compliance          |
+| `/commit`               | Draft Ataraxis framework style-compliant git commit messages                      |
+| `/pr`                   | Draft Ataraxis framework style-compliant pull request summaries                   |
+| `/release`              | Draft Ataraxis framework style-compliant release notes                            |
 
 ## Project context
 

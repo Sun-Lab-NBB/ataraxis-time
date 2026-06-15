@@ -401,14 +401,14 @@ that want to modify the source code of this library.
 ### Installing the Project
 
 ***Note,*** this installation method requires **mamba version 2.3.2 or above**. Currently, all
-Ataraxis framework automation pipelines require that mamba is installed through the
+automation pipelines require that mamba is installed through the
 [miniforge3](https://github.com/conda-forge/miniforge) installer.
 
 1. Download this repository to the local machine using the preferred method, such as git-cloning.
 2. If the downloaded distribution is stored as a compressed archive, unpack it using the
    appropriate decompression tool.
 3. `cd` to the root directory of the prepared project distribution.
-4. Install the core Ataraxis framework development dependencies into the ***base*** mamba environment via the
+4. Install the core development dependencies into the ***base*** mamba environment via the
    `mamba install tox uv tox-uv` command.
 5. Use the `tox -e create` command to create the project-specific development environment followed
    by `tox -e install` command to install the project into that environment as a library.
@@ -422,9 +422,9 @@ dependencies:
    the developed project. Currently, this library supports the three latest stable versions. It is
    recommended to use a tool like [pyenv](https://github.com/pyenv/pyenv) to install and manage
    the required versions.
-2. [Doxygen](https://www.doxygen.nl/manual/install.html), if you want to generate C++ code
+2. [Doxygen](https://www.doxygen.nl/manual/install.html), to generate C++ code
    documentation.
-3. An appropriate build tool or Docker, if you intend to build binary wheels via
+3. An appropriate build tool or Docker, to build binary wheels via
    [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/). See the link for information on which
    dependencies to install for each development platform.
 

@@ -114,14 +114,13 @@ def test_initialization_and_precision_control() -> None:
 
     # Verifies the representation method of the class
     timer.set_precision("s")
-    expected_start = "PrecisionTimer(precision=s, elapsed_time = "
-    expected_end = " s.)"
+    expected_start = "PrecisionTimer(precision=s, elapsed="
 
     # Checks if the __repr__ method returns the expected string. Specifically, verifies the entire string except for
     # the 'elapsed' parameter, as it is almost impossible to predict.
     repr_string = repr(timer)
-    assert expected_start in repr_string
-    assert expected_end in repr_string
+    assert repr_string.startswith(expected_start)
+    assert repr_string.endswith(")")
 
 
 def test_timer_precisions_enum() -> None:

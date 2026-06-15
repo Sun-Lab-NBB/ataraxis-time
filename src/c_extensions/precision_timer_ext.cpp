@@ -26,7 +26,6 @@ using namespace nb::literals;
 using namespace std::chrono;
 
 /**
- * @class CPrecisionTimer
  * @brief Provides methods for sub-microsecond-precise interval timing and blocking / non-blocking code execution
  * delays.
  *
@@ -49,9 +48,7 @@ class CPrecisionTimer
         SetPrecision(precision);
     }
 
-    /**
-     * @brief Resets the timer.
-     */
+    /// Resets the timer.
     void Reset()
     {
         // Re-bases the start_time to use the current time obtained using the highest resolution clock.
@@ -61,7 +58,7 @@ class CPrecisionTimer
     /**
      * @brief Returns the time elapsed since the last reset() method call or class instantiation.
      *
-     * @returns int64_t The elapsed time, using the current class precision units.
+     * @returns The elapsed time, using the current class precision units.
      */
     [[nodiscard]] int64_t Elapsed() const
     {
@@ -142,14 +139,16 @@ class CPrecisionTimer
         }
     }
 
-    /**
-     * @brief Returns the current precision (time-units) of the timer.
-     *
-     * @returns std::string The current precision of the timer ('ns', 'us', 'ms', or 's').
-     */
-    [[nodiscard]] std::string GetPrecision() const
+    /// Returns the current precision of the timer ('ns', 'us', 'ms', or 's').
+    [[nodiscard]] std::string get_precision() const
     {
         return _precision;
+    }
+
+    /// Returns a string representation of the CPrecisionTimer instance.
+    std::string Repr() const
+    {
+        return "CPrecisionTimer(precision=" + _precision + ")";
     }
 
     /// Destroys the CPrecisionTimer class.
@@ -175,7 +174,7 @@ class CPrecisionTimer
      * other methods in the future.
      *
      * @param nanoseconds The value in nanoseconds to be converted to the desired precision.
-     * @returns int64_t The converted time-value, truncated to the whole number via integer division toward zero.
+     * @returns The converted time-value, truncated to the whole number via integer division toward zero.
      */
     [[nodiscard]]
     int64_t ConvertToPrecision(const int64_t nanoseconds) const
@@ -218,6 +217,7 @@ NB_MODULE(precision_timer_ext, m)
             "block"_a = false,
             "Delays for the requested period of time while releasing or maintaining the GIL."
         )
-        .def("GetPrecision", &CPrecisionTimer::GetPrecision, "Returns the current precision of the timer.")
-        .def("SetPrecision", &CPrecisionTimer::SetPrecision, "precision"_a, "Sets the class precision to new units.");
+        .def("get_precision", &CPrecisionTimer::get_precision, "Returns the current precision of the timer.")
+        .def("SetPrecision", &CPrecisionTimer::SetPrecision, "precision"_a, "Sets the class precision to new units.")
+        .def("__repr__", &CPrecisionTimer::Repr);
 }

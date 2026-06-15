@@ -270,8 +270,9 @@ def convert_timestamp(
     Raises:
         TypeError: If the 'time_separator' argument is not a string, or if the 'timestamp' argument is not of a valid
             type.
-        ValueError: If the 'output_format' argument is not set to a valid format option, or if the 'precision'
-            argument is not a valid TimestampPrecisions value.
+        ValueError: If the 'output_format' argument is not set to a valid format option, if the 'precision' argument
+            is not a valid TimestampPrecisions value, or if the 'timestamp' is a string that cannot be parsed because
+            it has the wrong number of delimited parts or contains non-numeric components.
     """
     # Validates that the time separator is a string.
     if not isinstance(time_separator, str):

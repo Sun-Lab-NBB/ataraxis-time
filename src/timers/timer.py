@@ -94,8 +94,8 @@ class PrecisionTimer:
         Args:
             delay: The integer period of time to wait for. The method assumes the delay is given in the same precision
                 units as used by the instance.
-            allow_sleep: A boolean flag that allows releasing the CPU while suspending execution for durations above 1
-                millisecond.
+            allow_sleep: Determines whether the timer may use sleep instead of busy-wait to suspend execution.
+                Sleep is only used when the timer precision is 'ms' or 's'.
             block: Determines whether to hold (if True) or release (if False) the Global Interpreter Lock (GIL) during
                 the delay. Releasing the GIL allows other Python threads to run in parallel with the delay.
         """
@@ -209,8 +209,8 @@ class PrecisionTimer:
 
         Args:
             interval: The delay interval in the timer's current precision units.
-            allow_sleep: A boolean flag that allows releasing the CPU while suspending execution for durations above
-                1 millisecond.
+            allow_sleep: Determines whether the timer may use sleep instead of busy-wait to suspend execution.
+                Sleep is only used when the timer precision is 'ms' or 's'.
             block: Determines whether to hold or release the GIL during the delay.
 
         Yields:

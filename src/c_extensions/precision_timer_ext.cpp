@@ -80,9 +80,9 @@ class CPrecisionTimer
      * @warning If sleeping is allowed, there is an overhead of up to 1 millisecond due to scheduling on the Windows OS.
      *
      * @param duration The time to block for. Uses the same units as the instance's precision parameter.
-     * @param allow_sleep Determines whether the method should use sleep for delay durations above 1 millisecond. Sleep
-     * may be beneficial in some cases as it reduces the CPU load at the expense of an additional overhead compared to
-     * the default busy-wait delay approach.
+     * @param allow_sleep Determines whether the method may use sleep instead of busy-wait. Sleep is used only when
+     * the instance precision is 'ms' or 's', regardless of the requested delay duration. It reduces CPU load at the
+     * expense of additional overhead compared to the default busy-wait delay approach.
      * @param block Determines whether the method should release the GIL, allowing concurrent execution of other
      * Python threads. If false, the method releases the GIL. If true, the method maintains the GIL, preventing other
      * Python threads from running.
@@ -94,8 +94,8 @@ class CPrecisionTimer
 
         // Defines a lambda function to perform the actual delay
         auto perform_delay = [&]() {
-            // If sleep is allowed and delay duration is sufficiently long to resolve with sleep, uses sleep_for() to
-            // release the CPU during blocking.
+            // If sleep is allowed and the instance precision is coarse enough (ms or s) to resolve the delay with
+            // sleep, uses sleep_for() to release the CPU during blocking.
             if (allow_sleep && _precision_duration >= milliseconds(1))
             {
                 std::this_thread::sleep_for(delay_duration);
@@ -175,7 +175,7 @@ class CPrecisionTimer
      * other methods in the future.
      *
      * @param nanoseconds The value in nanoseconds to be converted to the desired precision.
-     * @returns int64_t The converted time-value, rounded to the whole number.
+     * @returns int64_t The converted time-value, truncated to the whole number via integer division toward zero.
      */
     [[nodiscard]]
     int64_t ConvertToPrecision(const int64_t nanoseconds) const

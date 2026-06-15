@@ -8,8 +8,8 @@ any source code.
 
 ## Style guide compliance
 
-You MUST follow the Sun Lab style conventions when working in this project. Invoke the appropriate skill before
-making any changes to the corresponding file type:
+You MUST follow the Ataraxis framework style conventions when working in this project. Invoke the appropriate
+skill before making any changes to the corresponding file type:
 
 | File type          | Required skill     |
 |--------------------|--------------------|
@@ -30,7 +30,7 @@ imports. For example, `src/timers/` imports from `src/utilities/` via `from ..ut
 
 ## Cross-referenced library verification
 
-This project depends on the following Sun Lab library:
+This project depends on the following Ataraxis framework library:
 
 | Library                 | Import name                | Role                                             |
 |-------------------------|----------------------------|--------------------------------------------------|
@@ -44,11 +44,11 @@ The `console` object is not enabled in this library's top-level `__init__.py`. I
 | Skill               | Description                                                   |
 |---------------------|---------------------------------------------------------------|
 | `/explore-codebase` | Performs in-depth codebase exploration at session start       |
-| `/python-style`     | Applies Sun Lab Python coding conventions                     |
-| `/cpp-style`        | Applies Sun Lab C++ coding conventions                        |
-| `/pyproject-style`  | Applies Sun Lab pyproject.toml conventions                    |
-| `/tox-config`       | Applies Sun Lab tox.ini conventions                           |
-| `/readme-style`     | Applies Sun Lab README.md conventions                         |
+| `/python-style`     | Applies Ataraxis framework Python coding conventions          |
+| `/cpp-style`        | Applies Ataraxis framework C++ coding conventions             |
+| `/pyproject-style`  | Applies Ataraxis framework pyproject.toml conventions         |
+| `/tox-config`       | Applies Ataraxis framework tox.ini conventions                |
+| `/readme-style`     | Applies Ataraxis framework README.md conventions              |
 | `/commit`           | Drafts style-compliant commit messages from local changes     |
 | `/skill-design`     | Generates and verifies skill files and CLAUDE.md instructions |
 

@@ -196,8 +196,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Project files that are part of the general Sun Lab C-Python project architecture that should not be uploaded to and
-# from Github
+# Project files that are part of the general Ataraxis framework C-Python project architecture that should not be
+# uploaded to and from Github
 /cmake-build-debug/
 /reports/
 /docs/source/doxygen/

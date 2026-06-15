@@ -29,8 +29,7 @@ keywords = [
     "non-blocking",
     "blocking",
     "date",
-    "ataraxis",
-    "sunlab"
+    "ataraxis"
 ]
 
 classifiers = [
@@ -61,7 +60,7 @@ dependencies = [
     # CLI
     "click>=8,<9",
 
-    # Sun Lab
+    # Ataraxis framework
     "ataraxis-base-utilities>=6,<7",
 ]
 

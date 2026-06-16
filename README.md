@@ -424,9 +424,14 @@ dependencies:
    the required versions.
 2. [Doxygen](https://www.doxygen.nl/manual/install.html), to generate C++ code
    documentation.
-3. An appropriate build tool or Docker, to build binary wheels via
-   [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/). See the link for information on which
-   dependencies to install for each development platform.
+3. A C++ build toolchain and, for cross-architecture wheels, Docker, to build binary wheels via
+   [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/). Testing cross-compiled wheels has
+   per-platform prerequisites: on macOS, Rosetta 2 is required to test x86_64 wheels on Apple Silicon
+   (install it with `softwareupdate --install-rosetta --agree-to-license`); on Linux, non-native
+   architectures build and test inside Docker under QEMU emulation, registered once per machine with
+   `docker run --privileged --rm tonistiigi/binfmt --install all`; on Windows, ARM64 wheels need the
+   ARM64 MSVC runtime, installed through the Visual Studio Installer. Run
+   `python tools/check_build_env.py` to verify these prerequisites before building.
 
 ### Development Automation
 

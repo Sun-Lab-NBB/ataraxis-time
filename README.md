@@ -108,7 +108,7 @@ print(f"Precision: {timer.precision}")
 
 # The precision can be adjusted after initialization if needed. While not recommended, it is possible to provide the
 # precision as a string instead of using the TimerPrecisions enumeration.
-timer.set_precision('ms')  # Switches timer precision to milliseconds
+timer.set_precision("ms")  # Switches timer precision to milliseconds
 print(f"Precision: {timer.precision}")
 ```
 
@@ -122,12 +122,12 @@ slightly different interface (reset / elapsed) and automatically converts the ou
 from ataraxis_time import PrecisionTimer
 import time as tm
 
-timer = PrecisionTimer('us')
+timer = PrecisionTimer("us")
 
 # Interval timing example
 timer.reset()  # Resets (re-bases) the timer
 tm.sleep(1)  # Simulates work (for 1 second)
-print(f'Work time: {timer.elapsed} us')
+print(f"Work time: {timer.elapsed} us")
 ```
 
 #### Delay
@@ -156,7 +156,7 @@ def count_in_background():
 
 
 # Setup
-timer = PrecisionTimer('us')
+timer = PrecisionTimer("us")
 
 # Starts the background counter thread
 thread = threading.Thread(target=count_in_background, daemon=True)
@@ -183,7 +183,7 @@ stop = True
 # With microsecond precisions, blocking runtime often results in the counter not being incremented at all.
 if blocking_count == 0:
     blocking_count = 1
-print(f"Difference: block=False allows ~{non_blocking_count/blocking_count:.0f}x more counting!")
+print(f"Difference: block=False allows ~{non_blocking_count / blocking_count:.0f}x more counting!")
 thread.join()
 ```
 
@@ -196,7 +196,7 @@ lap times are accessible through the laps property.
 from ataraxis_time import PrecisionTimer
 import time as tm
 
-timer = PrecisionTimer('ms')
+timer = PrecisionTimer("ms")
 
 # Records three laps
 for i in range(3):
@@ -217,7 +217,7 @@ most appropriate units.
 from ataraxis_time import PrecisionTimer
 import time as tm
 
-timer = PrecisionTimer('us')
+timer = PrecisionTimer("us")
 tm.sleep(2.5)  # Simulates work
 print(f"Elapsed: {timer.format_elapsed()}")  # e.g. "2 s 500.117 ms"
 print(f"Detailed: {timer.format_elapsed(max_fields=3)}")  # e.g. "2 s 500 ms 117 us"
@@ -231,7 +231,7 @@ for periodic task execution.
 ```python
 from ataraxis_time import PrecisionTimer
 
-timer = PrecisionTimer('ms')
+timer = PrecisionTimer("ms")
 
 # Polls every 100 ms, runs 10 iterations
 for count in timer.poll(100):
@@ -250,7 +250,7 @@ from ataraxis_time import Timeout
 import time as tm
 
 # Creates a 500 ms timeout
-timeout = Timeout(duration=500, precision='ms')
+timeout = Timeout(duration=500, precision="ms")
 
 # Checks timeout status
 tm.sleep(0.1)
@@ -335,7 +335,7 @@ from ataraxis_time import get_timestamp, convert_timestamp, TimestampFormats, Ti
 
 # Gets the current date and time as a timestamp. The timestamp is precise up to microseconds by default.
 # Use TimestampFormats to specify the desired format.
-dt = get_timestamp(time_separator='-', output_format=TimestampFormats.STRING)
+dt = get_timestamp(time_separator="-", output_format=TimestampFormats.STRING)
 print(f"Current timestamp: {dt}.")
 
 # Uses the precision parameter to control the detail level of the output.
@@ -442,16 +442,17 @@ This project uses `tox` for development automation. The following tox environmen
 | `lint`               | Runs ruff formatting, ruff linting, and mypy type checking   |
 | `stubs`              | Generates py.typed marker and .pyi stub files                |
 | `{py312,...}-test`   | Runs the test suite via pytest for each supported Python     |
-| `coverage`           | Aggregates test coverage into an HTML report                 |
+| `coverage`           | Aggregates test coverage and applies the 100% coverage gate  |
 | `docs`               | Builds the API documentation via Sphinx                      |
 | `build`              | Builds sdist and wheel distributions                         |
 | `upload`             | Uploads distributions to PyPI via twine                      |
+| `deploy`             | Uploads the built documentation to the Netlify site          |
 | `install`            | Builds and installs the project into its mamba environment   |
 | `uninstall`          | Uninstalls the project from its mamba environment            |
 | `create`             | Creates the project's mamba development environment          |
 | `remove`             | Removes the project's mamba development environment          |
 | `provision`          | Recreates the mamba environment from scratch                 |
-| `export`             | Exports the mamba environment as .yml and spec.txt files     |
+| `export`             | Exports the mamba environment as a .yml file                 |
 | `import`             | Creates or updates the mamba environment from a .yml file    |
 
 Run any environment using `tox -e ENVIRONMENT`. For example, `tox -e lint`.

@@ -1,14 +1,14 @@
 """Provides the benchmark used to assess the performance of the PrecisionTimer class on the current host-system."""
 
-import time as tm  # pragma: no cover
-from typing import Any  # pragma: no cover
+import time as tm
+from typing import Any
 
-import click  # pragma: no cover
-import numpy as np  # pragma: no cover
-from ataraxis_base_utilities import LogLevel, console  # pragma: no cover
+import click
+import numpy as np
+from ataraxis_base_utilities import LogLevel, console
 
-from .timer import PrecisionTimer, TimerPrecisions  # pragma: no cover
-from ..utilities import TimeUnits, convert_time  # pragma: no cover
+from .timer import PrecisionTimer, TimerPrecisions
+from ..utilities import TimeUnits, convert_time
 
 
 @click.command()
@@ -49,7 +49,7 @@ from ..utilities import TimeUnits, convert_time  # pragma: no cover
     help="The delay duration, in precision-units, to use during the delay benchmark for the tested precisions. "
     "Expects a space-separated sequence in the order of: ns, us, ms, s.",
 )
-def benchmark(  # pragma: no cover
+def benchmark(
     interval_cycles: int, interval_delay: float, delay_cycles: tuple[int, ...], delay_durations: tuple[int, ...]
 ) -> None:
     """Benchmarks the PrecisionTimer class performance on the local host-system. Use this command to determine the

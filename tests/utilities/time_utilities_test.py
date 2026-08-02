@@ -2,7 +2,7 @@
 
 import re
 from typing import Any
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import pytest
@@ -402,7 +402,7 @@ def test_timestamp_datetime_validity() -> None:
         minute=int(components[4]),
         second=int(components[5]),
         microsecond=int(components[6]),
-        tzinfo=timezone.utc,
+        tzinfo=UTC,
     )
     assert isinstance(datetime_object, datetime)
 
@@ -554,7 +554,7 @@ def test_parse_timestamp() -> None:
     assert result > 0
 
     # Verifies the parsed value matches expected microseconds.
-    expected_datetime = datetime(2024, 6, 15, 12, 30, 45, tzinfo=timezone.utc)
+    expected_datetime = datetime(2024, 6, 15, 12, 30, 45, tzinfo=UTC)
     expected_us = int(expected_datetime.timestamp() * 1_000_000)
     assert result == expected_us
 
@@ -590,13 +590,13 @@ def test_parse_timestamp() -> None:
     # Tests parsing a date-only format.
     result_date = parse_timestamp("15/06/2024", "%d/%m/%Y")
     assert isinstance(result_date, int)
-    expected_datetime = datetime(2024, 6, 15, tzinfo=timezone.utc)
+    expected_datetime = datetime(2024, 6, 15, tzinfo=UTC)
     assert result_date == int(expected_datetime.timestamp() * 1_000_000)
 
     # Tests parsing with microseconds.
     result_us = parse_timestamp("2024-06-15 12:30:45.123456", "%Y-%m-%d %H:%M:%S.%f")
     assert isinstance(result_us, int)
-    expected_datetime = datetime(2024, 6, 15, 12, 30, 45, 123456, tzinfo=timezone.utc)
+    expected_datetime = datetime(2024, 6, 15, 12, 30, 45, 123456, tzinfo=UTC)
     assert result_us == int(expected_datetime.timestamp() * 1_000_000)
 
 

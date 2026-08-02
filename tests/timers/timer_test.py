@@ -257,9 +257,6 @@ def test_precision_switching() -> None:
     timer = PrecisionTimer(TimerPrecisions.NANOSECOND)
     assert timer.precision == "ns"
 
-    # Record initial elapsed time in nanoseconds
-    initial_elapsed_ns = timer.elapsed
-
     # Switch to microseconds
     timer.set_precision(TimerPrecisions.MICROSECOND)
     assert timer.precision == "us"

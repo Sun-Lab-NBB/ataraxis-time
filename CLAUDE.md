@@ -90,8 +90,9 @@ import in `timer.py` is expected and should not be removed.
 
 - **Enumeration-driven precision**: Timer precision is controlled through `TimerPrecisions` (StrEnum) with values
   `"ns"`, `"us"`, `"ms"`, `"s"`. The string value is passed directly to the C++ layer.
-- **Benchmark exclusion**: All definitions in `benchmark.py` carry `# pragma: no cover` because the module
-  requires interactive CLI execution and cannot be unit tested.
+- **Benchmark exclusion**: `benchmark.py` is listed in the `[tool.coverage.run]` `omit` array of `pyproject.toml`,
+  which keeps the whole module outside the measured corpus because it requires interactive CLI execution. The module
+  carries no per-line `# pragma: no cover` comments.
 - **File ordering**: Constants appear first, then enumerations, then public functions/classes, then private
   functions. This ordering is enforced by `/python-style`.
 - **convert_time return type**: The `convert_time()` function always returns a floating-point value. By default
@@ -106,8 +107,9 @@ tox -e stubs       # Generate .pyi stub files
 tox -e py312-test  # Run tests for Python 3.12
 tox -e py313-test  # Run tests for Python 3.13
 tox -e py314-test  # Run tests for Python 3.14
-tox -e coverage    # Aggregate multi-version coverage reports
+tox -e coverage    # Aggregate multi-version coverage reports and apply the 100% coverage gate
 tox -e docs        # Build Sphinx + Doxygen documentation
+tox -e deploy      # Upload the built documentation to the project's Netlify site
 tox                # Run full pipeline (uninstall -> export -> lint -> ... -> install)
 ```
 

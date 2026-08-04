@@ -1,4 +1,4 @@
-"""Provides the PrecisionTimer class, Timeout guard, and support functions for timer usage and benchmarking."""
+"""Provides the PrecisionTimer class, the Timeout guard, the TimerPrecisions enumeration, and the timer benchmark."""
 
 from .timer import PrecisionTimer, TimerPrecisions
 from .timeout import Timeout

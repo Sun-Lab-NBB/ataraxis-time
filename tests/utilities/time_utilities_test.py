@@ -102,7 +102,7 @@ def test_get_timestamp_bytes_format() -> None:
     assert timestamp_bytes.dtype == np.uint8
     assert timestamp_bytes.ndim == 1
 
-    # Verifies the bytes' timestamp is the correct length (8 bytes for int64)
+    # Verifies the bytes' timestamp is the correct length (8 bytes for uint64)
     assert len(timestamp_bytes) == 8
 
     # Tests that time_separator is ignored for bytes' format
@@ -819,3 +819,90 @@ def test_parse_timestamp_honors_utc_offset() -> None:
     result = parse_timestamp("2024-06-15 12:00:00+0500", "%Y-%m-%d %H:%M:%S%z")
     expected = int(datetime(2024, 6, 15, 7, 0, 0, tzinfo=UTC).timestamp()) * 1_000_000
     assert result == expected
+
+
+def test_get_timestamp_separator_only_validated_for_string_format() -> None:
+    """Verifies get_timestamp() validates the time separator only when it emits a string."""
+    message = "Unable to get UTC timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+    with pytest.raises(ValueError, match=error_format(message)):
+        get_timestamp(output_format=TimestampFormats.STRING, time_separator="")
+
+    # The integer and bytes formats never read the separator, so an unusable one is ignored.
+    assert isinstance(get_timestamp(output_format=TimestampFormats.INTEGER, time_separator=""), int)
+    assert isinstance(get_timestamp(output_format=TimestampFormats.BYTES, time_separator=""), np.ndarray)
+
+
+def test_parse_timestamp_separator_only_validated_for_string_format() -> None:
+    """Verifies parse_timestamp() validates the time separator only when it emits a string."""
+    message = "Unable to parse timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+    with pytest.raises(ValueError, match=error_format(message)):
+        parse_timestamp("2024-06-15", "%Y-%m-%d", output_format=TimestampFormats.STRING, time_separator="")
+
+    invalid_separator: int = 123
+    message = (
+        f"Unable to parse timestamp. The 'time_separator' must be a string, but got "
+        f"{invalid_separator} of type {type(invalid_separator).__name__}."
+    )
+    with pytest.raises(TypeError, match=error_format(message)):
+        parse_timestamp(
+            "2024-06-15", "%Y-%m-%d", output_format=TimestampFormats.STRING, time_separator=invalid_separator
+        )
+
+    # The integer format never reads the separator, so an unusable one is ignored.
+    assert isinstance(parse_timestamp("2024-06-15", "%Y-%m-%d", time_separator=""), int)
+
+
+def test_convert_timestamp_separator_validated_for_every_format() -> None:
+    """Verifies convert_timestamp() rejects an empty time separator regardless of the output format."""
+    message = "Unable to convert timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+    with pytest.raises(ValueError, match=error_format(message)):
+        convert_timestamp("2024-06-15", time_separator="")
+
+    with pytest.raises(ValueError, match=error_format(message)):
+        convert_timestamp(12345, output_format=TimestampFormats.INTEGER, time_separator="")
+
+
+def test_convert_timestamp_calendar_range_errors() -> None:
+    """Verifies a component outside its calendar range is reported separately from a format error."""
+    invalid_date = "2024-13-01"
+    message = (
+        f"Unable to convert string timestamp. The timestamp must encode a valid calendar date and time, but got "
+        f"'{invalid_date}'."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        convert_timestamp(invalid_date)
+
+
+def test_timestamp_range_errors() -> None:
+    """Verifies timestamps outside the representable microsecond range are rejected."""
+    for out_of_range in (-1, 253402300800000000):
+        message = (
+            f"Unable to convert timestamp. The timestamp must be between 0 and 253402300799999999 microseconds "
+            f"since the UTC epoch onset, which spans 1970-01-01 to 9999-12-31, but got {out_of_range}."
+        )
+        with pytest.raises(ValueError, match=error_format(message)):
+            convert_timestamp(out_of_range)
+
+    # A pre-epoch datetime resolves to a negative microsecond count, which the parse path rejects.
+    message = (
+        "Unable to parse timestamp. The timestamp must be between 0 and 253402300799999999 microseconds "
+        "since the UTC epoch onset, which spans 1970-01-01 to 9999-12-31, but got -62135596800000000."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        parse_timestamp("0001-01-01", "%Y-%m-%d")
+
+
+def test_interval_to_rate_rejects_underflowing_interval() -> None:
+    """Verifies an interval that underflows to zero seconds is rejected instead of dividing by zero."""
+    underflowing = 5e-324
+    message = (
+        f"Unable to convert interval to rate. The 'interval' must stay above 0 after conversion to seconds, "
+        f"but got {underflowing} ns, which converts to 0.0 seconds."
+    )
+    with pytest.raises(ValueError, match=error_format(message)):
+        interval_to_rate(underflowing, from_units=TimeUnits.NANOSECOND)
+
+
+def test_convert_time_preserves_overflowing_scale() -> None:
+    """Verifies a value whose rounding scale overflows to infinity is returned rather than rounded."""
+    assert np.isinf(convert_time(1e308, from_units=TimeUnits.SECOND, to_units=TimeUnits.SECOND))

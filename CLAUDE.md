@@ -33,9 +33,9 @@ imports. For example, `src/timers/` imports from `src/utilities/` via `from ..ut
 
 This project depends on the following Ataraxis framework library:
 
-| Library                 | Import name                | Role                                             |
-|-------------------------|----------------------------|--------------------------------------------------|
-| ataraxis-base-utilities | `ataraxis_base_utilities`  | Provides `console` for error handling and output |
+| Library                 | Import name                | Role                                                          |
+|-------------------------|----------------------------|---------------------------------------------------------------|
+| ataraxis-base-utilities | `ataraxis_base_utilities`  | Provides `console` and the scalar/bytes serialization helpers |
 
 The `console` object is not enabled in this library's top-level `__init__.py`. It is enabled explicitly in
 `benchmark.py` before use. You MUST verify this pattern is preserved when adding new `console.echo()` calls.
@@ -56,6 +56,9 @@ The `console` object is not enabled in this library's top-level `__init__.py`. I
 | `/skill-design`         | Generate and verify skill files and CLAUDE.md project instructions                |
 | `/audit-facts`          | Audit documentation files for factual accuracy against the source code            |
 | `/audit-style`          | Audit source, config, and documentation files for style-guide compliance          |
+| `/audit-correctness`    | Audit source code for active and latent bugs the test suite leaves uncaught       |
+| `/audit-performance`    | Audit source code for speed, memory use, and dtype predictability                 |
+| `/audit-project`        | Orchestrate all four audits and merge their findings into one report              |
 | `/commit`               | Draft Ataraxis framework style-compliant git commit messages                      |
 | `/pr`                   | Draft Ataraxis framework style-compliant pull request summaries                   |
 | `/release`              | Draft Ataraxis framework style-compliant release notes                            |

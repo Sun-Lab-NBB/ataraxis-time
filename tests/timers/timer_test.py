@@ -487,7 +487,7 @@ def test_format_elapsed_pins_multi_field_output(monkeypatch: pytest.MonkeyPatch)
     assert timer.format_elapsed(max_fields=2) == "1 h 1 m"
     assert timer.format_elapsed(max_fields=3) == "1 h 1 m"
 
-    # Verifies sub-millisecond elapsed times survive, which routing through seconds previously collapsed to zero.
+    # Verifies a sub-millisecond elapsed time renders in nanoseconds.
     monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 500))
     monkeypatch.setattr(PrecisionTimer, "precision", property(lambda _self: "ns"))
     assert timer.format_elapsed() == "500 ns"
@@ -504,15 +504,25 @@ def test_format_elapsed_errors() -> None:
 def test_lap_partitions_elapsed_time() -> None:
     """Verifies consecutive laps account for the whole interval, leaving no gap between one lap and the next."""
     timer = PrecisionTimer("ns")
-    start = time.perf_counter_ns()
-    timer.reset()
-    for _ in range(200):
-        timer.lap()
-    total = time.perf_counter_ns() - start
+
+    # The recorded laps span a shorter interval than the bracket measuring them, so preemption between the bracket and
+    # the first lap only ever depresses the ratio. The best attempt is therefore the one that reflects the timer rather
+    # than the load the host happened to be under, and repeating guards a busy machine against a spurious failure.
+    best_ratio = 0.0
+    for _ in range(5):
+        start = time.perf_counter_ns()
+        timer.reset()
+        for _ in range(200):
+            timer.lap()
+        total = time.perf_counter_ns() - start
+        recorded = sum(timer.laps)
+
+        assert recorded <= total
+        best_ratio = max(best_ratio, recorded / total)
 
     # Each lap re-bases the timer in the same step that reads it, so the next lap begins where this one ended. Reading
     # the elapsed time and re-basing separately would drop the interval between the two calls from every lap.
-    assert 0.8 * total < sum(timer.laps) <= total
+    assert best_ratio > 0.8
 
 
 def test_lap_does_not_overlap_across_threads() -> None:

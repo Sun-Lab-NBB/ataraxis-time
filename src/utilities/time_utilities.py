@@ -52,9 +52,10 @@ _UTC_EPOCH: datetime.datetime = datetime.datetime(1970, 1, 1, tzinfo=datetime.UT
 
 
 class TimeUnits(StrEnum):
-    """Defines the time units supported by the convert_time() function.
+    """Defines the time units supported by the time conversion functions of this module.
 
-    Use this enumeration to specify the source and destination time units when calling the conversion function.
+    Use this enumeration to specify the source and destination time units when calling convert_time(),
+    rate_to_interval(), interval_to_rate(), to_timedelta(), or from_timedelta().
     """
 
     NANOSECOND = "ns"
@@ -74,9 +75,10 @@ class TimeUnits(StrEnum):
 
 
 class TimestampFormats(StrEnum):
-    """Defines the timestamp formats supported by the get_timestamp() and the convert_timestamp() functions.
+    """Defines the timestamp formats supported by the timestamp functions of this module.
 
-    Use this enumeration when generating or converting timestamps.
+    Use this enumeration when generating timestamps with get_timestamp(), converting them with convert_timestamp(),
+    or parsing them with parse_timestamp().
     """
 
     STRING = "str"
@@ -180,8 +182,8 @@ def get_timestamp(
 
     Raises:
         TypeError: If the 'time_separator' argument is not a string.
-        ValueError: If the 'output_format' argument is not set to a valid format option, or if the 'precision'
-            argument is not a valid TimestampPrecisions value.
+        ValueError: If the 'output_format' argument is not set to a valid format option, if the 'precision'
+            argument is not a valid TimestampPrecisions value, or if the 'time_separator' argument is an empty string.
     """
     # Validates the precision argument.
     if precision not in tuple(TimestampPrecisions):
@@ -263,8 +265,9 @@ def convert_timestamp(
 
     Args:
         timestamp: The timestamp value to convert.
-        time_separator: The separator to use for delimiting the date-and-time string. This is used when parsing input
-            date-and-time strings and when converting timestamps to the string format.
+        time_separator: The separator to use for delimiting the date-and-time string. This must be a non-empty string
+            for every output format, and it is used when parsing input date-and-time strings and when converting
+            timestamps to the string format.
         output_format: The format in which to return the timestamp. Use one of the valid options defined in the
             TimestampFormats enumeration: "str", "byte", or "int".
         precision: The precision level for the output timestamp. Use one of the valid options defined in the
@@ -277,9 +280,11 @@ def convert_timestamp(
     Raises:
         TypeError: If the 'time_separator' argument is not a string, or if the 'timestamp' argument is not of a valid
             type.
-        ValueError: If the 'output_format' argument is not set to a valid format option, if the 'precision' argument
-            is not a valid TimestampPrecisions value, or if the 'timestamp' is a string that cannot be parsed because
-            it has the wrong number of delimited parts or contains non-numeric components.
+        ValueError: If the 'time_separator' argument is an empty string, if the 'output_format' argument is not set to
+            a valid format option, or if the 'precision' argument is not a valid TimestampPrecisions value. This error
+            is also raised when the 'timestamp' string carries the wrong number of delimited parts, non-numeric
+            components, or a component outside its calendar range. It is also raised when the resolved timestamp falls
+            outside the range this module represents.
     """
     # Validates that the time separator is a string.
     if not isinstance(time_separator, str):
@@ -456,8 +461,10 @@ def parse_timestamp(
         The parsed timestamp in the requested output format.
 
     Raises:
-        ValueError: If the date_string cannot be parsed with the provided format_string, if the output_format is
-            invalid, or if the precision is invalid.
+        TypeError: If the 'time_separator' argument is not a string.
+        ValueError: If the date_string cannot be parsed with the provided format_string, if the output_format or the
+            precision is invalid, or if the 'time_separator' argument is an empty string. This error is also raised
+            when the resolved timestamp falls outside the range this module represents.
     """
     # Validates the precision argument.
     if precision not in tuple(TimestampPrecisions):
@@ -465,11 +472,6 @@ def parse_timestamp(
             f"Unable to parse timestamp. The 'precision' must be one of the valid members defined in the "
             f"TimestampPrecisions enumeration ({', '.join(tuple(TimestampPrecisions))}), but got {precision}."
         )
-        console.error(message=message, error=ValueError)
-
-    # Validates that the time separator is not empty, since an empty separator cannot delimit the output string.
-    if not time_separator:
-        message = "Unable to parse timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
         console.error(message=message, error=ValueError)
 
     # Parses the date string using the provided format. The timezone is applied below rather than here, because
@@ -504,6 +506,22 @@ def parse_timestamp(
         return convert_scalar_to_bytes(value=microseconds, dtype=_TIMESTAMP_DTYPE)
 
     if output_format == TimestampFormats.STRING:
+        # Validates that the time separator is a string.
+        if not isinstance(time_separator, str):
+            message = (
+                f"Unable to parse timestamp. The 'time_separator' must be a string, but got "
+                f"{time_separator} of type {type(time_separator).__name__}."
+            )
+            console.error(message=message, error=TypeError)
+
+        # Validates that the time separator is not empty, since an empty separator produces an undelimited string that
+        # cannot be parsed back into a timestamp.
+        if not time_separator:
+            message = (
+                "Unable to parse timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+            )
+            console.error(message=message, error=ValueError)
+
         # Reconstructs datetime from truncated microseconds.
         timestamp_dt = _datetime_from_microseconds(microseconds)
 
@@ -535,7 +553,7 @@ def rate_to_interval(
     """Converts a frequency in Hz to a time interval in the requested units.
 
     Args:
-        rate: The frequency in Hz to convert. Must be greater than 0.
+        rate: The frequency in Hz to convert. Must be a finite value greater than 0.
         to_units: The time units for the output interval. Use one of the valid options defined in the TimeUnits
             enumeration.
         as_float: Determines whether to return the result as a Python float (if True) or a NumPy 64-bit floating
@@ -545,7 +563,7 @@ def rate_to_interval(
         The time interval corresponding to the given frequency, in the requested units.
 
     Raises:
-        ValueError: If the rate is not greater than 0, or if to_units is not a valid time unit.
+        ValueError: If the rate is not a finite value greater than 0, or if to_units is not a valid time unit.
     """
     rate_value = float(rate)
     if not math.isfinite(rate_value) or rate_value <= 0:
@@ -571,7 +589,7 @@ def interval_to_rate(
     """Converts a time interval to a frequency in Hz.
 
     Args:
-        interval: The time interval to convert. Must be greater than 0.
+        interval: The time interval to convert. Must be a finite value greater than 0.
         from_units: The time units of the input interval. Use one of the valid options defined in the TimeUnits
             enumeration.
         as_float: Determines whether to return the result as a Python float (if True) or a NumPy 64-bit floating
@@ -581,7 +599,8 @@ def interval_to_rate(
         The frequency in Hz corresponding to the given time interval.
 
     Raises:
-        ValueError: If the interval is not greater than 0, or if from_units is not a valid time unit.
+        ValueError: If the interval is not a finite value greater than 0, if it underflows to zero seconds during
+            conversion, or if from_units is not a valid time unit.
     """
     interval_value = float(interval)
     if not math.isfinite(interval_value) or interval_value <= 0:
@@ -590,11 +609,14 @@ def interval_to_rate(
 
     _validate_time_units(units=from_units, parameter_name="from_units")
 
-    # Converts without the rounding convert_time() applies. Rounding would floor every interval below half of one
-    # millisecond to zero, which made this function raise ZeroDivisionError instead of returning a rate.
+    # Converts without the rounding convert_time() applies, because rounding floors every interval below half of one
+    # millisecond to zero, which leaves the division below undefined.
     seconds = _convert_time_exact(time=interval_value, from_units=from_units, to_units="s")
     if seconds <= 0:
-        message = f"Unable to convert interval to rate. The 'interval' must be greater than 0, but got {interval}."
+        message = (
+            f"Unable to convert interval to rate. The 'interval' must stay above 0 after conversion to seconds, "
+            f"but got {interval} {from_units}, which converts to {seconds} seconds."
+        )
         console.error(message=message, error=ValueError)
 
     result = 1.0 / seconds

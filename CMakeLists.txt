@@ -11,13 +11,13 @@ if (NOT SKBUILD)
   =====================================================================================================================
     $ python -m pip install .
   =====================================================================================================================
-  Developers should use the 'dev' specification to install the development dependencies. Note, additional non-python
-  dependencies, such as doxygen, may need to be installed manually. Consult the 'installation' section of the Readme.md
-  of the repository for more information.
+  Developers should install the development environment through tox. Note, additional non-python dependencies, such as
+  doxygen, may need to be installed manually. Consult the 'Developers' section of the README.md of the repository for
+  more information.
   ======================================================================================================================
-   $ python -m pip install .'[dev]'
-   or
-   $ python -m pip install .[dev]
+   $ mamba install tox uv tox-uv
+   $ tox -e create
+   $ tox -e install
   ======================================================================================================================
   For your convenience, OS-specific copies of the environments used for development are also included in all source
   code distributions under /envs directory.

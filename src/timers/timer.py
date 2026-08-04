@@ -147,7 +147,7 @@ class PrecisionTimer:
     def format_elapsed(self, *, max_fields: int = 2) -> str:
         """Returns the current elapsed time as a human-readable string.
 
-        Converts the elapsed time to seconds internally, then breaks it into descending unit components
+        Converts the elapsed time to nanoseconds internally, then breaks it into descending unit components
         (d, h, m, s, ms, us, ns). Auto-selects the largest non-zero unit as the starting point and includes
         up to max_fields unit segments.
 

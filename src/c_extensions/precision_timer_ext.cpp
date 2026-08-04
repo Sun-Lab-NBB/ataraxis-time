@@ -156,8 +156,8 @@ class CPrecisionTimer
             {
                 std::this_thread::sleep_for(delay_duration);
             }
-            // If sleep is not allowed or the requested delay is too short, uses a busy-wait delay approach which
-            // uses CPU to improve delay precision.
+            // If sleep is not allowed or the instance precision is finer than a millisecond, uses a busy-wait
+            // delay approach which uses CPU to improve delay precision.
             else
             {
                 const auto start = steady_clock::now();
@@ -243,6 +243,7 @@ class CPrecisionTimer
     }
 
     /// Returns a string representation of the CPrecisionTimer instance.
+    [[nodiscard]]
     std::string Repr() const
     {
         return "CPrecisionTimer(precision=" + get_precision() + ")";

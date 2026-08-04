@@ -13,6 +13,7 @@
 // Dependencies:
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <atomic>
 #include <chrono>
 #include <limits>
 #include <stdexcept>
@@ -36,9 +37,21 @@ using namespace std::chrono;
  * library's steady_clock, which advances monotonically and is therefore immune to the wall-clock adjustments that
  * network time synchronization applies. However, all method calls have a certain overhead associated with them and the
  * busier the OS is, the longer the overhead.
+ *
+ * @note Instances are safe to share between threads. The reference point and the precision are held in atomics, so a
+ * thread calling Delay() with the GIL released observes a consistent configuration while another thread reconfigures
+ * the instance.
  */
 class CPrecisionTimer
 {
+    // Confirms the timer state resolves to lock-free hardware instructions rather than a mutex, which the Elapsed()
+    // and Lap() methods depend on to stay usable inside time-critical loops.
+    static_assert(
+        std::atomic<steady_clock::time_point>::is_always_lock_free,
+        "CPrecisionTimer requires a lock-free atomic steady_clock::time_point."
+    );
+    static_assert(std::atomic<int64_t>::is_always_lock_free, "CPrecisionTimer requires a lock-free atomic int64_t.");
+
   public:
     /**
      * @brief Instantiates the CPrecisionTimer class using the requested precision.
@@ -59,11 +72,11 @@ class CPrecisionTimer
     void Reset()
     {
         // Re-bases the start_time to use the current time obtained using the monotonic clock.
-        _start_time = steady_clock::now();
+        _start_time.store(steady_clock::now());
     }
 
     /**
-     * @brief Returns the time elapsed since the last reset() method call or class instantiation.
+     * @brief Returns the time elapsed since the last Reset() or Lap() method call, or since class instantiation.
      *
      * @returns The elapsed time, using the current class precision units.
      */
@@ -71,8 +84,25 @@ class CPrecisionTimer
     int64_t Elapsed() const
     {
         const auto stop_time = steady_clock::now();
-        const auto elapsed   = duration_cast<nanoseconds>(stop_time - _start_time);
+        const auto elapsed   = duration_cast<nanoseconds>(stop_time - _start_time.load());
         return ConvertToPrecision(elapsed.count());
+    }
+
+    /**
+     * @brief Re-bases the timer and returns the time that elapsed since the previous reference point.
+     *
+     * Installs the new reference point and reads the one it replaces in a single atomic exchange, so the returned
+     * interval begins exactly where the preceding interval ended. Consecutive calls therefore partition the elapsed
+     * time, and concurrent calls from separate threads each receive a distinct slice of it.
+     *
+     * @returns The duration of the completed lap, using the current class precision units.
+     */
+    [[nodiscard]]
+    int64_t Lap()
+    {
+        const auto stop_time = steady_clock::now();
+        const auto previous  = _start_time.exchange(stop_time);
+        return ConvertToPrecision(duration_cast<nanoseconds>(stop_time - previous).count());
     }
 
     /**
@@ -97,26 +127,32 @@ class CPrecisionTimer
      */
     void Delay(const int64_t duration, const bool allow_sleep = false, const bool block = false) const
     {
+        // Samples the precision once, because this method runs with the GIL released and SetPrecision() may replace
+        // the value from another thread meanwhile. One sample keeps the overflow guard, the nanosecond conversion, and
+        // the sleep decision consistent with each other.
+        const int64_t precision_nanoseconds = _precision_nanoseconds.load();
+        const int64_t maximum_duration      = std::numeric_limits<int64_t>::max() / precision_nanoseconds;
+
         // Rejects durations that the nanosecond conversion below cannot represent. Signed overflow is undefined
         // behavior, and the wrapped negative value would make the method return immediately instead of blocking.
-        if (duration > _maximum_duration || duration < -_maximum_duration)
+        if (duration > maximum_duration || duration < -maximum_duration)
         {
             const std::string message =
                 "Unable to delay the requested period of time. The 'duration' magnitude must "
                 "not exceed " +
-                std::to_string(_maximum_duration) + " at the current timer precision, but received " +
+                std::to_string(maximum_duration) + " at the current timer precision, but received " +
                 std::to_string(duration) + ".";
             throw std::overflow_error(message);
         }
 
         // Converts input delay duration to nanoseconds.
-        const auto delay_duration = duration * _precision_duration;
+        const auto delay_duration = nanoseconds(duration * precision_nanoseconds);
 
         // Defines a lambda function to perform the actual delay
         auto perform_delay = [&]() {
             // If sleep is allowed and the instance precision is coarse enough (ms or s) to resolve the delay with
             // sleep, uses sleep_for() to release the CPU during blocking.
-            if (allow_sleep && _precision_duration >= milliseconds(1))
+            if (allow_sleep && precision_nanoseconds >= kNanosecondsPerMillisecond)
             {
                 std::this_thread::sleep_for(delay_duration);
             }
@@ -156,26 +192,26 @@ class CPrecisionTimer
         // Resolves the requested option into locals before touching any member. A rejected precision therefore leaves
         // the instance on its previous valid configuration rather than in a partially updated state.
         kPrecisionUnits resolved_units;
-        nanoseconds resolved_duration;
+        int64_t resolved_nanoseconds;
         if (precision == "ns")
         {
-            resolved_units    = kPrecisionUnits::kNanosecond;
-            resolved_duration = nanoseconds(1);
+            resolved_units       = kPrecisionUnits::kNanosecond;
+            resolved_nanoseconds = 1;
         }
         else if (precision == "us")
         {
-            resolved_units    = kPrecisionUnits::kMicrosecond;
-            resolved_duration = microseconds(1);
+            resolved_units       = kPrecisionUnits::kMicrosecond;
+            resolved_nanoseconds = kNanosecondsPerMicrosecond;
         }
         else if (precision == "ms")
         {
-            resolved_units    = kPrecisionUnits::kMillisecond;
-            resolved_duration = milliseconds(1);
+            resolved_units       = kPrecisionUnits::kMillisecond;
+            resolved_nanoseconds = kNanosecondsPerMillisecond;
         }
         else if (precision == "s")
         {
-            resolved_units    = kPrecisionUnits::kSecond;
-            resolved_duration = seconds(1);
+            resolved_units       = kPrecisionUnits::kSecond;
+            resolved_nanoseconds = kNanosecondsPerSecond;
         }
         else
         {
@@ -186,23 +222,30 @@ class CPrecisionTimer
             throw std::invalid_argument(message);
         }
 
-        _precision          = precision;
-        _precision_units    = resolved_units;
-        _precision_duration = resolved_duration;
-        _maximum_duration   = std::numeric_limits<int64_t>::max() / resolved_duration.count();
+        // Publishes the resolved configuration. Elapsed() reads the units and Delay() reads the nanosecond magnitude,
+        // and no method reads both, so the two stores need no ordering relative to each other.
+        _precision_units.store(resolved_units);
+        _precision_nanoseconds.store(resolved_nanoseconds);
     }
 
     /// Returns the current precision of the timer ('ns', 'us', 'ms', or 's').
     [[nodiscard]]
     std::string get_precision() const
     {
-        return _precision;
+        switch (_precision_units.load())
+        {
+            case kPrecisionUnits::kNanosecond: return "ns";
+            case kPrecisionUnits::kMicrosecond: return "us";
+            case kPrecisionUnits::kMillisecond: return "ms";
+            case kPrecisionUnits::kSecond: return "s";
+        }
+        throw std::invalid_argument("Unsupported precision");
     }
 
     /// Returns a string representation of the CPrecisionTimer instance.
     std::string Repr() const
     {
-        return "CPrecisionTimer(precision=" + _precision + ")";
+        return "CPrecisionTimer(precision=" + get_precision() + ")";
     }
 
     /// Destroys the CPrecisionTimer class.
@@ -210,7 +253,7 @@ class CPrecisionTimer
 
   private:
     /// Defines the timer precision options as a compact value, so that conversions dispatch on an integer rather than
-    /// re-parsing the _precision string on every call.
+    /// re-parsing a precision string on every call.
     enum class kPrecisionUnits : uint8_t
     {
         kNanosecond,
@@ -219,30 +262,31 @@ class CPrecisionTimer
         kSecond
     };
 
-    /// Stores the reference value used to calculate elapsed time.
-    steady_clock::time_point _start_time;
+    /// Stores the number of nanoseconds contained in a single microsecond.
+    static constexpr int64_t kNanosecondsPerMicrosecond = 1'000;
 
-    /// Stores the string-option that describes the units used for inputs and outputs.
-    std::string _precision;
+    /// Stores the number of nanoseconds contained in a single millisecond.
+    static constexpr int64_t kNanosecondsPerMillisecond = 1'000'000;
 
-    /// Stores the resolved form of the _precision option, used to select the conversion divisor.
-    kPrecisionUnits _precision_units = kPrecisionUnits::kMicrosecond;
+    /// Stores the number of nanoseconds contained in a single second.
+    static constexpr int64_t kNanosecondsPerSecond = 1'000'000'000;
 
-    /// Stores the conversion factor that is assigned based on the chosen _precision option. It is used to convert the
-    /// input duration values (for delay methods) to nanoseconds and the output duration values from nanoseconds to the
-    /// chosen precision units.
-    nanoseconds _precision_duration = microseconds(1);
+    /// Stores the reference value used to calculate elapsed time. Lap() installs a new value and reads the one it
+    /// replaces in one indivisible step, which is what lets consecutive laps partition the elapsed time.
+    std::atomic<steady_clock::time_point> _start_time;
 
-    /// Stores the largest duration magnitude the delay methods can convert to nanoseconds without overflowing a 64-bit
-    /// signed integer at the currently selected precision.
-    int64_t _maximum_duration = std::numeric_limits<int64_t>::max() / 1000;
+    /// Stores the resolved form of the selected precision option, used to select the conversion divisor.
+    std::atomic<kPrecisionUnits> _precision_units = kPrecisionUnits::kMicrosecond;
+
+    /// Stores the number of nanoseconds in one unit of the selected precision. It is used to convert the input
+    /// duration values (for delay methods) to nanoseconds, and Delay() reads it with the GIL released.
+    std::atomic<int64_t> _precision_nanoseconds = kNanosecondsPerMicrosecond;
 
     /**
      * @brief Converts the input value from nanoseconds to the chosen precision units.
      *
-     * This method is currently used by the Elapsed() method to convert elapsed time from nanoseconds (used by the
-     * class) to the desired precision (requested by the user). However, it is a general converter that may be used by
-     * other methods in the future.
+     * This method is used by the Elapsed() and Lap() methods to convert a nanosecond interval to the desired precision
+     * (requested by the user). However, it is a general converter that may be used by other methods in the future.
      *
      * @param nanoseconds The value in nanoseconds to be converted to the desired precision.
      * @returns The converted time-value, truncated to the whole number via integer division toward zero.
@@ -250,12 +294,12 @@ class CPrecisionTimer
     [[nodiscard]]
     int64_t ConvertToPrecision(const int64_t nanoseconds) const
     {
-        switch (_precision_units)
+        switch (_precision_units.load())
         {
             case kPrecisionUnits::kNanosecond: return nanoseconds;
-            case kPrecisionUnits::kMicrosecond: return nanoseconds / 1000;
-            case kPrecisionUnits::kMillisecond: return nanoseconds / 1000000;
-            case kPrecisionUnits::kSecond: return nanoseconds / 1000000000;
+            case kPrecisionUnits::kMicrosecond: return nanoseconds / kNanosecondsPerMicrosecond;
+            case kPrecisionUnits::kMillisecond: return nanoseconds / kNanosecondsPerMillisecond;
+            case kPrecisionUnits::kSecond: return nanoseconds / kNanosecondsPerSecond;
         }
         throw std::invalid_argument("Unsupported precision");
     }
@@ -277,8 +321,12 @@ NB_MODULE(precision_timer_ext, m)
         .def(
             "Elapsed",
             &CPrecisionTimer::Elapsed,
-            "Reports the time elapsed since the last reset() method call or class instantiation (whichever happened "
-            "last)."
+            "Reports the time elapsed since the last Reset() or Lap() method call, or since class instantiation."
+        )
+        .def(
+            "Lap",
+            &CPrecisionTimer::Lap,
+            "Re-bases the reference point to the current time and reports the interval that just ended."
         )
         .def(
             "Delay",

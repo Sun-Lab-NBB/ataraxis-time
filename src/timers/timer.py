@@ -49,9 +49,8 @@ class PrecisionTimer:
         advised to benchmark the class before deploying it in time-critical projects to characterize the overhead
         associated with using different timer methods.
 
-        Each instance is safe to use from its own thread, and separate instances do not interfere with each other. Use
-        one instance per thread, since lap() and reset() update the recorded lap list and the timer reference point as
-        a pair.
+        Instances are safe to share between threads. The timer reference point is updated with atomic operations, so
+        concurrent lap() calls return adjacent intervals that together partition the elapsed time.
 
     Args:
         precision: The desired precision of the timer. Use one of the supported values defined in the TimerPrecisions
@@ -90,7 +89,7 @@ class PrecisionTimer:
 
     @property
     def elapsed(self) -> int:
-        """Returns the time elapsed since class instantiation or the last reset() method call,
+        """Returns the time elapsed since class instantiation or the most recent reset() or lap() method call,
         whichever happened last.
         """
         return int(self._timer.Elapsed())
@@ -202,9 +201,8 @@ class PrecisionTimer:
         Returns:
             The elapsed time captured as the lap duration, in the timer's current precision units.
         """
-        duration = self.elapsed
+        duration = int(self._timer.Lap())
         self._laps.append(duration)
-        self._timer.Reset()
         return duration
 
     @property

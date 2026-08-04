@@ -452,3 +452,50 @@ def test_poll() -> None:
             break
 
     assert iterations2 == [1, 2]
+
+
+@pytest.mark.parametrize(
+    "precision,divisor,sleep_duration",
+    [("ns", 1, 0.05), ("us", 1_000, 0.05), ("ms", 1_000_000, 0.05), ("s", 1_000_000_000, 1.1)],
+)
+def test_elapsed_reports_expected_magnitude(precision: str, divisor: int, sleep_duration: float) -> None:
+    """Verifies the elapsed property reports the correct magnitude for each precision.
+
+    Uses a two-sided bound against an independently measured interval, so that a wrong conversion divisor fails here.
+    Every other assertion in this suite is a lower bound or a relative ordering, which a scaled value satisfies.
+    """
+    timer = PrecisionTimer(precision)
+    timer.reset()
+    start = time.perf_counter_ns()
+    time.sleep(sleep_duration)
+    reported = timer.elapsed
+    expected = (time.perf_counter_ns() - start) / divisor
+
+    assert 0.5 * expected <= reported <= 2.0 * expected
+
+
+def test_format_elapsed_pins_multi_field_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verifies the multi-field decomposition produces exact segment values.
+
+    Pins the elapsed time so the decomposition is deterministic, since real elapsed times cannot reproduce an exact
+    multi-segment string.
+    """
+    monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 3_660_000))
+    monkeypatch.setattr(PrecisionTimer, "precision", property(lambda _self: "ms"))
+    timer = PrecisionTimer("ms")
+
+    assert timer.format_elapsed(max_fields=2) == "1 h 1 m"
+    assert timer.format_elapsed(max_fields=3) == "1 h 1 m"
+
+    # Verifies sub-millisecond elapsed times survive, which routing through seconds previously collapsed to zero.
+    monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 500))
+    monkeypatch.setattr(PrecisionTimer, "precision", property(lambda _self: "ns"))
+    assert timer.format_elapsed() == "500 ns"
+
+
+def test_format_elapsed_errors() -> None:
+    """Verifies format_elapsed() rejects a max_fields value below one."""
+    timer = PrecisionTimer("s")
+    message = "Unable to format the elapsed time. The 'max_fields' must be greater than 0, but got 0."
+    with pytest.raises(ValueError, match=error_format(message)):
+        timer.format_elapsed(max_fields=0)

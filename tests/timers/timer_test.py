@@ -499,3 +499,40 @@ def test_format_elapsed_errors() -> None:
     message = "Unable to format the elapsed time. The 'max_fields' must be greater than 0, but got 0."
     with pytest.raises(ValueError, match=error_format(message)):
         timer.format_elapsed(max_fields=0)
+
+
+def test_lap_partitions_elapsed_time() -> None:
+    """Verifies consecutive laps account for the whole interval, leaving no gap between one lap and the next."""
+    timer = PrecisionTimer("ns")
+    start = time.perf_counter_ns()
+    timer.reset()
+    for _ in range(200):
+        timer.lap()
+    total = time.perf_counter_ns() - start
+
+    # Each lap re-bases the timer in the same step that reads it, so the next lap begins where this one ended. Reading
+    # the elapsed time and re-basing separately would drop the interval between the two calls from every lap.
+    assert 0.8 * total < sum(timer.laps) <= total
+
+
+def test_lap_does_not_overlap_across_threads() -> None:
+    """Verifies concurrent laps receive distinct slices of the elapsed time."""
+    timer = PrecisionTimer("ns")
+    start = time.perf_counter_ns()
+    timer.reset()
+
+    def record_laps() -> None:
+        for _ in range(200):
+            timer.lap()
+
+    threads = [threading.Thread(target=record_laps) for _ in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    total = time.perf_counter_ns() - start
+
+    assert len(timer.laps) == 800
+
+    # Overlapping laps would count the shared interval once per thread and push the sum past the measured total.
+    assert sum(timer.laps) <= total

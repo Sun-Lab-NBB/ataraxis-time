@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+import math
 from typing import TYPE_CHECKING, Any
 import datetime
 
@@ -28,6 +29,26 @@ _PRECISION_PARTS: dict[str, int] = {
     "microsecond": 7,
 }
 """Maps each TimestampPrecisions level to the number of string parts to include in the output."""
+
+_SECONDS_PER_UNIT: dict[str, float] = {
+    "d": 86400.0,  # seconds in a day
+    "h": 3600.0,  # seconds in an hour
+    "m": 60.0,  # seconds in a minute
+    "s": 1.0,  # seconds in a second
+    "ms": 0.001,  # seconds in a millisecond
+    "us": 1e-6,  # seconds in a microsecond
+    "ns": 1e-9,  # seconds in a nanosecond
+}
+"""Maps each TimeUnits value to the number of seconds that unit contains."""
+
+_MICROSECONDS_PER_SECOND: int = 1_000_000
+"""The number of microseconds in one second, used to split and rejoin microsecond timestamps."""
+
+_MAXIMUM_TIMESTAMP: int = 253402300799999999
+"""The largest microsecond timestamp this module represents, which is 9999-12-31 23:59:59.999999 UTC."""
+
+_UTC_EPOCH: datetime.datetime = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+"""The UTC epoch onset, used as the reference point for exact integer timestamp arithmetic."""
 
 
 class TimeUnits(StrEnum):
@@ -120,46 +141,18 @@ def convert_time(
     Raises:
         ValueError: If 'from_units' or 'to_units' argument is not set to a valid time-option.
     """
-    conversion_dict: dict[str, int | float] = {
-        "d": 86400,  # seconds in a day
-        "h": 3600,  # seconds in an hour
-        "m": 60,  # seconds in a minute
-        "s": 1,  # seconds in a second
-        "ms": 0.001,  # seconds in a millisecond
-        "us": 1e-6,  # seconds in a microsecond
-        "ns": 1e-9,  # seconds in a nanosecond
-    }
-
     # Validates that the unit options are valid.
-    if from_units not in conversion_dict:
-        message = (
-            f"Unable to convert time value. The 'from_units' must be one of the valid members defined in the "
-            f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {from_units}."
-        )
-        console.error(message=message, error=ValueError)
-
-    if to_units not in conversion_dict:
-        message = (
-            f"Unable to convert time value. The 'to_units' must be one of the valid members defined in the "
-            f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {to_units}."
-        )
-        console.error(message=message, error=ValueError)
-
-    # Converts the input value to a NumPy 64-bit floating point value. This prepares the data for processing and acts
-    # as a check for whether the input value is NumPy-float-convertible (valid).
-    time = np.float64(time)
+    _validate_time_units(units=from_units, parameter_name="from_units")
+    _validate_time_units(units=to_units, parameter_name="to_units")
 
     # Converts the time to the desired time format and rounds the resultant value to 3 decimal places.
-    converted_time = np.round(
-        (time * conversion_dict[from_units]) / conversion_dict[to_units],
-        decimals=3,
-    )
+    converted_time = _round_to_three_decimals(_convert_time_exact(time=time, from_units=from_units, to_units=to_units))
 
     # If requested, returns the converted value as a Python float. Otherwise, returns it as a NumPy 64-bit floating
     # scalar.
     if as_float:
-        return float(converted_time)
-    return converted_time
+        return converted_time
+    return np.float64(converted_time)
 
 
 def get_timestamp(
@@ -202,7 +195,7 @@ def get_timestamp(
     now = datetime.datetime.now(datetime.UTC)
 
     # Converts UTC timestamp to microseconds elapsed since UTC epoch onset.
-    microseconds = int(now.timestamp() * 1_000_000)
+    microseconds = _microseconds_from_datetime(now)
 
     # Applies precision truncation for non-string formats.
     truncated_microseconds = _truncate_microseconds(microseconds, precision)
@@ -224,6 +217,14 @@ def get_timestamp(
                 f"{time_separator} of type {type(time_separator).__name__}."
             )
             console.error(message=message, error=TypeError)
+
+        # Validates that the time separator is not empty, since an empty separator produces an undelimited string that
+        # cannot be parsed back into a timestamp.
+        if not time_separator:
+            message = (
+                "Unable to get UTC timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+            )
+            console.error(message=message, error=ValueError)
 
         # Formats the timestamp into a string using the requested delimiter.
         full_string = now.strftime(
@@ -288,6 +289,12 @@ def convert_timestamp(
         )
         console.error(message=message, error=TypeError)
 
+    # Validates that the time separator is not empty. An empty separator cannot delimit the output string and makes
+    # str.split() raise an unformatted error when parsing string inputs.
+    if not time_separator:
+        message = "Unable to convert timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+        console.error(message=message, error=ValueError)
+
     # Validates the precision argument.
     if precision not in tuple(TimestampPrecisions):
         message = (
@@ -299,12 +306,14 @@ def convert_timestamp(
     # Converts the input to microseconds based on the input type.
     microseconds: int = 0  # Pre-initializes the variable to appease mypy.
     if isinstance(timestamp, np.ndarray):
-        # Validates that the timestamp is stored as a one-dimensional uint8 array.
-        if timestamp.dtype != np.uint8 or timestamp.ndim != 1:
+        # Validates that the timestamp is stored as a one-dimensional uint8 array holding exactly the byte count the
+        # serialization dtype requires. Without the size check the failure surfaces from the dependency instead, naming
+        # its own parameter rather than 'timestamp'.
+        if timestamp.dtype != np.uint8 or timestamp.ndim != 1 or timestamp.nbytes != _TIMESTAMP_DTYPE.itemsize:
             message = (
-                f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array, "
-                f"but got {timestamp} of type {type(timestamp).__name__} with dtype {timestamp.dtype} and shape "
-                f"{timestamp.shape}."
+                f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array of "
+                f"{_TIMESTAMP_DTYPE.itemsize} bytes, but got {timestamp} of type {type(timestamp).__name__} with "
+                f"dtype {timestamp.dtype} and shape {timestamp.shape}."
             )
             console.error(message=message, error=TypeError)
 
@@ -322,7 +331,7 @@ def convert_timestamp(
             # Expected format: YYYY-MM-DD-HH-MM-SS-ffffff (with custom separator), but accepts 1-7 parts.
             parts = timestamp.split(time_separator)
             num_parts = len(parts)
-            if num_parts < 1 or num_parts > _DT_MAX_PARTS:
+            if num_parts > _DT_MAX_PARTS:
                 message = (
                     f"Unable to convert string timestamp. The timestamp must have 1 to 7 delimited parts, but got "
                     f"'{timestamp}' with {num_parts} parts."
@@ -334,9 +343,20 @@ def convert_timestamp(
 
             # Parses provided components, fills missing ones with defaults.
             values = [int(parts[i]) if i < num_parts else defaults[i] for i in range(_DT_MAX_PARTS)]
-            year, month, day, hour, minute, second, microsecond = values
 
-            # Creates a datetime object.
+        except ValueError:
+            message = (
+                f"Unable to convert string timestamp. The timestamp must follow the format "
+                f"YYYY{time_separator}MM{time_separator}DD{time_separator}HH{time_separator}MM"
+                f"{time_separator}SS{time_separator}ffffff (1 to 7 parts), but got '{timestamp}'."
+            )
+            console.error(message=message, error=ValueError)
+
+        year, month, day, hour, minute, second, microsecond = values
+
+        # Creates a datetime object. A component outside its calendar range is reported separately from a format
+        # error, because such an input already satisfies the documented format.
+        try:
             dt = datetime.datetime(
                 year=year,
                 month=month,
@@ -347,17 +367,15 @@ def convert_timestamp(
                 microsecond=microsecond,
                 tzinfo=datetime.UTC,
             )
-
-            # Converts to microseconds since UTC epoch onset.
-            microseconds = int(dt.timestamp() * 1_000_000)
-
-        except (ValueError, IndexError):
+        except ValueError:
             message = (
-                f"Unable to convert string timestamp. The timestamp must follow the format "
-                f"YYYY{time_separator}MM{time_separator}DD{time_separator}HH{time_separator}MM"
-                f"{time_separator}SS{time_separator}ffffff (1 to 7 parts), but got '{timestamp}'."
+                f"Unable to convert string timestamp. The timestamp must encode a valid calendar date and time, but "
+                f"got '{timestamp}'."
             )
             console.error(message=message, error=ValueError)
+
+        # Converts to microseconds since UTC epoch onset.
+        microseconds = _microseconds_from_datetime(dt)
 
     else:
         message = (
@@ -365,6 +383,10 @@ def convert_timestamp(
             f"{timestamp} of type {type(timestamp).__name__}."
         )
         console.error(message=message, error=TypeError)
+
+    # Verifies the resolved value is representable before it reaches the truncation and serialization paths, which
+    # otherwise surface unformatted OverflowError and ValueError instances from their dependencies.
+    _validate_timestamp_range(microseconds=microseconds, context="convert timestamp")
 
     # Applies precision truncation.
     microseconds = _truncate_microseconds(microseconds, precision)
@@ -380,12 +402,8 @@ def convert_timestamp(
 
     # String format.
     if output_format == TimestampFormats.STRING:
-        # Splits into seconds and microseconds components.
-        seconds = float(microseconds) // 1_000_000
-        microseconds_part = int(microseconds % 1_000_000)
-
         # Creates a UTC datetime with microsecond precision.
-        timestamp_dt = datetime.datetime.fromtimestamp(seconds, tz=datetime.UTC).replace(microsecond=microseconds_part)
+        timestamp_dt = _datetime_from_microseconds(microseconds)
 
         # Formats with the specified separator.
         full_string = timestamp_dt.strftime(
@@ -449,9 +467,15 @@ def parse_timestamp(
         )
         console.error(message=message, error=ValueError)
 
-    # Parses the date string using the provided format.
+    # Validates that the time separator is not empty, since an empty separator cannot delimit the output string.
+    if not time_separator:
+        message = "Unable to parse timestamp. The 'time_separator' must be a non-empty string, but got an empty one."
+        console.error(message=message, error=ValueError)
+
+    # Parses the date string using the provided format. The timezone is applied below rather than here, because
+    # .astimezone() would interpret a naive result as local time instead of the UTC this function documents.
     try:
-        dt = datetime.datetime.strptime(date_string, format_string).replace(tzinfo=datetime.UTC)
+        parsed = datetime.datetime.strptime(date_string, format_string)  # noqa: DTZ007
     except ValueError:
         message = (
             f"Unable to parse timestamp. The date string '{date_string}' could not be parsed with the format "
@@ -459,8 +483,15 @@ def parse_timestamp(
         )
         console.error(message=message, error=ValueError)
 
+    # Treats a naive datetime as UTC, matching the documented assumption, and converts an aware one so that an offset
+    # the format string parsed is honored rather than discarded.
+    dt = parsed.replace(tzinfo=datetime.UTC) if parsed.tzinfo is None else parsed.astimezone(datetime.UTC)
+
     # Converts the parsed datetime to microseconds since UTC epoch onset.
-    microseconds = int(dt.timestamp() * 1_000_000)
+    microseconds = _microseconds_from_datetime(dt)
+
+    # Verifies the resolved value is representable before it reaches the truncation and serialization paths.
+    _validate_timestamp_range(microseconds=microseconds, context="parse timestamp")
 
     # Applies precision truncation.
     microseconds = _truncate_microseconds(microseconds, precision)
@@ -474,9 +505,7 @@ def parse_timestamp(
 
     if output_format == TimestampFormats.STRING:
         # Reconstructs datetime from truncated microseconds.
-        seconds = float(microseconds) // 1_000_000
-        microseconds_part = int(microseconds % 1_000_000)
-        timestamp_dt = datetime.datetime.fromtimestamp(seconds, tz=datetime.UTC).replace(microsecond=microseconds_part)
+        timestamp_dt = _datetime_from_microseconds(microseconds)
 
         full_string = timestamp_dt.strftime(
             f"%Y{time_separator}%m{time_separator}%d{time_separator}%H{time_separator}%M{time_separator}"
@@ -519,11 +548,18 @@ def rate_to_interval(
         ValueError: If the rate is not greater than 0, or if to_units is not a valid time unit.
     """
     rate_value = float(rate)
-    if rate_value <= 0:
+    if not math.isfinite(rate_value) or rate_value <= 0:
         message = f"Unable to convert rate to interval. The 'rate' must be greater than 0, but got {rate}."
         console.error(message=message, error=ValueError)
 
-    return convert_time(time=1.0 / rate_value, from_units="s", to_units=to_units, as_float=as_float)
+    _validate_time_units(units=to_units, parameter_name="to_units")
+
+    # Converts without the rounding convert_time() applies, so that intervals below one thousandth of the destination
+    # unit are preserved rather than collapsing to zero.
+    interval = _convert_time_exact(time=1.0 / rate_value, from_units="s", to_units=to_units)
+    if as_float:
+        return interval
+    return np.float64(interval)
 
 
 def interval_to_rate(
@@ -548,13 +584,20 @@ def interval_to_rate(
         ValueError: If the interval is not greater than 0, or if from_units is not a valid time unit.
     """
     interval_value = float(interval)
-    if interval_value <= 0:
+    if not math.isfinite(interval_value) or interval_value <= 0:
         message = f"Unable to convert interval to rate. The 'interval' must be greater than 0, but got {interval}."
         console.error(message=message, error=ValueError)
 
-    seconds = convert_time(time=interval_value, from_units=from_units, to_units="s", as_float=True)
-    # Casts to float since convert_time with as_float=True returns float.
-    result = 1.0 / float(seconds)
+    _validate_time_units(units=from_units, parameter_name="from_units")
+
+    # Converts without the rounding convert_time() applies. Rounding would floor every interval below half of one
+    # millisecond to zero, which made this function raise ZeroDivisionError instead of returning a rate.
+    seconds = _convert_time_exact(time=interval_value, from_units=from_units, to_units="s")
+    if seconds <= 0:
+        message = f"Unable to convert interval to rate. The 'interval' must be greater than 0, but got {interval}."
+        console.error(message=message, error=ValueError)
+
+    result = 1.0 / seconds
     if as_float:
         return result
     return np.float64(result)
@@ -577,8 +620,11 @@ def to_timedelta(
     Raises:
         ValueError: If from_units is not a valid time unit.
     """
-    seconds = convert_time(time=time, from_units=from_units, to_units="s", as_float=True)
-    return datetime.timedelta(seconds=float(seconds))
+    _validate_time_units(units=from_units, parameter_name="from_units")
+
+    # Converts without the rounding convert_time() applies, so that sub-millisecond values survive. timedelta carries
+    # native microsecond resolution, so rounding here would discard detail the return type can represent.
+    return datetime.timedelta(seconds=_convert_time_exact(time=time, from_units=from_units, to_units="s"))
 
 
 def from_timedelta(
@@ -601,7 +647,123 @@ def from_timedelta(
     Raises:
         ValueError: If to_units is not a valid time unit.
     """
-    return convert_time(time=timedelta_value.total_seconds(), from_units="s", to_units=to_units, as_float=as_float)
+    _validate_time_units(units=to_units, parameter_name="to_units")
+
+    # Converts without the rounding convert_time() applies, so that sub-millisecond timedelta values survive.
+    value = _convert_time_exact(time=timedelta_value.total_seconds(), from_units="s", to_units=to_units)
+    if as_float:
+        return value
+    return np.float64(value)
+
+
+def _validate_time_units(units: str, parameter_name: str) -> None:
+    """Verifies that the input time-unit option is one of the values defined in the TimeUnits enumeration.
+
+    Args:
+        units: The time-unit option to validate.
+        parameter_name: The name of the validated parameter, used to build the error message.
+
+    Raises:
+        ValueError: If the option is not a valid time-unit.
+    """
+    if units not in _SECONDS_PER_UNIT:
+        message = (
+            f"Unable to convert time value. The '{parameter_name}' must be one of the valid members defined in the "
+            f"TimeUnits enumeration ({', '.join(tuple(TimeUnits))}), but got {units}."
+        )
+        console.error(message=message, error=ValueError)
+
+
+def _convert_time_exact(
+    time: float | np.integer[Any] | np.floating[Any],
+    from_units: str,
+    to_units: str,
+) -> float:
+    """Converts the input time value between the requested units without applying any rounding.
+
+    Callers validate both unit options before calling this function.
+
+    Args:
+        time: The time value to convert.
+        from_units: The units used by the input value.
+        to_units: The units to convert the input value to.
+
+    Returns:
+        The converted time value as a Python float.
+    """
+    return (float(time) * _SECONDS_PER_UNIT[from_units]) / _SECONDS_PER_UNIT[to_units]
+
+
+def _round_to_three_decimals(value: float) -> float:
+    """Rounds the input value to three decimal places, resolving ties to the nearest even digit.
+
+    Scales the value, rounds it to the nearest integer, then rescales it. This reproduces the result of
+    numpy.round(value, decimals=3) for every finite input while avoiding the NumPy dispatch overhead.
+
+    Args:
+        value: The value to round.
+
+    Returns:
+        The rounded value, or the unmodified scaled value when scaling overflows to infinity.
+    """
+    scaled = value * 1000.0
+    if not math.isfinite(scaled):
+        return scaled
+    return round(scaled) / 1000.0
+
+
+def _microseconds_from_datetime(timestamp: datetime.datetime) -> int:
+    """Converts a timezone-aware datetime to the number of microseconds elapsed since the UTC epoch onset.
+
+    Uses integer arithmetic over a timedelta rather than scaling the float that datetime.timestamp() returns, so the
+    result stays exact across the whole datetime range.
+
+    Args:
+        timestamp: The timezone-aware datetime to convert.
+
+    Returns:
+        The number of microseconds elapsed since the UTC epoch onset.
+    """
+    elapsed = timestamp - _UTC_EPOCH
+    return (
+        elapsed.days * 86_400 * _MICROSECONDS_PER_SECOND
+        + elapsed.seconds * _MICROSECONDS_PER_SECOND
+        + (elapsed.microseconds)
+    )
+
+
+def _datetime_from_microseconds(microseconds: int) -> datetime.datetime:
+    """Converts a microsecond timestamp to the matching timezone-aware UTC datetime.
+
+    Splits the timestamp with integer division rather than routing the value through a float, so the reconstruction
+    stays exact above the 53-bit mantissa limit that floats impose.
+
+    Args:
+        microseconds: The number of microseconds elapsed since the UTC epoch onset.
+
+    Returns:
+        The reconstructed timezone-aware UTC datetime.
+    """
+    seconds, microseconds_part = divmod(microseconds, _MICROSECONDS_PER_SECOND)
+    return datetime.datetime.fromtimestamp(seconds, tz=datetime.UTC).replace(microsecond=microseconds_part)
+
+
+def _validate_timestamp_range(microseconds: int, context: str) -> None:
+    """Verifies that the input microsecond timestamp falls inside the range this module can represent.
+
+    Args:
+        microseconds: The microsecond timestamp to validate.
+        context: The action name used to build the error message.
+
+    Raises:
+        ValueError: If the timestamp is negative or exceeds the maximum representable value.
+    """
+    if microseconds < 0 or microseconds > _MAXIMUM_TIMESTAMP:
+        message = (
+            f"Unable to {context}. The timestamp must be between 0 and {_MAXIMUM_TIMESTAMP} microseconds since the "
+            f"UTC epoch onset, which spans 1970-01-01 to 9999-12-31, but got {microseconds}."
+        )
+        console.error(message=message, error=ValueError)
 
 
 def _truncate_microseconds(microseconds: int, precision: str) -> int:
@@ -621,9 +783,7 @@ def _truncate_microseconds(microseconds: int, precision: str) -> int:
         return microseconds
 
     # Reconstructs the datetime from microseconds.
-    seconds = float(microseconds) // 1_000_000
-    microseconds_part = int(microseconds % 1_000_000)
-    dt = datetime.datetime.fromtimestamp(seconds, tz=datetime.UTC).replace(microsecond=microseconds_part)
+    dt = _datetime_from_microseconds(microseconds)
 
     # Zeroes out sub-precision fields by constructing a new datetime with only the fields up to the precision level.
     dt = datetime.datetime(
@@ -636,4 +796,4 @@ def _truncate_microseconds(microseconds: int, precision: str) -> int:
         microsecond=dt.microsecond if precision not in ("year", "month", "day", "hour", "minute", "second") else 0,
         tzinfo=datetime.UTC,
     )
-    return int(dt.timestamp() * 1_000_000)
+    return _microseconds_from_datetime(dt)

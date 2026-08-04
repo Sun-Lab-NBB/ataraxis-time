@@ -3,8 +3,8 @@
  *
  * @brief Defines and implements the CPrecisionTimer class as a nanobind-bound C++ extension module.
  *
- * Uses the fastest system clock available through the 'chrono' library, which allows the timer to resolve
- * sub-microsecond intervals on sufficiently fast CPUs. This module works on Windows, macOS, and Linux.
+ * Uses the monotonic system clock provided by the 'chrono' library, which allows the timer to resolve sub-microsecond
+ * intervals on sufficiently fast CPUs. This module works on Windows, macOS, and Linux.
  *
  * @note This module is bound to Python using nanobind and is designed to be further wrapped with a pure-Python
  * PrecisionTimer class. The binding code is stored at the end of this file.
@@ -14,6 +14,9 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <chrono>
+#include <limits>
+#include <stdexcept>
+#include <string>
 #include <thread>
 
 // Simplifies interacting with the nanobind namespace by shortening it as nb.
@@ -29,10 +32,10 @@ using namespace std::chrono;
  * @brief Provides methods for sub-microsecond-precise interval timing and blocking / non-blocking code execution
  * delays.
  *
- * @note The performance of this class scales with the OS and the state of the host system. The 'chrono' library
- * provides a high_resolution_clock, which is automatically set to the highest resolution clock of the host OS.
- * However, all method calls have a certain overhead associated with them and the busier the OS is, the longer the
- * overhead.
+ * @note The performance of this class scales with the OS and the state of the host system. The class uses the 'chrono'
+ * library's steady_clock, which advances monotonically and is therefore immune to the wall-clock adjustments that
+ * network time synchronization applies. However, all method calls have a certain overhead associated with them and the
+ * busier the OS is, the longer the overhead.
  */
 class CPrecisionTimer
 {
@@ -55,8 +58,8 @@ class CPrecisionTimer
     /// Resets the timer.
     void Reset()
     {
-        // Re-bases the start_time to use the current time obtained using the highest resolution clock.
-        _start_time = high_resolution_clock::now();
+        // Re-bases the start_time to use the current time obtained using the monotonic clock.
+        _start_time = steady_clock::now();
     }
 
     /**
@@ -64,9 +67,10 @@ class CPrecisionTimer
      *
      * @returns The elapsed time, using the current class precision units.
      */
-    [[nodiscard]] int64_t Elapsed() const
+    [[nodiscard]]
+    int64_t Elapsed() const
     {
-        const auto stop_time = high_resolution_clock::now();
+        const auto stop_time = steady_clock::now();
         const auto elapsed   = duration_cast<nanoseconds>(stop_time - _start_time);
         return ConvertToPrecision(elapsed.count());
     }
@@ -87,9 +91,24 @@ class CPrecisionTimer
      * @param block Determines whether the method should release the GIL, allowing concurrent execution of other
      * Python threads. If false, the method releases the GIL. If true, the method maintains the GIL, preventing other
      * Python threads from running.
+     *
+     * @throws std::overflow_error If converting the duration to nanoseconds would exceed the range of a 64-bit signed
+     * integer at the instance's current precision.
      */
     void Delay(const int64_t duration, const bool allow_sleep = false, const bool block = false) const
     {
+        // Rejects durations that the nanosecond conversion below cannot represent. Signed overflow is undefined
+        // behavior, and the wrapped negative value would make the method return immediately instead of blocking.
+        if (duration > _maximum_duration || duration < -_maximum_duration)
+        {
+            const std::string message =
+                "Unable to delay the requested period of time. The 'duration' magnitude must "
+                "not exceed " +
+                std::to_string(_maximum_duration) + " at the current timer precision, but received " +
+                std::to_string(duration) + ".";
+            throw std::overflow_error(message);
+        }
+
         // Converts input delay duration to nanoseconds.
         const auto delay_duration = duration * _precision_duration;
 
@@ -105,8 +124,8 @@ class CPrecisionTimer
             // uses CPU to improve delay precision.
             else
             {
-                const auto start = high_resolution_clock::now();
-                while (duration_cast<nanoseconds>(high_resolution_clock::now() - start) < delay_duration);
+                const auto start = steady_clock::now();
+                while (duration_cast<nanoseconds>(steady_clock::now() - start) < delay_duration);
             }
         };
 
@@ -129,22 +148,53 @@ class CPrecisionTimer
      *
      * @param precision The new precision to use. Supported values are: 'ns' (nanoseconds),
      * 'us' (microseconds), 'ms' (milliseconds), and 's' (seconds).
+     *
+     * @throws std::invalid_argument If the precision does not exactly match one of the four supported options.
      */
     void SetPrecision(const std::string& precision)
     {
-        _precision = precision;
-        switch (precision[0])
+        // Resolves the requested option into locals before touching any member. A rejected precision therefore leaves
+        // the instance on its previous valid configuration rather than in a partially updated state.
+        kPrecisionUnits resolved_units;
+        nanoseconds resolved_duration;
+        if (precision == "ns")
         {
-            case 'n': _precision_duration = nanoseconds(1); break;
-            case 'u': _precision_duration = microseconds(1); break;
-            case 'm': _precision_duration = milliseconds(1); break;
-            case 's': _precision_duration = seconds(1); break;
-            default: throw std::invalid_argument("Unsupported precision. Use 'ns', 'us', 'ms', or 's'.");
+            resolved_units    = kPrecisionUnits::kNanosecond;
+            resolved_duration = nanoseconds(1);
         }
+        else if (precision == "us")
+        {
+            resolved_units    = kPrecisionUnits::kMicrosecond;
+            resolved_duration = microseconds(1);
+        }
+        else if (precision == "ms")
+        {
+            resolved_units    = kPrecisionUnits::kMillisecond;
+            resolved_duration = milliseconds(1);
+        }
+        else if (precision == "s")
+        {
+            resolved_units    = kPrecisionUnits::kSecond;
+            resolved_duration = seconds(1);
+        }
+        else
+        {
+            const std::string message =
+                "Unable to set the timer precision. The precision must be one of 'ns', 'us', "
+                "'ms', or 's', but received '" +
+                precision + "'.";
+            throw std::invalid_argument(message);
+        }
+
+        _precision          = precision;
+        _precision_units    = resolved_units;
+        _precision_duration = resolved_duration;
+        _maximum_duration   = std::numeric_limits<int64_t>::max() / resolved_duration.count();
     }
 
     /// Returns the current precision of the timer ('ns', 'us', 'ms', or 's').
-    [[nodiscard]] std::string get_precision() const
+    [[nodiscard]]
+    std::string get_precision() const
     {
         return _precision;
     }
@@ -159,16 +209,33 @@ class CPrecisionTimer
     ~CPrecisionTimer() = default;
 
   private:
+    /// Defines the timer precision options as a compact value, so that conversions dispatch on an integer rather than
+    /// re-parsing the _precision string on every call.
+    enum class kPrecisionUnits : uint8_t
+    {
+        kNanosecond,
+        kMicrosecond,
+        kMillisecond,
+        kSecond
+    };
+
     /// Stores the reference value used to calculate elapsed time.
-    high_resolution_clock::time_point _start_time;
+    steady_clock::time_point _start_time;
 
     /// Stores the string-option that describes the units used for inputs and outputs.
     std::string _precision;
+
+    /// Stores the resolved form of the _precision option, used to select the conversion divisor.
+    kPrecisionUnits _precision_units = kPrecisionUnits::kMicrosecond;
 
     /// Stores the conversion factor that is assigned based on the chosen _precision option. It is used to convert the
     /// input duration values (for delay methods) to nanoseconds and the output duration values from nanoseconds to the
     /// chosen precision units.
     nanoseconds _precision_duration = microseconds(1);
+
+    /// Stores the largest duration magnitude the delay methods can convert to nanoseconds without overflowing a 64-bit
+    /// signed integer at the currently selected precision.
+    int64_t _maximum_duration = std::numeric_limits<int64_t>::max() / 1000;
 
     /**
      * @brief Converts the input value from nanoseconds to the chosen precision units.
@@ -183,14 +250,14 @@ class CPrecisionTimer
     [[nodiscard]]
     int64_t ConvertToPrecision(const int64_t nanoseconds) const
     {
-        switch (_precision[0])
+        switch (_precision_units)
         {
-            case 'n': return nanoseconds;
-            case 'u': return nanoseconds / 1000;
-            case 'm': return nanoseconds / 1000000;
-            case 's': return nanoseconds / 1000000000;
-            default: throw std::invalid_argument("Unsupported precision");
+            case kPrecisionUnits::kNanosecond: return nanoseconds;
+            case kPrecisionUnits::kMicrosecond: return nanoseconds / 1000;
+            case kPrecisionUnits::kMillisecond: return nanoseconds / 1000000;
+            case kPrecisionUnits::kSecond: return nanoseconds / 1000000000;
         }
+        throw std::invalid_argument("Unsupported precision");
     }
 };
 
@@ -218,7 +285,7 @@ NB_MODULE(precision_timer_ext, m)
             &CPrecisionTimer::Delay,
             "duration"_a,
             "allow_sleep"_a = false,
-            "block"_a = false,
+            "block"_a       = false,
             "Delays for the requested period of time while releasing or maintaining the GIL."
         )
         .def("get_precision", &CPrecisionTimer::get_precision, "Returns the current precision of the timer.")

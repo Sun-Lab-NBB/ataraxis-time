@@ -75,6 +75,20 @@ def benchmark(
     # use the same system clock.
     interval_results: list[tuple[TimerPrecisions, np.floating[Any], np.floating[Any]]] = []
     for precision in precisions:
+        # Converts the requested interval into the tested precision once. A delay shorter than one unit of that
+        # precision rounds to zero, which would make the busy-wait below exit without running a single iteration and
+        # report a zero-variance result for a measurement that never happened.
+        resolvable_interval: float = convert_time(
+            time=interval_delay, from_units=TimeUnits.SECOND, to_units=precision.lower()
+        )
+        if resolvable_interval <= 0:
+            console.echo(
+                message=f"Skipping the interval timing benchmark for the {precision} precision timer. The requested "
+                f"{interval_delay} second interval is shorter than a single {precision} unit.",
+                level=LogLevel.WARNING,
+            )
+            continue
+
         # Switches the timer to use the tested precision.
         timer.set_precision(precision=precision)
         elapsed_deltas = []
@@ -82,8 +96,8 @@ def benchmark(
         for _ in console.track(
             range(interval_cycles), description=f"Running interval timing benchmark for {precision} precision timer"
         ):
-            # Converts the interval delay to the precision used by the elapsed timer and runs a busywait loop.
-            interval: float = convert_time(time=interval_delay, from_units=TimeUnits.SECOND, to_units=precision.lower())
+            # Runs a busywait loop for the interval resolved above.
+            interval: float = resolvable_interval
             start = tm.perf_counter_ns()
             timer.reset()
             while timer.elapsed < interval:

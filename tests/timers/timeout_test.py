@@ -3,7 +3,7 @@
 import time
 
 import pytest
-from ataraxis_time import Timeout, TimerPrecisions
+from ataraxis_time import Timeout, PrecisionTimer, TimerPrecisions
 from ataraxis_base_utilities import error_format
 
 
@@ -139,3 +139,21 @@ def test_timeout_errors() -> None:
     message = "Unable to reset Timeout. The 'duration' must be greater than 0, but got -50."
     with pytest.raises(ValueError, match=error_format(message)):
         timeout.reset(duration=-50)
+
+
+def test_timeout_pins_computed_values(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verifies expired and remaining compute exact values against a pinned elapsed time.
+
+    Every other assertion in this suite is a range or a boolean, which leaves the arithmetic behind both properties
+    unpinned.
+    """
+    timeout = Timeout(duration=5_000_000, precision=TimerPrecisions.MICROSECOND)
+
+    monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 2_000_000))
+    assert timeout.remaining == 3_000_000
+    assert not timeout.expired
+
+    # Verifies the boundary resolves as expired, since the guard uses an inclusive comparison.
+    monkeypatch.setattr(PrecisionTimer, "elapsed", property(lambda _self: 5_000_000))
+    assert timeout.expired
+    assert timeout.remaining == 0

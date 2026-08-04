@@ -262,9 +262,9 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid numpy array (wrong dtype)
     invalid_array = np.array([1, 2, 3], dtype=np.float32)
     message = (
-        f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array, "
-        f"but got {invalid_array} of type {type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape "
-        f"{invalid_array.shape}."
+        f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array of "
+        f"8 bytes, but got {invalid_array} of type {type(invalid_array).__name__} with "
+        f"dtype {invalid_array.dtype} and shape {invalid_array.shape}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         convert_timestamp(invalid_array)
@@ -272,9 +272,9 @@ def test_convert_timestamp_errors() -> None:
     # Tests an invalid numpy array (wrong dimensions)
     invalid_array = np.array([[1, 2], [3, 4]], dtype=np.uint8)
     message = (
-        f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array, "
-        f"but got {invalid_array} of type {type(invalid_array).__name__} with dtype {invalid_array.dtype} and shape "
-        f"{invalid_array.shape}."
+        f"Unable to convert bytes timestamp. The 'timestamp' must be a one-dimensional uint8 numpy array of "
+        f"8 bytes, but got {invalid_array} of type {type(invalid_array).__name__} with "
+        f"dtype {invalid_array.dtype} and shape {invalid_array.shape}."
     )
     with pytest.raises(TypeError, match=error_format(message)):
         convert_timestamp(invalid_array)
@@ -760,3 +760,62 @@ def test_timedelta_roundtrip() -> None:
         time_delta = to_timedelta(original, from_units=units)
         recovered = from_timedelta(time_delta, to_units=units, as_float=True)
         assert abs(recovered - original) < 0.01
+
+
+def test_timestamp_wire_format() -> None:
+    """Verifies byte timestamps serialize as little-endian unsigned 64-bit integers.
+
+    Derives the expected bytes independently of the module's serialization dtype, so that a change to the byte order or
+    to the signedness of the wire format fails here rather than round-tripping silently.
+    """
+    value = 1785000000123456
+    result = convert_timestamp(value, output_format=TimestampFormats.BYTES)
+    assert bytes(result) == value.to_bytes(8, "little", signed=False)
+
+    parsed = parse_timestamp("2024-06-15 12:30:45", "%Y-%m-%d %H:%M:%S", output_format=TimestampFormats.BYTES)
+    expected_microseconds = int(datetime(2024, 6, 15, 12, 30, 45, tzinfo=UTC).timestamp()) * 1_000_000
+    assert bytes(parsed) == expected_microseconds.to_bytes(8, "little", signed=False)
+
+
+def test_precision_truncation_pins_concrete_values() -> None:
+    """Verifies precision truncation zeroes every sub-precision field, pinning concrete integer timestamps."""
+    full_timestamp = "2024-06-15-12-30-45-123456"
+    expected_moments = {
+        TimestampPrecisions.YEAR: datetime(2024, 1, 1, tzinfo=UTC),
+        TimestampPrecisions.MONTH: datetime(2024, 6, 1, tzinfo=UTC),
+        TimestampPrecisions.DAY: datetime(2024, 6, 15, tzinfo=UTC),
+        TimestampPrecisions.HOUR: datetime(2024, 6, 15, 12, tzinfo=UTC),
+        TimestampPrecisions.MINUTE: datetime(2024, 6, 15, 12, 30, tzinfo=UTC),
+        TimestampPrecisions.SECOND: datetime(2024, 6, 15, 12, 30, 45, tzinfo=UTC),
+    }
+    for precision, moment in expected_moments.items():
+        result = convert_timestamp(full_timestamp, output_format=TimestampFormats.INTEGER, precision=precision)
+        assert result == int(moment.timestamp()) * 1_000_000
+
+
+def test_convert_time_returns_exact_types() -> None:
+    """Verifies the as_float argument selects the exact return type.
+
+    Uses an identity type check because np.float64 subclasses float, which makes an isinstance check pass for both
+    return types and therefore pin neither.
+    """
+    assert type(convert_time(1000, "ms", "s", as_float=True)) is float
+    assert type(convert_time(1000, "ms", "s", as_float=False)) is np.float64
+    assert type(rate_to_interval(1.0, to_units=TimeUnits.SECOND, as_float=True)) is float
+    assert type(rate_to_interval(1.0, to_units=TimeUnits.SECOND)) is np.float64
+
+
+def test_sub_millisecond_conversions_are_preserved() -> None:
+    """Verifies conversion helpers preserve values below one thousandth of the destination unit."""
+    assert to_timedelta(500, from_units=TimeUnits.MICROSECOND) == timedelta(microseconds=500)
+    assert to_timedelta(1000, from_units=TimeUnits.NANOSECOND) == timedelta(microseconds=1)
+    assert abs(interval_to_rate(1, from_units=TimeUnits.MICROSECOND, as_float=True) - 1_000_000.0) < 1.0
+    assert abs(interval_to_rate(600, from_units=TimeUnits.MICROSECOND, as_float=True) - 1666.6667) < 0.01
+    assert rate_to_interval(2000.0, to_units=TimeUnits.SECOND, as_float=True) == 0.0005
+
+
+def test_parse_timestamp_honors_utc_offset() -> None:
+    """Verifies an offset parsed through the %z directive is converted rather than discarded."""
+    result = parse_timestamp("2024-06-15 12:00:00+0500", "%Y-%m-%d %H:%M:%S%z")
+    expected = int(datetime(2024, 6, 15, 7, 0, 0, tzinfo=UTC).timestamp()) * 1_000_000
+    assert result == expected

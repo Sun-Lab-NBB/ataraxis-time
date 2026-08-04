@@ -5,8 +5,21 @@ from collections.abc import Generator
 
 from ataraxis_base_utilities import console
 
-from ..utilities import convert_time
 from ..precision_timer_ext import CPrecisionTimer  # type: ignore[import-not-found]
+
+_NANOSECONDS_PER_UNIT: dict[str, int] = {"ns": 1, "us": 1_000, "ms": 1_000_000, "s": 1_000_000_000}
+"""Maps each TimerPrecisions value to the number of nanoseconds that unit contains."""
+
+_FORMAT_UNITS: tuple[tuple[str, int], ...] = (
+    ("d", 86_400_000_000_000),
+    ("h", 3_600_000_000_000),
+    ("m", 60_000_000_000),
+    ("s", 1_000_000_000),
+    ("ms", 1_000_000),
+    ("us", 1_000),
+    ("ns", 1),
+)
+"""Orders the units used to format elapsed time, from largest to smallest, with their nanosecond magnitudes."""
 
 
 class TimerPrecisions(StrEnum):
@@ -35,6 +48,10 @@ class PrecisionTimer:
         The precision of all class methods depends on the precision and frequency of the system's CPU. It is highly
         advised to benchmark the class before deploying it in time-critical projects to characterize the overhead
         associated with using different timer methods.
+
+        Each instance is safe to use from its own thread, and separate instances do not interfere with each other. Use
+        one instance per thread, since lap() and reset() update the recorded lap list and the timer reference point as
+        a pair.
 
     Args:
         precision: The desired precision of the timer. Use one of the supported values defined in the TimerPrecisions
@@ -97,7 +114,9 @@ class PrecisionTimer:
             allow_sleep: Determines whether the timer may use sleep instead of busy-wait to suspend execution.
                 Sleep is only used when the timer precision is 'ms' or 's'.
             block: Determines whether to hold (if True) or release (if False) the Global Interpreter Lock (GIL) during
-                the delay. Releasing the GIL allows other Python threads to run in parallel with the delay.
+                the delay. Releasing the GIL allows other Python threads to run in parallel with the delay, at the cost
+                of tail latency. When another Python thread is CPU-bound, reacquiring the GIL can extend a delay by up
+                to one thread-switch interval. Use block=True when latency determinism matters more than parallelism.
         """
         self._timer.Delay(duration=delay, allow_sleep=allow_sleep, block=block)
 
@@ -139,49 +158,41 @@ class PrecisionTimer:
 
         Returns:
             A human-readable string representation of the elapsed time, e.g. "2 h 30 m", "1.5 ms", "500 ns".
+
+        Raises:
+            ValueError: If max_fields is less than 1.
         """
-        # Gets the current elapsed time and converts it to seconds for uniform processing.
+        if max_fields < 1:
+            message = (
+                f"Unable to format the elapsed time. The 'max_fields' must be greater than 0, but got {max_fields}."
+            )
+            console.error(message=message, error=ValueError)
+
+        # Gets the current elapsed time and converts it to nanoseconds. Nanoseconds are the finest unit the timer
+        # reports, so the whole decomposition runs on exact integers and no floating point residue reaches the output.
         elapsed = self.elapsed
         precision = self.precision
-        elapsed_seconds = float(convert_time(time=elapsed, from_units=precision, to_units="s", as_float=True))
-
-        # Defines units in descending order with their second-based thresholds.
-        units: list[tuple[str, float]] = [
-            ("d", 86400.0),
-            ("h", 3600.0),
-            ("m", 60.0),
-            ("s", 1.0),
-            ("ms", 0.001),
-            ("us", 1e-6),
-            ("ns", 1e-9),
-        ]
+        elapsed_nanoseconds = elapsed * _NANOSECONDS_PER_UNIT[precision]
 
         # Handles zero elapsed time.
-        if elapsed_seconds == 0:
+        if elapsed_nanoseconds == 0:
             return f"0 {precision}"
 
-        # Decomposes the elapsed seconds into unit components.
-        remaining = elapsed_seconds
+        # Decomposes the elapsed nanoseconds into unit components, largest unit first.
+        remaining = elapsed_nanoseconds
         parts: list[str] = []
-        for unit_name, unit_seconds in units:
-            if len(parts) >= max_fields:  # pragma: no cover
+        for unit_name, unit_nanoseconds in _FORMAT_UNITS:
+            if remaining < unit_nanoseconds:
+                continue
+            if len(parts) == max_fields - 1 or unit_name == _FORMAT_UNITS[-1][0]:
+                # Last field: renders the remainder as a decimal, dropping a trailing zero fraction.
+                count = round(remaining / unit_nanoseconds, 3)
+                whole_count = int(count)
+                parts.append(f"{whole_count} {unit_name}" if count == whole_count else f"{count} {unit_name}")
                 break
-            if remaining >= unit_seconds:
-                count = remaining / unit_seconds
-                if len(parts) == max_fields - 1 or unit_name == units[-1][0]:
-                    # Last field: use decimal representation for remainder.
-                    # Rounds to avoid floating point noise.
-                    rounded = round(count, 3)
-                    # Uses integer representation if the value is a whole number.
-                    if rounded == int(rounded):  # pragma: no cover
-                        parts.append(f"{int(rounded)} {unit_name}")
-                    else:
-                        parts.append(f"{rounded} {unit_name}")
-                    break
-                whole = int(count)
-                if whole > 0:
-                    parts.append(f"{whole} {unit_name}")
-                    remaining -= whole * unit_seconds
+            whole = remaining // unit_nanoseconds
+            parts.append(f"{whole} {unit_name}")
+            remaining -= whole * unit_nanoseconds
 
         return " ".join(parts)
 

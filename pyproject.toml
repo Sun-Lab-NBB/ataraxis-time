@@ -6,7 +6,7 @@ build-backend = "scikit_build_core.build"
 # Project metadata section. Provides the general ID information about the project.
 [project]
 name = "ataraxis-time"
-version = "6.0.2"
+version = "7.0.0"
 description = "Provides a high-precision thread-safe timer and helper methods to work with date and time data."
 readme = "README.md"
 license = "Apache-2.0"
@@ -29,7 +29,7 @@ keywords = [
     "non-blocking",
     "blocking",
     "date",
-    "ataraxis"
+    "ataraxis",
 ]
 
 classifiers = [
@@ -49,7 +49,7 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
     # Typing
-    "Typing :: Typed"
+    "Typing :: Typed",
 ]
 
 # Runtime project dependencies.
@@ -100,7 +100,7 @@ build-dir = "build/{wheel_tag}"
 
 # Cross-compilation override for Windows ARM64 wheels. cibuildwheel signals the target via the SETUPTOOLS_EXT_SUFFIX
 # environment variable (e.g. '.cp312-win_arm64.pyd'). The Visual Studio CMake generator targets the build host's
-# architecture by default; on a native ARM64 host this is already ARM64, but when cross-building from an AMD64 host
+# architecture by default. On a native ARM64 host this is already ARM64, but when cross-building from an AMD64 host
 # (e.g. CI) it would emit AMD64 code. Forcing CMAKE_GENERATOR_PLATFORM=ARM64 guarantees ARM64 binaries regardless of
 # host. The matching module-name fix (NB_SUFFIX / SOABI) lives in CMakeLists.txt.
 [[tool.scikit-build.overrides]]
@@ -123,7 +123,7 @@ test-command = "pytest {project}/tests -n logical --dist loadgroup"
 test-requires = ["pytest", "pytest-xdist"]
 
 # Per-platform architecture matrix: AMD64/ARM64 everywhere, plus x86 on Linux and Windows. The host must be able to
-# cross-compile and emulate these targets; run 'python tools/check_build_env.py' first to confirm readiness up front.
+# cross-compile and emulate these targets. Run 'python tools/check_build_env.py' first to confirm readiness up front.
 [tool.cibuildwheel.macos]
 # Testing the x86_64 slice on Apple Silicon requires Rosetta 2 ('softwareupdate --install-rosetta --agree-to-license').
 # arm64 wheels cannot be tested on Intel hosts, where cibuildwheel skips those tests automatically.
@@ -138,8 +138,9 @@ archs = ["AMD64", "ARM64", "x86"]
 # ARM64-only delvewheel override. The ARM64 MSVC C++ runtime DLLs (msvcp140.dll, vcruntime140*.dll) that the extension
 # links against are NOT on PATH on a Windows host (System32 holds the AMD64 copies), so delvewheel cannot find an
 # architecture-matching DLL to vendor and aborts. The 'tools/repair_windows_wheel.py' helper discovers the ARM64 runtime
-# redistributable directory at build time (via vswhere / VS environment / filesystem glob, with an ATARAXIS_ARM64_CRT_DIR
-# override) and forwards it to delvewheel through '--add-path', so no machine- or version-specific path is hardcoded.
+# redistributable directory at build time (via vswhere / VS environment / filesystem glob, with an
+# ATARAXIS_ARM64_CRT_DIR override) and forwards it to delvewheel through '--add-path', so no machine- or
+# version-specific path is hardcoded.
 # Scoped via 'select' so AMD64/x86 Windows wheels keep cibuildwheel's default repair behavior.
 [[tool.cibuildwheel.overrides]]
 select = "*-win_arm64"
@@ -164,7 +165,7 @@ lint.select = ["ALL"]
 
 # General ignore directives
 lint.ignore = [
-    # Shared corpus. These entries are present in every Ataraxis framework and Sollertia platform project.
+    # Universal lint.ignore corpus. Present in every Ataraxis framework and Sollertia platform project.
     "W291",    # Conflicts with docstring formatting
     "ANN401",  # While suboptimal, ANY is a helpful type when used with caution
     "BLE001",  # Broad exception handling is necessary at library boundaries
@@ -172,11 +173,11 @@ lint.ignore = [
     "PLR0911", # Sometimes complex return graphs are necessary
     "PLR0912", # Sometimes complex functions are necessary
     "PLR0913", # Sometimes complex functions are necessary
-    "PLR0915", # Sometimes complex type definitions are necessary
+    "PLR0915", # Sometimes functions with many statements are necessary
     "PLR0917", # Call sites pass keyword arguments, so the positional count is immaterial
     "COM812",  # Conflicts with the formatter
     "ISC001",  # Conflicts with the formatter
-    "PT001",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-182590771
+    "PT001",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
     "PT023",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
     "D107",    # __init__ is documented inside the main class docstring where applicable
     "D205",    # Bugs out for file descriptions
@@ -190,9 +191,9 @@ lint.ignore = [
 
 # Additional formatting configurations
 [tool.ruff.format]
-quote-style = "double"             # Uses double quotes for strings
-indent-style = "space"             # Uses space for indents
-skip-magic-trailing-comma = false  # Like black, ignores trailing commas
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false  # Like black, honors magic trailing commas
 line-ending = "auto"               # Automatically detects and standardizes line-ending character
 
 # Docstrings and comments' line length
@@ -217,15 +218,22 @@ convention = "google"
     "SLF001",  # Tests exercise private module members directly
     "PT006",   # Parametrize argument names are declared as a single comma-separated string
     "ARG001",  # Pytest injects fixtures that individual tests may not reference
+    "T201",    # Diagnostic prints are how a test reports intermediate state
     "D",       # Test names and inline comments carry the intent that docstrings carry in library code
     "ANN",     # Test functions and mock helpers do not need annotations
 
     # Project-specific
     "FBT001",  # Parametrized cases inject the tested boolean flags as positional arguments
 ]
+"tools/**/*.py" = [
+    "INP001",  # The build helper directory is not an importable package
+    "S603",    # The helpers invoke fixed build tools with arguments the project itself supplies
+    "S607",    # Build tools such as 'docker' and 'arch' are resolved through PATH by design
+    "SIM112",  # The Windows environment variables are spelled as Microsoft documents them
+]
 
 [tool.ruff.lint.isort]
-case-sensitive = true              # Takes case into account when sorting imports
+case-sensitive = true
 combine-as-imports = true          # Combines multiple "as" imports for the same package
 force-wrap-aliases = true          # Wraps "as" imports so that each uses a separate line
 force-sort-within-sections = true  # Forces "as" and "from" imports for the same package to be close
@@ -256,14 +264,19 @@ pretty = true
 
 exclude = [
     "ataraxis-time-\\d+", # Ignores temporary folder created by setuptools when building the sdist
-    "venv.*/",            # Ignores virtual environments
-    "build/",             # Ignores the sdist directory
-    "dist/",              # Ignores the wheel directory
+    "venv.*/",
+    "build/",
+    "dist/",
     "docs/",              # Ignores the sphinx / doxygen directory
     "stubs/",             # Ignores stubs directory (stubgen output target)
     "recipe/",            # Ignores recipe directory (grayskull output target)
-    "tests/",             # Ignores the test directory.
+    "tests/",
 ]
+
+# Pytest configuration. The import mode is declared here so that a bare 'pytest' invocation resolves test modules
+# the same way the '{py}-test' tox task does.
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 
 # Lists the source files excluded from coverage measurement in full. Interface modules, such as the benchmark CLI, are
 # covered by the tests written for the functions they wrap.

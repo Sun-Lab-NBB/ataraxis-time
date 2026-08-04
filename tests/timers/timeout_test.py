@@ -14,7 +14,6 @@ def test_timeout_initialization() -> None:
     assert timeout.elapsed >= 0
     assert not timeout.expired
 
-    # Explicit microsecond precision.
     timeout = Timeout(duration=5_000_000, precision=TimerPrecisions.MICROSECOND)
     assert not timeout.expired
 
@@ -78,12 +77,12 @@ def test_timeout_kick() -> None:
     """Verifies the kick() method resets the timeout timer for activity-based timeouts."""
     timeout = Timeout(duration=5_000_000, precision=TimerPrecisions.MICROSECOND)
 
-    # Let some time pass.
+    # Lets some time pass.
     time.sleep(0.01)
     elapsed_before = timeout.elapsed
     assert elapsed_before > 0
 
-    # Kick the timeout (reset the timer).
+    # Kicks the timeout.
     timeout.kick()
 
     # Elapsed should be reset to near-zero.
@@ -95,15 +94,15 @@ def test_timeout_reset() -> None:
     """Verifies the reset() method with and without a new duration."""
     timeout = Timeout(duration=5_000_000, precision=TimerPrecisions.MICROSECOND)
 
-    # Let some time pass.
+    # Lets some time pass.
     time.sleep(0.01)
 
-    # Reset without changing duration.
+    # Resets without changing the duration.
     timeout.reset()
     assert timeout.elapsed < 1000  # Should be very small after reset.
     assert timeout.remaining > 0
 
-    # Reset with a new duration.
+    # Resets with a new duration.
     timeout.reset(duration=5_000_000)
     assert timeout.remaining > 1_000_000
     assert not timeout.expired

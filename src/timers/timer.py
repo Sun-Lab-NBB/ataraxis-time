@@ -23,10 +23,7 @@ _FORMAT_UNITS: tuple[tuple[str, int], ...] = (
 
 
 class TimerPrecisions(StrEnum):
-    """Defines the timer precision modes supported by PrecisionTimer instances.
-
-    Use this enumeration when initializing or reconfiguring the precision used by a PrecisionTimer instance.
-    """
+    """Defines the timer precision modes supported by PrecisionTimer instances."""
 
     NANOSECOND = "ns"
     """Nanosecond precision."""
@@ -66,7 +63,6 @@ class PrecisionTimer:
     """
 
     def __init__(self, precision: str | TimerPrecisions = TimerPrecisions.MICROSECOND) -> None:
-        # Validates the input precision against supported options.
         if precision not in tuple(TimerPrecisions):
             message = (
                 f"Unable to initialize PrecisionTimer class. The precision must be one of the supported options "
@@ -74,13 +70,8 @@ class PrecisionTimer:
             )
             console.error(message=message, error=ValueError)
 
-        # Converts the precision to a TimerPrecisions enumeration instance.
         precision = TimerPrecisions(precision)
-
-        # Initializes the C++ timer class with the validated precision.
         self._timer = CPrecisionTimer(precision=precision.value)
-
-        # Initializes the lap tracking list.
         self._laps: list[int] = []
 
     def __repr__(self) -> str:
@@ -130,7 +121,6 @@ class PrecisionTimer:
         Raises:
             ValueError: If the input precision is not one of the accepted options.
         """
-        # Validates the input precision against supported options.
         if precision not in tuple(TimerPrecisions):
             message = (
                 f"Unable to set PrecisionTimer precision. The precision must be one of the supported options "
@@ -138,10 +128,7 @@ class PrecisionTimer:
             )
             console.error(message=message, error=ValueError)
 
-        # Converts the precision to a TimerPrecisions enumeration instance.
         precision = TimerPrecisions(precision)
-
-        # Updates the precision used by the C++ timer class.
         self._timer.SetPrecision(precision=precision.value)
 
     def format_elapsed(self, *, max_fields: int = 2) -> str:
@@ -167,17 +154,15 @@ class PrecisionTimer:
             )
             console.error(message=message, error=ValueError)
 
-        # Gets the current elapsed time and converts it to nanoseconds. Nanoseconds are the finest unit the timer
-        # reports, so the whole decomposition runs on exact integers and no floating point residue reaches the output.
+        # Nanoseconds are the finest unit the timer reports, so the whole decomposition runs on exact integers and no
+        # floating point residue reaches the output.
         elapsed = self.elapsed
         precision = self.precision
         elapsed_nanoseconds = elapsed * _NANOSECONDS_PER_UNIT[precision]
 
-        # Handles zero elapsed time.
         if elapsed_nanoseconds == 0:
             return f"0 {precision}"
 
-        # Decomposes the elapsed nanoseconds into unit components, largest unit first.
         remaining = elapsed_nanoseconds
         parts: list[str] = []
         for unit_name, unit_nanoseconds in _FORMAT_UNITS:
@@ -185,7 +170,7 @@ class PrecisionTimer:
                 continue
             if len(parts) == max_fields - 1 or unit_name == _FORMAT_UNITS[-1][0]:
                 # Last field: renders the remainder as a decimal, dropping a trailing zero fraction.
-                count = round(remaining / unit_nanoseconds, 3)
+                count = round(remaining / unit_nanoseconds, ndigits=3)
                 whole_count = int(count)
                 parts.append(f"{whole_count} {unit_name}" if count == whole_count else f"{count} {unit_name}")
                 break
@@ -213,8 +198,7 @@ class PrecisionTimer:
     def poll(self, interval: int, *, allow_sleep: bool = True, block: bool = False) -> Generator[int, None, None]:
         """Yields an iteration count after each delay cycle.
 
-        Each iteration calls self.delay() with the specified interval and parameters. The caller should break
-        out of the loop when done.
+        The caller should break out of the loop when done, because the generator never terminates on its own.
 
         Args:
             interval: The delay interval in the timer's current precision units.

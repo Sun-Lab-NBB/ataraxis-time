@@ -8,8 +8,7 @@ any source code.
 
 ## Style guide compliance
 
-You MUST follow the Ataraxis framework style conventions when working in this project. Invoke the appropriate
-skill before making any changes to the corresponding file type:
+You MUST invoke the appropriate style skill before making any changes to the corresponding file type:
 
 | File type             | Required skill     |
 |-----------------------|--------------------|
@@ -33,9 +32,9 @@ imports. For example, `src/timers/` imports from `src/utilities/` via `from ..ut
 
 This project depends on the following Ataraxis framework library:
 
-| Library                 | Import name                | Role                                                          |
-|-------------------------|----------------------------|---------------------------------------------------------------|
-| ataraxis-base-utilities | `ataraxis_base_utilities`  | Provides `console` and the scalar/bytes serialization helpers |
+| Library                 | Import name               | Role                                                          |
+|-------------------------|---------------------------|---------------------------------------------------------------|
+| ataraxis-base-utilities | `ataraxis_base_utilities` | Provides `console` and the scalar/bytes serialization helpers |
 
 The `console` object is not enabled in this library's top-level `__init__.py`. It is enabled explicitly in
 `benchmark.py` before use. You MUST verify this pattern is preserved when adding new `console.echo()` calls.
@@ -86,8 +85,8 @@ The library is organized into two Python packages (`timers`, `utilities`) plus t
 
 This is a C++ extension project. The build backend is scikit-build-core with nanobind. `CMakeLists.txt` at the
 project root compiles `src/c_extensions/precision_timer_ext.cpp` into a platform-specific binary extension.
-Binary wheels are built via cibuildwheel. The `# type: ignore[import-not-found]` comment on the C++ extension
-import in `timer.py` is expected and should not be removed.
+Binary wheels are built via cibuildwheel. You MUST preserve the `# type: ignore[import-not-found]` comment on the
+C++ extension import in `timer.py`.
 
 ### Key patterns
 
@@ -99,7 +98,7 @@ import in `timer.py` is expected and should not be removed.
 - **File ordering**: Constants appear first, then enumerations, then public functions/classes, then private
   functions. This ordering is enforced by `/python-style`.
 - **convert_time return type**: The `convert_time()` function always returns a floating-point value. By default
-  (`as_float=False`) it returns a NumPy 64-bit float scalar (`np.float64`); with `as_float=True` it returns a
+  (`as_float=False`) it returns a NumPy 64-bit float scalar (`np.float64`). With `as_float=True` it returns a
   Python `float`.
 
 ### Development commands

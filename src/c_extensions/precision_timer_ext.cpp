@@ -7,7 +7,7 @@
  * intervals on sufficiently fast CPUs. This module works on Windows, macOS, and Linux.
  *
  * @note This module is bound to Python using nanobind and is designed to be further wrapped with a pure-Python
- * PrecisionTimer class. The binding code is stored at the end of this file.
+ * PrecisionTimer class.
  */
 
 // Dependencies:
@@ -108,7 +108,7 @@ class CPrecisionTimer
     /**
      * @brief Blocks (delays) in-place for the specified number of time-units (depends on used precision).
      *
-     * This method is used to execute arbitrary delays while maintaining or releasing the Global Interpreter Lock (GIL).
+     * Executes arbitrary delays while maintaining or releasing the Global Interpreter Lock (GIL).
      * By default, this method uses a busy-wait approach where the thread constantly checks elapsed time until the exit
      * condition is encountered and releases the GIL while waiting.
      *
@@ -180,10 +180,8 @@ class CPrecisionTimer
     /**
      * @brief Changes the timer precision used by the instance to the requested units.
      *
-     * This method can be used to dynamically change the precision used by a class instance during runtime.
-     *
-     * @param precision The new precision to use. Supported values are: 'ns' (nanoseconds),
-     * 'us' (microseconds), 'ms' (milliseconds), and 's' (seconds).
+     * @param precision The new precision to use. Supported values are: 'ns' (nanoseconds), 'us' (microseconds),
+     * 'ms' (milliseconds), and 's' (seconds).
      *
      * @throws std::invalid_argument If the precision does not exactly match one of the four supported options.
      */
@@ -239,7 +237,10 @@ class CPrecisionTimer
             case kPrecisionUnits::kMillisecond: return "ms";
             case kPrecisionUnits::kSecond: return "s";
         }
-        throw std::invalid_argument("Unsupported precision");
+        const std::string message =
+            "Unable to report the timer precision. The internal precision state must be one of the four "
+            "kPrecisionUnits members.";
+        throw std::invalid_argument(message);
     }
 
     /// Returns a string representation of the CPrecisionTimer instance.
@@ -257,10 +258,10 @@ class CPrecisionTimer
     /// re-parsing a precision string on every call.
     enum class kPrecisionUnits : uint8_t
     {
-        kNanosecond,
-        kMicrosecond,
-        kMillisecond,
-        kSecond
+        kNanosecond,   ///< The timer reports and accepts values in nanoseconds.
+        kMicrosecond,  ///< The timer reports and accepts values in microseconds.
+        kMillisecond,  ///< The timer reports and accepts values in milliseconds.
+        kSecond,       ///< The timer reports and accepts values in seconds.
     };
 
     /// Stores the number of nanoseconds contained in a single microsecond.
@@ -272,22 +273,18 @@ class CPrecisionTimer
     /// Stores the number of nanoseconds contained in a single second.
     static constexpr int64_t kNanosecondsPerSecond = 1'000'000'000;
 
-    /// Stores the reference value used to calculate elapsed time. Lap() installs a new value and reads the one it
-    /// replaces in one indivisible step, which is what lets consecutive laps partition the elapsed time.
+    /// Stores the reference point that elapsed intervals are measured from.
     std::atomic<steady_clock::time_point> _start_time;
 
     /// Stores the resolved form of the selected precision option, used to select the conversion divisor.
     std::atomic<kPrecisionUnits> _precision_units = kPrecisionUnits::kMicrosecond;
 
-    /// Stores the number of nanoseconds in one unit of the selected precision. It is used to convert the input
-    /// duration values (for delay methods) to nanoseconds, and Delay() reads it with the GIL released.
+    /// Stores the number of nanoseconds in one unit of the selected precision, used as the conversion multiplier
+    /// for delay durations.
     std::atomic<int64_t> _precision_nanoseconds = kNanosecondsPerMicrosecond;
 
     /**
      * @brief Converts the input value from nanoseconds to the chosen precision units.
-     *
-     * This method is used by the Elapsed() and Lap() methods to convert a nanosecond interval to the desired precision
-     * (requested by the user). However, it is a general converter that may be used by other methods in the future.
      *
      * @param nanoseconds The value in nanoseconds to be converted to the desired precision.
      * @returns The converted time-value, truncated to the whole number via integer division toward zero.
@@ -302,7 +299,10 @@ class CPrecisionTimer
             case kPrecisionUnits::kMillisecond: return nanoseconds / kNanosecondsPerMillisecond;
             case kPrecisionUnits::kSecond: return nanoseconds / kNanosecondsPerSecond;
         }
-        throw std::invalid_argument("Unsupported precision");
+        const std::string message =
+            "Unable to convert the value to the timer precision. The internal precision state must be one of the "
+            "four kPrecisionUnits members.";
+        throw std::invalid_argument(message);
     }
 };
 
@@ -310,7 +310,6 @@ class CPrecisionTimer
  * @brief Binds the CPrecisionTimer class to the Python API via nanobind.
  *
  * The module is available as 'precision_timer_ext' and must be bound to a Python package via CMake configuration.
- * Each method exposed to the Python API uses the name given as the first argument to each 'def' call.
  */
 // NOLINTNEXTLINE(performance-unnecessary-value-param)
 NB_MODULE(precision_timer_ext, m)

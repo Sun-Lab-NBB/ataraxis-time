@@ -8,9 +8,6 @@ from .timer import PrecisionTimer, TimerPrecisions
 class Timeout:
     """Provides a timeout guard built on PrecisionTimer.
 
-    This class wraps a PrecisionTimer instance and provides a convenient API for checking whether a specified
-    duration has elapsed. It supports activity-based reset (kick) and full reset with optional duration changes.
-
     Args:
         duration: The timeout duration in the timer's precision units. Must be greater than 0.
         precision: The precision to use for timeout tracking. Use one of the supported values defined in the
@@ -31,8 +28,8 @@ class Timeout:
             )
             console.error(message=message, error=ValueError)
 
-        self._duration = duration
-        self._timer = PrecisionTimer(precision=precision)
+        self._duration: int = duration
+        self._timer: PrecisionTimer = PrecisionTimer(precision=precision)
         self._timer.reset()
 
     def __repr__(self) -> str:
@@ -56,10 +53,7 @@ class Timeout:
         return self._timer.elapsed
 
     def kick(self) -> None:
-        """Resets the timeout timer (for activity-based timeouts).
-
-        This resets the internal timer without changing the duration, effectively restarting the timeout countdown.
-        """
+        """Resets the timeout timer (for activity-based timeouts)."""
         self._timer.reset()
 
     def reset(self, duration: int | None = None) -> None:

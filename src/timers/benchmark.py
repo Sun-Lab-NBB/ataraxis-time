@@ -1,6 +1,6 @@
 """Provides the benchmark used to assess the performance of the PrecisionTimer class on the current host-system."""
 
-import time as tm
+import time
 from typing import Any
 
 import click
@@ -55,17 +55,13 @@ def benchmark(
     """Benchmarks the PrecisionTimer class performance on the local host-system. Use this command to determine the
     actual precision of the timer for the local Operating System and CPU clock combination.
     """
-    # Enables the console and progress bar display for output.
     console.enable()
     console.enable_progress()
 
-    # Initializes the timer class to benchmark.
     timer: PrecisionTimer = PrecisionTimer(precision="ns")
 
-    # Extracts the set of precisions to be benchmarked.
     precisions: tuple[TimerPrecisions, ...] = tuple(TimerPrecisions)
 
-    # Notifies the user that the benchmark has started.
     console.echo(message="Initializing PrecisionTimer benchmark...")
 
     # Runs and aggregates interval timing results. The interval tests execute the requested delay via PrecisionTimer's
@@ -89,26 +85,22 @@ def benchmark(
             )
             continue
 
-        # Switches the timer to use the tested precision.
         timer.set_precision(precision=precision)
         elapsed_deltas = []
-        # Executes the requested number of benchmarking cycles for each precision.
         for _ in console.track(
             range(interval_cycles), description=f"Running interval timing benchmark for {precision} precision timer"
         ):
-            # Runs a busywait loop for the interval resolved above.
             interval: float = resolvable_interval
-            start = tm.perf_counter_ns()
+            start = time.perf_counter_ns()
             timer.reset()
             while timer.elapsed < interval:
                 pass
-            end = tm.perf_counter_ns()
+            end = time.perf_counter_ns()
             elapsed_time: float = convert_time(
                 time=end - start, from_units=TimeUnits.NANOSECOND, to_units=precision.lower()
             )
             elapsed_deltas.append(elapsed_time)
 
-        # Appends cycle results (mean and std) to the storage list.
         interval_results.append(
             (precision, np.around(np.mean(elapsed_deltas), decimals=3), np.around(np.std(elapsed_deltas), decimals=3))
         )
@@ -124,19 +116,16 @@ def benchmark(
         for _ in console.track(
             range(delay_cycles[index]), description=f"Running busywait delay benchmark for {precision} precision timer"
         ):
-            # Tests blocking delay.
-            start = tm.perf_counter_ns()
+            start = time.perf_counter_ns()
             timer.delay(delay=delay_durations[index], allow_sleep=False, block=True)
-            end = tm.perf_counter_ns()
+            end = time.perf_counter_ns()
             deltas_block.append(convert_time(time=end - start, from_units=TimeUnits.NANOSECOND, to_units=precision))
 
-            # Tests non-blocking delay.
-            start = tm.perf_counter_ns()
+            start = time.perf_counter_ns()
             timer.delay(delay=delay_durations[index], allow_sleep=False, block=False)
-            end = tm.perf_counter_ns()
+            end = time.perf_counter_ns()
             deltas_noblock.append(convert_time(time=end - start, from_units=TimeUnits.NANOSECOND, to_units=precision))
 
-        # Appends cycle results (mean and std for blocking and non-blocking delays).
         delay_results_busywait.append(
             (
                 precision,
@@ -159,19 +148,16 @@ def benchmark(
         for _ in console.track(
             range(delay_cycles[index]), description=f"Running sleep delay benchmark for {precision} precision timer"
         ):
-            # Tests blocking delay.
-            start = tm.perf_counter_ns()
+            start = time.perf_counter_ns()
             timer.delay(delay=delay_durations[index], allow_sleep=True, block=True)
-            end = tm.perf_counter_ns()
+            end = time.perf_counter_ns()
             deltas_block.append(convert_time(time=end - start, from_units=TimeUnits.NANOSECOND, to_units=precision))
 
-            # Tests non-blocking delay.
-            start = tm.perf_counter_ns()
+            start = time.perf_counter_ns()
             timer.delay(delay=delay_durations[index], allow_sleep=True, block=False)
-            end = tm.perf_counter_ns()
+            end = time.perf_counter_ns()
             deltas_noblock.append(convert_time(time=end - start, from_units=TimeUnits.NANOSECOND, to_units=precision))
 
-        # Appends cycle results (mean and std for blocking and non-blocking delays).
         delay_results_sleep.append(
             (
                 precision,
@@ -188,11 +174,11 @@ def benchmark(
     console.echo(message="Interval Timing:", raw=True)
     console.echo(message="Precision | Interval Time | Mean Recorded Time | Std Recorded Time", raw=True)
     console.echo(message="----------+---------------+--------------------+------------------", raw=True)
-    for precision, mean, std in interval_results:
+    for precision, mean, standard_deviation in interval_results:
         console.echo(
             message=f"{precision:9} | "
             f"{convert_time(time=interval_delay, from_units=TimeUnits.SECOND, to_units=precision):13} | "
-            f"{mean:18.3f} | {std:16.3f}",
+            f"{mean:18.3f} | {standard_deviation:16.3f}",
             raw=True,
         )
 
@@ -205,10 +191,17 @@ def benchmark(
         message="----------+----------------+-----------------+----------------+-------------------+-----------------",
         raw=True,
     )
-    for precision, delay_duration, block_mean, block_std, noblock_mean, noblock_std in delay_results_busywait:
+    for (
+        precision,
+        delay_duration,
+        block_mean,
+        block_standard_deviation,
+        noblock_mean,
+        noblock_standard_deviation,
+    ) in delay_results_busywait:
         console.echo(
-            message=f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | "
-            f"{noblock_mean:17.3f} | {noblock_std:16.3f}",
+            message=f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_standard_deviation:14.3f} | "
+            f"{noblock_mean:17.3f} | {noblock_standard_deviation:16.3f}",
             raw=True,
         )
 
@@ -221,10 +214,17 @@ def benchmark(
         message="----------+----------------+-----------------+----------------+-------------------+-----------------",
         raw=True,
     )
-    for precision, delay_duration, block_mean, block_std, noblock_mean, noblock_std in delay_results_sleep:
+    for (
+        precision,
+        delay_duration,
+        block_mean,
+        block_standard_deviation,
+        noblock_mean,
+        noblock_standard_deviation,
+    ) in delay_results_sleep:
         console.echo(
-            message=f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_std:14.3f} | "
-            f"{noblock_mean:17.3f} | {noblock_std:16.3f}",
+            message=f"{precision:9} | {delay_duration:14} | {block_mean:15.3f} | {block_standard_deviation:14.3f} | "
+            f"{noblock_mean:17.3f} | {noblock_standard_deviation:16.3f}",
             raw=True,
         )
 

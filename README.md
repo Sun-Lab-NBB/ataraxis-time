@@ -24,6 +24,8 @@ the library offers a set of standalone helper functions for manipulating date an
 generation and parsing, time-unit conversion, rate-interval conversion, and timedelta interoperability. This library is
 part of the [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework for AI-assisted scientific hardware control.
 
+___
+
 ## Features
 
 - Supports Windows, Linux, and macOS.
@@ -36,6 +38,8 @@ part of the [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework for AI
 - Interoperability with Python datetime.timedelta objects.
 - Apache 2.0 License.
 
+___
+
 ## Table of Contents
 
 - [Dependencies](#dependencies)
@@ -44,6 +48,7 @@ part of the [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework for AI
   - [Precision Timer](#precision-timer)
   - [Timeout](#timeout)
   - [Date and Time Helper Functions](#date-and-time-helper-functions)
+  - [CLI Commands](#cli-commands)
 - [API Documentation](#api-documentation)
 - [Developers](#developers)
 - [Versioning](#versioning)
@@ -87,11 +92,11 @@ ___
 
 ### Precision Timer
 
-The timer API is intentionally minimalistic to simplify class adoption and usage. It is heavily inspired by the
+The timer API is inspired by the
 [elapsedMillis](https://github.com/pfeerick/elapsedMillis/blob/master/elapsedMillis.h) library for
 Teensy and Arduino microcontrollers.
 
-All timer class functionality is realized through a fast C-extension class wrapped into the PrecisionTimer class.
+All timer class functionality is realized through a C-extension class wrapped into the PrecisionTimer class.
 
 #### Initialization and Configuration
 
@@ -132,8 +137,7 @@ print(f"Work time: {timer.elapsed} us")
 
 #### Delay
 
-Delay timing functionality is the primary advantage of this library over the standard 'time' library. At the time of
-writing, the 'time' library can provide nanosecond-precise delays via a 'busywait' perf_counter_ns() function that does
+The standard 'time' library provides nanosecond-precise delays via a 'busywait' perf_counter_ns() function that does
 not release the GIL. Alternatively, it can release the GIL via the sleep() function, but it is only accurate
 up to millisecond precision. The PrecisionTimer class can delay for time-periods within microsecond precision, while
 releasing or holding the GIL.
@@ -225,8 +229,7 @@ print(f"Detailed: {timer.format_elapsed(max_fields=3)}")  # e.g. "2 s 500 ms 117
 
 #### Polling
 
-The poll() method provides an infinite generator that yields an iteration count after each delay cycle. This is useful
-for periodic task execution.
+The poll() method provides an infinite generator that yields an iteration count after each delay cycle.
 
 ```python
 from ataraxis_time import PrecisionTimer
@@ -267,8 +270,7 @@ timeout.reset(duration=1000)
 
 ### Date and Time Helper Functions
 
-These are helper functions that are not directly part of the timer classes showcased above. Since these functions
-are not intended for realtime applications, they are implemented entirely in Python.
+Since these functions are not intended for realtime applications, they are implemented entirely in Python.
 
 #### Convert Time
 
@@ -383,6 +385,16 @@ day_timestamp = parse_timestamp(
 print(f"Day-precision parsed timestamp: {day_timestamp}")
 ```
 
+### CLI Commands
+
+This library provides the `axt-benchmark` CLI that exposes the following commands:
+
+| Command         | Description                                                       |
+|-----------------|-------------------------------------------------------------------|
+| `axt-benchmark` | Benchmarks interval timing and delay accuracy on the local system |
+
+Use `axt-benchmark --help` for detailed usage information.
+
 ___
 
 ## API Documentation
@@ -426,10 +438,10 @@ dependencies:
    documentation.
 3. A C++ build toolchain and, for cross-architecture wheels, Docker, to build binary wheels via
    [cibuildwheel](https://cibuildwheel.pypa.io/en/stable/). Testing cross-compiled wheels has
-   per-platform prerequisites: on macOS, Rosetta 2 is required to test x86_64 wheels on Apple Silicon
-   (install it with `softwareupdate --install-rosetta --agree-to-license`); on Linux, non-native
+   per-platform prerequisites. On macOS, Rosetta 2 is required to test x86_64 wheels on Apple Silicon,
+   installed with `softwareupdate --install-rosetta --agree-to-license`. On Linux, non-native
    architectures build and test inside Docker under QEMU emulation, registered once per machine with
-   `docker run --privileged --rm tonistiigi/binfmt --install all`; on Windows, ARM64 wheels need the
+   `docker run --privileged --rm tonistiigi/binfmt --install all`. On Windows, ARM64 wheels need the
    ARM64 MSVC runtime, installed through the Visual Studio Installer. Run
    `python tools/check_build_env.py` to verify these prerequisites before building.
 

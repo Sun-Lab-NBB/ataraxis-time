@@ -11,20 +11,20 @@ if (NOT SKBUILD)
   =====================================================================================================================
     $ python -m pip install .
   =====================================================================================================================
-  Developers should use the 'dev' specification to install the development dependencies. Note, additional non-python
-  dependencies, such as doxygen, may need to be installed manually. Consult the 'installation' section of the Readme.md
-  of the repository for more information.
+  Developers should install the development environment through tox. Note, additional non-python dependencies, such as
+  doxygen, may need to be installed manually. Consult the 'Developers' section of the README.md of the repository for
+  more information.
   ======================================================================================================================
-   $ python -m pip install .'[dev]'
-   or
-   $ python -m pip install .[dev]
+   $ mamba install tox uv tox-uv
+   $ tox -e create
+   $ tox -e install
   ======================================================================================================================
   For your convenience, OS-specific copies of the environments used for development are also included in all source
   code distributions under /envs directory.
   ")
 endif()
 
-# Imports the necessary nanobind components. Note, the Python version has to match the minimum python version supported
+# Imports the necessary nanobind components. Note, the Python version has to match the minimum Python version supported
 # by the library (declared via pyproject.toml).
 find_package(Python 3.12
   REQUIRED COMPONENTS Interpreter Development.Module)
@@ -33,10 +33,10 @@ find_package(Python 3.12
 # and scikit-build-core's SKBUILD_SOABI both report 'cp3xx-win_amd64'. nanobind derives the extension module's filename
 # suffix from these, mis-naming the module 'cp3xx-win_amd64' even though MSVC emits genuine ARM64 code (the VS generator
 # targets the ARM64 host by default). A module with that suffix is not importable on a real ARM64 interpreter.
-# cibuildwheel passes the correct target suffix via the SETUPTOOLS_EXT_SUFFIX environment variable
-# (e.g. '.cp312-win_arm64.pyd'); the block below derives nanobind's suffix variables from it before nanobind is
-# configured. It is inert for native builds,where SETUPTOOLS_EXT_SUFFIX is unset and the default SOABI already matches
-# the target.
+# cibuildwheel passes the correct target suffix via the SETUPTOOLS_EXT_SUFFIX environment variable (e.g.
+# '.cp312-win_arm64.pyd'). The block below derives nanobind's suffix variables from it before nanobind is configured.
+# It is inert for native builds, where SETUPTOOLS_EXT_SUFFIX is unset and the default SOABI already matches the
+# target.
 if (DEFINED ENV{SETUPTOOLS_EXT_SUFFIX})
   set(NB_SUFFIX "$ENV{SETUPTOOLS_EXT_SUFFIX}")  # Full suffix incl. extension, e.g. '.cp312-win_arm64.pyd'
   string(REGEX REPLACE "^\\.(.+)\\.pyd$" "\\1" SKBUILD_SOABI "$ENV{SETUPTOOLS_EXT_SUFFIX}")  # -> 'cp312-win_arm64'
@@ -52,8 +52,8 @@ execute_process(
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
-# Binds the C++ extension to the python precision_timer_ext module. This exposes the C++ API to Python via nanobind
-# module.
+# Binds the C++ extension to the Python precision_timer_ext module. This exposes the C++ API to Python via the
+# nanobind module.
 nanobind_add_module(
   precision_timer_ext
   NB_STATIC

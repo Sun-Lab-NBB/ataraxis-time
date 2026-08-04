@@ -153,7 +153,7 @@ MACOSX_DEPLOYMENT_TARGET = "15.0"
 # Ruff Configuration.
 [tool.ruff]
 line-length = 120         # Deviates from the commonly used '80' standard.
-indent-width = 4          # Same as black, indents are 4 spaces
+indent-width = 4
 target-version = "py312"  # Targets the lowest supported version of python
 src = ["src"]             # The name of the root source code directory
 
@@ -174,7 +174,7 @@ lint.ignore = [
     "PLR0912", # Sometimes complex functions are necessary
     "PLR0913", # Sometimes complex functions are necessary
     "PLR0915", # Sometimes functions with many statements are necessary
-    "PLR0917", # Call sites pass keyword arguments, so the positional count is immaterial
+    "PLR0917", # PLR0913 already covers argument counts, and call sites pass keyword arguments
     "COM812",  # Conflicts with the formatter
     "ISC001",  # Conflicts with the formatter
     "PT001",   # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
@@ -182,8 +182,8 @@ lint.ignore = [
     "D107",    # __init__ is documented inside the main class docstring where applicable
     "D205",    # Bugs out for file descriptions
     "PLW0603", # While global statement usage is not ideal, it streamlines certain development patterns
-    "TID252",  # Conflicts with the library import management strategy
-    "CPY001",  # The license is declared in the LICENSE file and the project metadata
+    "TID252",  # Conflicts with the library import management strategy, which requires parent-relative imports
+    "CPY001",  # The license is declared in the LICENSE file and the license and license-files metadata fields
 
     # Project-specific
     "TRY301",  # The string timestamp parser raises inside its try block to reach one shared error handler
@@ -232,6 +232,7 @@ convention = "google"
     "SIM112",  # The Windows environment variables are spelled as Microsoft documents them
 ]
 
+# Import sorting (isort) configuration.
 [tool.ruff.lint.isort]
 case-sensitive = true
 combine-as-imports = true          # Combines multiple "as" imports for the same package
@@ -241,7 +242,7 @@ length-sort = true                 # Places shorter imports first
 
 # MyPy configuration section.
 [tool.mypy]
-# Strict mode settings (equivalent to --strict)
+# Strict mode settings (--strict), plus the unused-config warning that --strict does not enable
 warn_unused_configs = true
 disallow_any_generics = true
 disallow_subclassing_any = true
@@ -263,13 +264,13 @@ extra_checks = true
 pretty = true
 
 exclude = [
-    "ataraxis-time-\\d+", # Ignores temporary folder created by setuptools when building the sdist
+    "ataraxis-time-\\d+",  # The temporary folder created when building the sdist
     "venv.*/",
     "build/",
     "dist/",
-    "docs/",              # Ignores the sphinx / doxygen directory
-    "stubs/",             # Ignores stubs directory (stubgen output target)
-    "recipe/",            # Ignores recipe directory (grayskull output target)
+    "docs/",
+    "stubs/",             # stubgen output target
+    "recipe/",            # grayskull output target
     "tests/",
 ]
 
@@ -285,7 +286,7 @@ omit = [
     "*/ataraxis_time/timers/benchmark.py",
 ]
 
-# This is used by the 'test' tox tasks to aggregate coverage data produced during pytest runtimes.
+# Used by the 'coverage' tox task to merge the coverage data files the '{py}-test' tasks produce.
 [tool.coverage.paths]
 
 # Maps coverage measured in site-packages to source files in src. The second pattern matches the POSIX virtual

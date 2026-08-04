@@ -61,7 +61,7 @@ dependencies = [
     "click>=8,<9",
 
     # Ataraxis framework
-    "ataraxis-base-utilities>=6,<7",
+    "ataraxis-base-utilities>=7,<8",
 ]
 
 # Project repository and hosted documentation URLs.
